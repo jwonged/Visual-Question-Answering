@@ -1,2 +1,1 @@
-"# Visual Question Answering" 
-"# Visual-QUestion-Answering" 
+# Visual Question Answering
