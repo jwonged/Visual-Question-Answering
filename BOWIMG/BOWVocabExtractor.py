@@ -32,3 +32,5 @@ class BOWVocabExtractor(object):
         with open(file, 'w', newline='') as vocabFile:
             writer = csv.writer(vocabFile)
             writer.writerow(text)
+            
+
