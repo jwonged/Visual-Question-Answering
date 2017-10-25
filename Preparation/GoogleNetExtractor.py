@@ -3,8 +3,8 @@
 import numpy as np
 import os, sys, getopt
  
-# Main path to your caffe installation
-caffe_root = '/path/to/your/caffe/'
+# Main path to caffe installation
+caffe_root = '/home/jwong/caffe/'
  
 # Model prototxt file
 model_prototxt = caffe_root + 'models/bvlc_googlenet/deploy.prototxt'
