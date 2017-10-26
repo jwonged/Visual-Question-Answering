@@ -2,6 +2,7 @@
 
 import numpy as np
 import os, sys, getopt
+import json
  
 # Main path to caffe installation
 caffe_root = '/home/jwong/caffe/'
@@ -24,24 +25,9 @@ layer_name = 'pool5/7x7_s1'
 sys.path.insert(0, caffe_root + 'python')
 import caffe
  
-def main(argv):
-    inputfile = ''
-    outputfile = ''
- 
-    try:
-        opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
-    except getopt.GetoptError:
-        print 'caffe_feature_extractor.py -i <inputfile> -o <outputfile>'
-        sys.exit(2)
- 
-    for opt, arg in opts:
-        if opt == '-h':
-            print 'caffe_feature_extractor.py -i <inputfile> -o <outputfile>'
-            sys.exit()
-        elif opt in ("-i"):
-            inputfile = arg
-        elif opt in ("-o"):
-            outputfile = arg
+def main():
+    inputfile = '/media/jwong/Transcend/testImages/images.txt'
+    outputfile = 'output'
  
     print 'Reading images from "', inputfile
     print 'Writing vectors to "', outputfile
@@ -53,7 +39,7 @@ def main(argv):
                            mean=np.load(mean_path).mean(1).mean(1),
                            channel_swap=(2,1,0),
                            raw_scale=255,
-                           image_dims=(256, 256))
+                           image_dims=(480, 640))
  
     # Loading class labels
     with open(imagenet_labels) as f:
@@ -63,6 +49,9 @@ def main(argv):
     # You can uncomment this, to have a look inside the network and choose which layer to print
     #print [(k, v.data.shape) for k, v in net.blobs.items()]
     #exit()
+
+    resultJSONData = {}
+    resultJSONData['VQAset'] = []
  
     # Processing one image at a time, printint predictions and writing the vector to a file
     with open(inputfile, 'r') as reader:
@@ -73,7 +62,17 @@ def main(argv):
                 input_image = caffe.io.load_image(image_path)
                 prediction = net.predict([input_image], oversample=False)
                 print os.path.basename(image_path), ' : ' , labels[prediction[0].argmax()].strip() , ' (', prediction[0][prediction[0].argmax()] , ')'
-                np.savetxt(writer, net.blobs[layer_name].data[0].reshape(1,-1), fmt='%.8g')
+                
+                #append image name
+                splitPath = image_path.split('/')
+                imgName = splitPath[len(splitPath)-1]
+
+                # filename, array data to be saved, format, delimiter
+                featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
+                np.savetxt(writer, featureData, fmt='%.8g')
+                resultJSONData['VQAset'].append({'name':imgName, 'features':featureData})
+    with open('outputData.json', 'w') as jsonOut:
+        json.dump(resultJSONData, jsonOut)
  
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
