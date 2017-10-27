@@ -6,14 +6,17 @@ def loadTextFile():
 	for imageF in arrays:
 		imageF.insert(0, 'name')
 		print(imageF)
-	print('--------------------------------------------------')
 	print(arrays)
 	for item in arrays:
 		print(len(item))
 	print(len(arrays))
 
-def loadJSONfile():
+def loadFeatureFromID(imgID):
 	with open('outputData.json') as jsonFile:
 		featureData = json.load(jsonFile)
-		print(featureData['VQAset'][1]['name'])
-		#print(json.dumps(featureData, indent=4, sort_keys=True))
+		print(featureData[imgID][0])
+
+def printJSONfile():
+	with open('outputData.json') as jsonFile:
+		print(json.dumps(json.load(jsonFile), indent=4, sort_keys=True))
+
