@@ -1,5 +1,3 @@
-#Forked from http://www.marekrei.com/blog/transforming-images-to-feature-vectors/
-
 import numpy as np
 import os, sys, getopt
 import json
