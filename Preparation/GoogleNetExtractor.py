@@ -51,9 +51,9 @@ def main():
     #exit()
 
     resultJSONData = {}
-    resultJSONData['VQAset'] = []
+    errorMessages = []
  
-    # Processing one image at a time, printint predictions and writing the vector to a file
+    # Processing one image at a time, print predictions
     with open(inputfile, 'r') as reader:
         with open(outputfile, 'w') as writer:
             writer.truncate()
@@ -63,16 +63,28 @@ def main():
                 prediction = net.predict([input_image], oversample=False)
                 print os.path.basename(image_path), ' : ' , labels[prediction[0].argmax()].strip() , ' (', prediction[0][prediction[0].argmax()] , ')'
                 
-                #append image name
-                splitPath = image_path.split('/')
-                imgName = splitPath[len(splitPath)-1]
+                try:
+                    #Get image name
+                    splitPath = image_path.split('/')
+                    imgNameParts = splitPath[len(splitPath)-1].split('_') #COCO, train, XXX.jpg
+                    suffix =  imgNameParts[len(imgNameParts)-1] #XXX.jpg
+                    img_id = int(suffix.split('.')[0])
+                    print(img_id)
 
-                # filename, array data to be saved, format, delimiter
-                featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
-                np.savetxt(writer, featureData, fmt='%.8g')
-                resultJSONData['VQAset'].append({'name':imgName, 'features':featureData})
+                    # filename, array data to be saved, format, delimiter
+                    featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
+                    np.savetxt(writer, featureData, fmt='%.8g')
+                    resultJSONData[img_id] = featureData
+
+                except ValueError:
+                    #Invalid image names
+                    errorMessages.append(image_path)
+
     with open('outputData.json', 'w') as jsonOut:
         json.dump(resultJSONData, jsonOut)
+    with open('GNExtractLog.txt', 'w') as logFile:
+        for msg in errorMessages:
+            logFile.write(msg)
  
 if __name__ == "__main__":
     main()
