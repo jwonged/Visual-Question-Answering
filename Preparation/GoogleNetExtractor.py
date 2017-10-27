@@ -26,11 +26,14 @@ sys.path.insert(0, caffe_root + 'python')
 import caffe
  
 def main():
-    inputfile = '/media/jwong/Transcend/testImages/images.txt'
-    outputfile = 'output'
- 
+    inputfile = '/media/jwong/Transcend/VQADataset/imagePaths.txt'
+    outputfile = '/media/jwong/Transcend/VQADataset/VQATrainOutput'
+    jsonFile = '/media/jwong/Transcend/VQADataset/VQAImgFeatures_Train.json'
+    errorLogFile = '/media/jwong/Transcend/VQADataset/ImgFeatures_TrainLog.txt'
+
     print 'Reading images from "', inputfile
     print 'Writing vectors to "', outputfile
+    print 'Writing to json file "', jsonFile
  
     # Setting this to CPU, but feel free to use GPU if you have CUDA installed
     caffe.set_mode_cpu()
@@ -64,12 +67,12 @@ def main():
                 print os.path.basename(image_path), ' : ' , labels[prediction[0].argmax()].strip() , ' (', prediction[0][prediction[0].argmax()] , ')'
                 
                 try:
-                    #Get image name
+                    #Get image ID
                     splitPath = image_path.split('/')
                     imgNameParts = splitPath[len(splitPath)-1].split('_') #COCO, train, XXX.jpg
                     suffix =  imgNameParts[len(imgNameParts)-1] #XXX.jpg
                     img_id = int(suffix.split('.')[0])
-                    print(img_id)
+                    print('Reading img ', img_id)
 
                     # filename, array data to be saved, format, delimiter
                     featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
@@ -80,9 +83,9 @@ def main():
                     #Invalid image names
                     errorMessages.append(image_path)
 
-    with open('outputData.json', 'w') as jsonOut:
+    with open(jsonFile, 'w') as jsonOut:
         json.dump(resultJSONData, jsonOut)
-    with open('GNExtractLog.txt', 'w') as logFile:
+    with open(errorLogFile, 'w') as logFile:
         for msg in errorMessages:
             logFile.write(msg)
  
