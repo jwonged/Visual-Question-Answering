@@ -4,6 +4,7 @@ import numpy as np
 from collections import Counter
 from nltk import word_tokenize
 import QuestionProcessor
+
 '''
 Read in annotations
 Retrieve answer
@@ -46,6 +47,8 @@ class InputProcessor:
 		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
 		ansClassLen = len(ansClasses)
 
+		batchSize = 100
+
 		ylabels = []
 		xlabels = []
 		numOfAns = 0
@@ -59,10 +62,21 @@ class InputProcessor:
 			xVec = qnVec + self.imgData[str(annot['image_id'])][0]
 			xlabels.append(xVec)
 			numOfAns = numOfAns + 1
-			if (numOfAns > 10):
+			if (numOfAns == batchSize):
 				break
 
+		print('Batch size produced: ' + str(numOfAns))
 		return xlabels, ylabels
+
+	def writeToCSVfile(self, fileName, data):
+		with open(fileName, 'w') as csvFile:
+			writer = csv.writer(csvFile)
+			for item in data:
+				writer.writerow(item)
+
+	def writeToNPfile(self, fileName, data):
+		with open(fileName, 'w') as (outFile):
+			np.savetxt(fileName, data, fmt='%.8g')
 
 	def encodeAns(self, ans, ansClassMap, ansClassLen):
 		ansVec = [0] * ansClassLen
@@ -101,15 +115,20 @@ if __name__ == "__main__":
 	annotationsFile = '/media/jwong/Transcend/VQADataset/TrainSet/mscoco_train_annotations.json'
 	imageFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
 	
+	#csv output files
+	csvOutputX = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchX.csv'
+	csvOutputY = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchY.csv'
+
+	#np output files
+	npOutputX = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchX.out'
+	npOutputY = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchY.out'
+
 	#constant files
 	mostFreqAnswersFile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/1000MostFreqAnswers.csv'
 	vocabBOWfile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/BOWdimensions.csv'
 	
 	inputProcessor = InputProcessor(questionFile, vocabBOWfile, imageFile, annotationsFile, mostFreqAnswersFile)
-	xlabels, ylabels = inputProcessor.getXandYbatch()
-	print(xlabels[0])
-	print(ylabels[0])
-	print(len(xlabels))
-	print(len(xlabels[0]))
-	print(len(ylabels))
-	print(len(ylabels[0]))
+	xVals, yVals = inputProcessor.getXandYbatch()
+	inputProcessor.writeToNPfile(npOutputX, xVals)
+	inputProcessor.writeToNPfile(npOutputY, yVals)
+
