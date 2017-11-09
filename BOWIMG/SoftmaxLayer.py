@@ -15,8 +15,8 @@ class SoftmaxLayer:
 
 		#Softmax layer model
 		x = tf.placeholder(tf.float32,[None, inputVecSize])
-		w = tf.variable(tf.zeroes([inputVecSize, numOfClasses]))
-		b = tf.variable(tf.zeroes([numOfClasses]))
+		w = tf.Variable(tf.zeros([inputVecSize, numOfClasses]))
+		b = tf.Variable(tf.zeros([numOfClasses]))
 		y = tf.matmul(x,w) + b
 
 		#Loss
