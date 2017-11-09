@@ -6,8 +6,7 @@ from nltk import word_tokenize
 import QuestionProcessor
 
 '''
-Read in annotations
-Retrieve answer
+Read in annotations file and process input into X and Y batch
 '''
 
 class InputProcessor:
@@ -19,35 +18,11 @@ class InputProcessor:
 		self.qnProcessor = QuestionProcessor.QuestionProcessor(questionFile, vocabBOWfile)
 		self.mostFreqAnswersFile = mostFreqAnswersFile
 
-	def readAnnotationsFile(self):
-		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
-		ansClassLen = len(ansClasses)
-
-		#Get answer
-		ans1 = self.resolveAnswer(self.annotData['annotations'][0]['answers'])
-		ans2 = self.resolveAnswer(self.annotData['annotations'][1]['answers'])
-		ans1e = self.encodeAns(ans1, ansClassMap, ansClassLen)
-		ans2e = self.encodeAns(ans2, ansClassMap, ansClassLen)
-
-		#Get qn
-		qn1 = str(self.annotData['annotations'][0]['question_id'])
-		qn2 = str(self.annotData['annotations'][1]['question_id'])
-		qn1encode, qn1 = self.qnProcessor.getEncodedQn(qn1)
-		qn2encode, qn2 = self.qnProcessor.getEncodedQn(qn2)
-		print(qn1)
-		print(qn2)
-
-		firstVec = qn1encode + self.imgData[str(self.annotData['annotations'][0]['image_id'])][0]
-		npvec = np.array(firstVec)
-		#print(npvec)
-		print(len(qn1encode))
-		print(len(firstVec))
-
 	def getXandYbatch(self):
 		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
 		ansClassLen = len(ansClasses)
 
-		batchSize = 1000
+		batchSize = 10000
 
 		ylabels = []
 		xlabels = []
@@ -58,7 +33,7 @@ class InputProcessor:
 			ylabels.append(ansVec)
 
 			qnVec, qn = self.qnProcessor.getEncodedQn(annot['question_id'])
-			print('Processing:' + qn)
+			#print('Processing:' + qn)
 			xVec = qnVec + self.imgData[str(annot['image_id'])][0]
 			xlabels.append(xVec)
 			numOfAns = numOfAns + 1
@@ -79,6 +54,7 @@ class InputProcessor:
 	def writeToNPfile(self, fileName, data):
 		with open(fileName, 'w') as (outFile):
 			np.savetxt(fileName, data, fmt='%.8g')
+		print('Written to: ' + fileName)
 
 	def encodeAns(self, ans, ansClassMap, ansClassLen):
 		ansVec = [0] * ansClassLen
@@ -137,4 +113,3 @@ if __name__ == "__main__":
 	print('yVals: ' + str(len(yVals)))
 	inputProcessor.writeToNPfile(npOutputX, xVals)
 	inputProcessor.writeToNPfile(npOutputY, yVals)
-
