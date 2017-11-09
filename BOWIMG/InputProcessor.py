@@ -47,7 +47,7 @@ class InputProcessor:
 		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
 		ansClassLen = len(ansClasses)
 
-		batchSize = 100
+		batchSize = 1000
 
 		ylabels = []
 		xlabels = []
@@ -62,6 +62,8 @@ class InputProcessor:
 			xVec = qnVec + self.imgData[str(annot['image_id'])][0]
 			xlabels.append(xVec)
 			numOfAns = numOfAns + 1
+			if(numOfAns%100 == 0):
+				print('Number of ans processed: ' + str(numOfAns))
 			if (numOfAns == batchSize):
 				break
 
@@ -127,8 +129,12 @@ if __name__ == "__main__":
 	mostFreqAnswersFile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/1000MostFreqAnswers.csv'
 	vocabBOWfile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/BOWdimensions.csv'
 	
+	print('Loading files...')
 	inputProcessor = InputProcessor(questionFile, vocabBOWfile, imageFile, annotationsFile, mostFreqAnswersFile)
+	print('Files loaded.')
 	xVals, yVals = inputProcessor.getXandYbatch()
+	print('xVals: ' + str(len(xVals)))
+	print('yVals: ' + str(len(yVals)))
 	inputProcessor.writeToNPfile(npOutputX, xVals)
 	inputProcessor.writeToNPfile(npOutputY, yVals)
 
