@@ -10,51 +10,38 @@ Read in annotations file and process input into X and Y batch
 '''
 
 class InputProcessor:
-	def __init__(self, questionFile, vocabBOWfile, imageFile, annotationsFile, mostFreqAnswersFile):
-		with open(annotationsFile) as annotFile:
-			annotData = json.load(annotFile)
-		self.annotData = annotData
+	def __init__(self, questionFile, vocabBOWfile, imageFile, mostFreqAnswersFile):
 		self.imgData = self.readJsonFile(imageFile)
 		self.qnProcessor = QuestionProcessor.QuestionProcessor(questionFile, vocabBOWfile)
 		self.mostFreqAnswersFile = mostFreqAnswersFile
 
-	def getXandYbatch(self):
-		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
+	def getXandYbatch(self, annotFileName):
+		with open(annotFileName) as annotFile:
+			annotBatch = json.load(annotFile)
+		ansClasses, ansClassMap = self.getNMostFreqAnswers()
 		ansClassLen = len(ansClasses)
-
-		batchSize = 10000
 
 		ylabels = []
 		xlabels = []
 		numOfAns = 0
-		for annot in self.annotData['annotations']:
+		for annot in annotBatch:
 			singleAns = self.resolveAnswer(annot['answers'])
 			ansVec = self.encodeAns(singleAns, ansClassMap, ansClassLen)
 			ylabels.append(ansVec)
 
 			qnVec, qn = self.qnProcessor.getEncodedQn(annot['question_id'])
+			imgVec = self.imgData[str(annot['image_id'])][0]
 			#print('Processing:' + qn)
-			xVec = qnVec + self.imgData[str(annot['image_id'])][0]
+			xVec = qnVec + imgVec
 			xlabels.append(xVec)
+
+			#checks
 			numOfAns = numOfAns + 1
-			if(numOfAns%100 == 0):
+			if(numOfAns%(len(annotBatch)/5) == 0):
 				print('Number of ans processed: ' + str(numOfAns))
-			if (numOfAns == batchSize):
-				break
 
 		print('Batch size produced: ' + str(numOfAns))
 		return xlabels, ylabels
-
-	def writeToCSVfile(self, fileName, data):
-		with open(fileName, 'w') as csvFile:
-			writer = csv.writer(csvFile)
-			for item in data:
-				writer.writerow(item)
-
-	def writeToNPfile(self, fileName, data):
-		with open(fileName, 'w') as (outFile):
-			np.savetxt(fileName, data, fmt='%.8g')
-		print('Written to: ' + fileName)
 
 	def encodeAns(self, ans, ansClassMap, ansClassLen):
 		ansVec = [0] * ansClassLen
@@ -74,7 +61,7 @@ class InputProcessor:
 		mostCommon = Counter(answers).most_common(1)
 		return mostCommon[0][0]
 
-	def get1000MostFreqAnswers(self):
+	def getNMostFreqAnswers(self):
 		with open(self.mostFreqAnswersFile, 'rb') as ansFile:
 			reader = csv.reader(ansFile, delimiter=',')
 			ansVec = next(reader)
@@ -86,6 +73,17 @@ class InputProcessor:
 			index = index + 1 
 
 		return ansVec, ansClassMap
+
+	def writeToCSVfile(self, fileName, data):
+		with open(fileName, 'w') as csvFile:
+			writer = csv.writer(csvFile)
+			for item in data:
+				writer.writerow(item)
+
+	def writeToNPfile(self, fileName, data):
+		with open(fileName, 'w') as (outFile):
+			np.savetxt(fileName, data, fmt='%.8g')
+		print('Written to: ' + fileName)
 
 if __name__ == "__main__":
 	#files that depend on set
