@@ -3,21 +3,14 @@ import numpy as np
 import time
 
 class SoftmaxLayer:
-	def runSoftmaxLayer(self, inputx, inputy):
-		numOfClasses = 1000 #for answer
+	def runSoftmaxLayer(self, trainX, trainY, testX, testY):
+		
+		#AllAns 
 		inputVecSize = 14794 #BOWDim (13770) + ImgFeatures (1024)
+		numOfClasses = 1000 #for answers -- allans=17140
 
-		print('Reading in batch size: ' + str(len(inputx)))
-		print('Reading in label size: ' + str(len(inputy)))
-
-		#80/20 split
-		trainSize = (len(inputx)*80)/100
-		trainX = inputx[:trainSize]
-		trainY = inputy[:trainSize]
-		testX = inputx[trainSize:]
-		testY = inputy[trainSize:]
-
-		print('Training batch size: ' + str(trainSize))
+		print('Reading in batch size: ' + str(len(trainX)))
+		print('Reading in label size: ' + str(len(trainY)))		
 
 		#Softmax layer model
 		x = tf.placeholder(tf.float32,[None, inputVecSize])
@@ -38,8 +31,7 @@ class SoftmaxLayer:
 		#Train
 		print('Training model...')
 		startT = time.time()
-		for i in range(8):
-			sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
+		sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
 		endT = time.time()
 
 		# Test trained model
@@ -53,6 +45,7 @@ class SoftmaxLayer:
 		print('Reading file: ' + fileName)
 		with open(fileName, 'r') as file:
 			return np.loadtxt(file)
+
 
 if __name__ == '__main__':
 
