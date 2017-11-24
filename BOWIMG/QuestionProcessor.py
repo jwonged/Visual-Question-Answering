@@ -31,7 +31,7 @@ class QuestionProcessor:
 		qnVec = [0] * self.bowLen
 		qn = self.getQn(qnID)
 		for word in word_tokenize(qn.lower()):
-			if (word != '?'):
+			if (word != '?' and word in self.bowDimMap):
 				qnVec[self.bowDimMap[word]] = qnVec[self.bowDimMap[word]] + 1
 		return qnVec, qn
 

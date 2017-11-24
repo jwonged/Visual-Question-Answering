@@ -3,14 +3,18 @@ import numpy as np
 import time
 
 class SoftmaxLayer:
-	def runSoftmaxLayer(self, trainX, trainY, testX, testY):
+	def runSoftmaxLayer(self, trainProcessor, testProcessor):
 		
 		#AllAns 
 		inputVecSize = 14794 #BOWDim (13770) + ImgFeatures (1024)
 		numOfClasses = 1000 #for answers -- allans=17140
+		miniBatchPath = '/media/jwong/Transcend/VQADataset/TrainSet/trainMiniBatches/TrainMiniBatch'
 
-		print('Reading in batch size: ' + str(len(trainX)))
-		print('Reading in label size: ' + str(len(trainY)))		
+		print('Reading test batches')
+		testX, testY = testProcessor.getXandYbatch('/media/jwong/Transcend/VQADataset/ValSet/testMiniBatches/testMiniBatch1.json')
+
+		#print('Reading in batch size: ' + str(len(trainX)))
+		#print('Reading in label size: ' + str(len(trainY)))		
 
 		#Softmax layer model
 		x = tf.placeholder(tf.float32,[None, inputVecSize])
@@ -29,17 +33,23 @@ class SoftmaxLayer:
 		tf.global_variables_initializer().run()
 
 		#Train
-		print('Training model...')
-		startT = time.time()
-		sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
-		endT = time.time()
+		with open('Trainlog.txt', 'w') as logFile:
+			for i in range(1,26):
+				print('Training model... Batch: ' + str(i))
+				trainX, trainY = trainProcessor.getXandYbatch(miniBatchPath + str(i) + '.json')
+				sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
 
-		# Test trained model
-		print('Evaluating model...')
-		correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(ylabels, 1))
-		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-		print('Accuracy: ' + str(sess.run(accuracy, feed_dict={x: testX, ylabels: testY})))
-		print('Time taken: ' + str(endT-startT))
+				print('Evaluating model...')
+				
+				#test
+				correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(ylabels, 1))
+				accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+				result = sess.run(accuracy, feed_dict={x: testX, ylabels: testY})
+				logFile.write('Batch: ' + str(i) + ', Accuracy: ' + str(result) + '\n')
+
+		print('Completed')
+		#startT = time.time()
+		#endT = time.time()
 
 	def readNPfile(self, fileName):
 		print('Reading file: ' + fileName)
