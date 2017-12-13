@@ -7,7 +7,7 @@ class SoftmaxLayer:
 		
 		#AllAns 
 		inputVecSize = 14794 #BOWDim (13770) + ImgFeatures (1024)
-		numOfClasses = 1000 #for answers -- allans=17140
+		numOfClasses = 17140 #for answers -- allans=17140
 		miniBatchPath = '/media/jwong/Transcend/VQADataset/TrainSet/trainMiniBatches/TrainMiniBatch'
 
 		print('Reading test batches')
@@ -45,6 +45,7 @@ class SoftmaxLayer:
 				correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(ylabels, 1))
 				accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 				result = sess.run(accuracy, feed_dict={x: testX, ylabels: testY})
+				print('Batch: ' + str(i) + ', Accuracy: ' + str(result) + '\n')
 				logFile.write('Batch: ' + str(i) + ', Accuracy: ' + str(result) + '\n')
 
 		print('Completed')

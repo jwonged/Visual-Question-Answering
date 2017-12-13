@@ -16,32 +16,29 @@ class InputProcessor:
 	def __init__(self, questionFile, vocabBOWfile):
 		self.qnProcessor = QuestionProcessor(questionFile, vocabBOWfile)
 
-def readAnnotationsFile(annotationsFile, qnData, imgData):
-	bowDim, bowDimMap = getBOWdimensions()
-	bowLen = len(bowDim)
-	ansClasses, ansClassMap = get1000MostFreqAnswers()
-	ansClassLen = len(ansClasses)
+	def readAnnotationsFile(self):
+		ansClasses, ansClassMap = self.get1000MostFreqAnswers()
+		ansClassLen = len(ansClasses)
 
-	with open(annotationsFile) as annotFile:
-		annotData = json.load(annotFile)
+		#Get answer
+		ans1 = self.resolveAnswer(self.annotData['annotations'][0]['answers'])
+		ans2 = self.resolveAnswer(self.annotData['annotations'][1]['answers'])
+		ans1e = self.encodeAns(ans1, ansClassMap, ansClassLen)
+		ans2e = self.encodeAns(ans2, ansClassMap, ansClassLen)
 
-	#Get answer
-	ans1 = resolveAnswer(annotData['annotations'][0]['answers'])
-	ans2 = resolveAnswer(annotData['annotations'][1]['answers'])
-	ans1e = encodeAns(ans1, ansClassMap, ansClassLen)
-	ans2e = encodeAns(ans2, ansClassMap, ansClassLen)
+		#Get qn
+		qn1 = str(self.annotData['annotations'][0]['question_id'])
+		qn2 = str(self.annotData['annotations'][1]['question_id'])
+		qn1encode, qn1 = self.qnProcessor.getEncodedQn(qn1)
+		qn2encode, qn2 = self.qnProcessor.getEncodedQn(qn2)
+		print(qn1)
+		print(qn2)
 
-	#Get qn
-	qn1 = qnData[str(annotData['annotations'][0]['question_id'])]
-	qn2 = qnData[str(annotData['annotations'][1]['question_id'])]
-	qn1encode = encodeQn(qn1, bowDimMap, bowLen)
-	qn2encode = encodeQn(qn2, bowDimMap, bowLen)
-
-	firstVec = qn1encode + imgData[str(annotData['annotations'][0]['image_id'])][0]
-	npvec = np.array(firstVec)
-	print(npvec)
-	print(len(qn1encode))
-	print(len(firstVec))
+		firstVec = qn1encode + self.imgData[str(self.annotData['annotations'][0]['image_id'])][0]
+		npvec = np.array(firstVec)
+		#print(npvec)
+		print(len(qn1encode))
+		print(len(firstVec))
 
 
 def encodeQn(qn, bowDimMap, bowLen):
