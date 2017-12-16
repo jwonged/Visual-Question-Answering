@@ -4,6 +4,13 @@
 http://visualqa.org/
 
 # Resources
+
+### Word embeddings
+Word2Vec model - https://code.google.com/archive/p/word2vec/
+gensim - https://radimrehurek.com/gensim/models/word2vec.html
+GloVe - https://nlp.stanford.edu/projects/glove/
+Others - http://ahogrammer.com/2017/01/20/the-list-of-pretrained-word-embeddings/
+
 ### For using GoogleNet Model
 http://www.marekrei.com/blog/transforming-images-to-feature-vectors/
 
