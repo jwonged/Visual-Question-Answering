@@ -3,18 +3,21 @@ import numpy as np
 import time
 
 class SoftmaxLayer:
-	def runSoftmaxLayer(self, trainProcessor, testProcessor):
+	def getNetworkLayers():
+		#Softmax layer model
+		x = tf.placeholder(tf.float32,[None, inputVecSize])
+		w = tf.Variable(tf.zeros([inputVecSize, numOfClasses]))
+		b = tf.Variable(tf.zeros([numOfClasses]))
+		y = tf.matmul(x,w) + b
+
+		return y
+
+	def trainSoftmaxLayer(self, trainProcessor, valProcessor):
 		
 		#AllAns 
 		inputVecSize = 14794 #BOWDim (13770) + ImgFeatures (1024)
 		numOfClasses = 17140 #for answers -- allans=17140
-		miniBatchPath = '/media/jwong/Transcend/VQADataset/TrainSet/trainMiniBatches/TrainMiniBatch'
-
-		print('Reading test batches')
-		testX, testY = testProcessor.getXandYbatch('/media/jwong/Transcend/VQADataset/ValSet/testMiniBatches/testMiniBatch1.json')
-
-		#print('Reading in batch size: ' + str(len(trainX)))
-		#print('Reading in label size: ' + str(len(trainY)))		
+		batchSize = 16	
 
 		#Softmax layer model
 		x = tf.placeholder(tf.float32,[None, inputVecSize])
@@ -26,12 +29,35 @@ class SoftmaxLayer:
 		ylabels = tf.placeholder(tf.float32, [None, numOfClasses])
 		crossEntropyLoss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=ylabels, logits=y))
 		trainModel = tf.train.GradientDescentOptimizer(0.01).minimize(crossEntropyLoss)
+		#trainModel = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(crossEntropyLoss)
 		#try adam optimizer and adadelta (speed up training / result)
+
+		correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(ylabels, 1))
+		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 		#Setup
 		sess = tf.InteractiveSession()
 		tf.global_variables_initializer().run()
+		#saver = tf.train.Saver()
 
+		print('Training model...')
+		while(True):
+			if (trainProcessor.getIndexInEpoch() > 200):
+				break
+
+			trainX, trainY = trainProcessor.getNextXYBatch(batchSize)
+			print('Training with batch size: ' + str(len(trainX)))
+			valX, valY = valProcessor.getNextXYBatch(batchSize)
+			sess.run(trainModel, feed_dict={x: trainX, ylaels: trainY})
+
+			#Evaluate
+			trainAcc = sess.run(accuracy, feed_dict={x: trainX, ylabels: trainY})
+			valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
+
+			print('Epoch_index = ' + str(trainProcessor.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', Val accuracy = ' + str(valAcc))
+		print('Completed')
+
+		'''
 		#Train
 		with open('Trainlog.txt', 'w') as logFile:
 			for i in range(1,26):
@@ -42,13 +68,12 @@ class SoftmaxLayer:
 				print('Evaluating model...')
 				
 				#test
-				correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(ylabels, 1))
-				accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+				
 				result = sess.run(accuracy, feed_dict={x: testX, ylabels: testY})
 				print('Batch: ' + str(i) + ', Accuracy: ' + str(result) + '\n')
 				logFile.write('Batch: ' + str(i) + ', Accuracy: ' + str(result) + '\n')
+		'''
 
-		print('Completed')
 		#startT = time.time()
 		#endT = time.time()
 

@@ -14,13 +14,40 @@ class InputProcessor:
 		self.imgData = self.readJsonFile(imageFile)
 		self.qnProcessor = QuestionProcessor.QuestionProcessor(questionFile, vocabBOWfile)
 		self.mostFreqAnswersFile = mostFreqAnswersFile
+		self.index = 0
+		self.xlabels = []
+		self.ylabels = []
+		self.size = 0
+		self.epoch = 0
 
-	def getXandYbatch(self, annotFileName):
+	def getEpochSize(self):
+		return self.size
+
+	def getIndexInEpoch(self):
+		return self.index
+
+	def getEpoch(self):
+		return self.epoch
+
+	def getNextXYBatch(self, batchSize):
+		if self.index > self.size: 
+			#start on new epoch
+			self.index = 0
+			self.epoch += 1
+			
+		start = self.index
+		self.index += batchSize
+		end = self.index
+
+		return self.xlabels[start:end], self.ylabels[start:end]
+
+
+	def readAnnotFile(self, annotFileName):
 		with open(annotFileName) as annotFile:
 			annotBatch = json.load(annotFile)
 		ansClasses, ansClassMap = self.getNMostFreqAnswers()
 		ansClassLen = len(ansClasses)
-
+		
 		ylabels = []
 		xlabels = []
 		numOfAns = 0
@@ -41,7 +68,9 @@ class InputProcessor:
 				print('Number of ans processed: ' + str(numOfAns))
 
 		print('Batch size produced: ' + str(numOfAns))
-		return xlabels, ylabels
+		self.xlabels = xlabels
+		self.ylabels = ylabels
+		self.size = len(xlabels)
 
 	def encodeAns(self, ans, ansClassMap, ansClassLen):
 		ansVec = [0] * ansClassLen
@@ -80,11 +109,6 @@ class InputProcessor:
 			for item in data:
 				writer.writerow(item)
 
-	def writeToNPfile(self, fileName, data):
-		with open(fileName, 'w') as (outFile):
-			np.savetxt(fileName, data, fmt='%.8g')
-		print('Written to: ' + fileName)
-
 if __name__ == "__main__":
 	#files that depend on set
 	questionFile = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
@@ -109,5 +133,5 @@ if __name__ == "__main__":
 	xVals, yVals = inputProcessor.getXandYbatch()
 	print('xVals: ' + str(len(xVals)))
 	print('yVals: ' + str(len(yVals)))
-	inputProcessor.writeToNPfile(npOutputX, xVals)
-	inputProcessor.writeToNPfile(npOutputY, yVals)
+	#inputProcessor.writeToNPfile(npOutputX, xVals)
+	#inputProcessor.writeToNPfile(npOutputY, yVals)
