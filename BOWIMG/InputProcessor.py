@@ -1,23 +1,24 @@
 import json
 import csv
-import numpy as np
 from collections import Counter
-from nltk import word_tokenize
-import QuestionProcessor
+import pickle
+from WVSumQuestionProcessor import WVSumQuestionProcessor
 
 '''
 Read in annotations file and process input into X and Y batch
 '''
 
 class InputProcessor:
-	def __init__(self, questionFile, vocabBOWfile, imageFile, mostFreqAnswersFile):
-		self.imgData = self.readJsonFile(imageFile)
-		self.qnProcessor = QuestionProcessor.QuestionProcessor(questionFile, vocabBOWfile)
+	def __init__(self, annotFileName, questionFile, imageFile, mostFreqAnswersFile):
+		print('Reading ' + imageFile)
+		with open(imageFile) as jFile:
+			self.imgData = json.load(jFile)
+		print('Reading ' + questionFile)
+		self.qnProcessor = WVSumQuestionProcessor(questionFile)
 		self.mostFreqAnswersFile = mostFreqAnswersFile
+		print('Reading ' + annotFileName)
+		self.xlabels, self.ylabels, self.size = self.readAnnotFile(annotFileName)
 		self.index = 0
-		self.xlabels = []
-		self.ylabels = []
-		self.size = 0
 		self.epoch = 0
 
 	def getEpochSize(self):
@@ -38,9 +39,7 @@ class InputProcessor:
 		start = self.index
 		self.index += batchSize
 		end = self.index
-
 		return self.xlabels[start:end], self.ylabels[start:end]
-
 
 	def readAnnotFile(self, annotFileName):
 		with open(annotFileName) as annotFile:
@@ -56,32 +55,25 @@ class InputProcessor:
 			ansVec = self.encodeAns(singleAns, ansClassMap, ansClassLen)
 			ylabels.append(ansVec)
 
-			qnVec, qn = self.qnProcessor.getEncodedQn(annot['question_id'])
+			qnVec = self.qnProcessor.getEncodedQn(annot['question_id'])
 			imgVec = self.imgData[str(annot['image_id'])][0]
-			#print('Processing:' + qn)
 			xVec = qnVec + imgVec
+			assert len(xVec) == 1324
 			xlabels.append(xVec)
 
 			#checks
-			numOfAns = numOfAns + 1
+			numOfAns += 1
 			if(numOfAns%(len(annotBatch)/5) == 0):
 				print('Number of ans processed: ' + str(numOfAns))
 
 		print('Batch size produced: ' + str(numOfAns))
-		self.xlabels = xlabels
-		self.ylabels = ylabels
-		self.size = len(xlabels)
+		return xlabels, ylabels, numOfAns
 
 	def encodeAns(self, ans, ansClassMap, ansClassLen):
 		ansVec = [0] * ansClassLen
 		if (ans in ansClassMap):
 			ansVec[ansClassMap[ans]] = 1
 		return ansVec
-
-	def readJsonFile(self, jsonFile):
-		with open(jsonFile) as jFile:
-			data = json.load(jFile)
-		return data
 
 	def resolveAnswer(self, possibleAnswersList):
 		answers = []
@@ -102,36 +94,58 @@ class InputProcessor:
 			index = index + 1 
 
 		return ansVec, ansClassMap
+	
+	def getData(self):
+		return self.xlabels, self.ylabels
 
-	def writeToCSVfile(self, fileName, data):
-		with open(fileName, 'w') as csvFile:
-			writer = csv.writer(csvFile)
-			for item in data:
-				writer.writerow(item)
+
+def pickleData(self, dataX, dataY, xfile, yfile):
+	print('Writing ' + xfile)
+	with open(xfile, 'wb') as pklFile:
+		pickle.dump(dataX, pklFile)
+	print('Writing ' + yfile)
+	with open(yfile, 'wb') as pklFile:
+		pickle.dump(dataY, pklFile)
 
 if __name__ == "__main__":
-	#files that depend on set
-	questionFile = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
-	annotationsFile = '/media/jwong/Transcend/VQADataset/TrainSet/mscoco_train_annotations.json'
-	imageFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
-	
-	#csv output files
-	csvOutputX = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchX.csv'
-	csvOutputY = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchY.csv'
-
-	#np output files
-	npOutputX = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchX.out'
-	npOutputY = '/media/jwong/Transcend/VQADataset/TrainSet/inputBatches/testBatchY.out'
-
-	#constant files
 	mostFreqAnswersFile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/1000MostFreqAnswers.csv'
-	vocabBOWfile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/BOWdimensions.csv'
 	
 	print('Loading files...')
-	inputProcessor = InputProcessor(questionFile, vocabBOWfile, imageFile, annotationsFile, mostFreqAnswersFile)
-	print('Files loaded.')
-	xVals, yVals = inputProcessor.getXandYbatch()
-	print('xVals: ' + str(len(xVals)))
-	print('yVals: ' + str(len(yVals)))
-	#inputProcessor.writeToNPfile(npOutputX, xVals)
-	#inputProcessor.writeToNPfile(npOutputY, yVals)
+	
+	xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/WVsum1000Trainx'
+	yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/WVsum1000Trainy'
+	
+	trainWVQnsFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedQnFeatures/word2VecAddQnFeatures_Train.json'
+	trainImgFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
+	trainAnnotFile = '/media/jwong/Transcend/VQADataset/TrainSet/AllTrainAnnotationsList.json'
+	trainProcessor = InputProcessor(trainAnnotFile, trainWVQnsFile, trainImgFile, mostFreqAnswersFile)
+	dataX, dataY = trainProcessor.getData()
+	
+	pickleData(dataX=dataX[], dataY=dataY[], xTrainPickle+'1.pkl', yTrainPickle+'1.pkl')
+	pickleData(dataX=dataX[], dataY=dataY[], xTrainPickle+'1.pkl', yTrainPickle+'1.pkl')
+	pickleData(dataX=dataX[], dataY=dataY[], xTrainPickle+'1.pkl', yTrainPickle+'1.pkl')
+	#trainProcessor.pickleData(xfile=xTrainPickle, yfile=yTrainPickle)
+	print('Train files completed.')
+	del trainProcessor
+	
+	xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/WVsum1000valx.pkl'
+	yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/WVsum1000valy.pkl'
+	xTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/WVsum1000testx.pkl'
+	yTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/WVsum1000testy.pkl'
+	
+	valTestWVQnsFile = '/media/jwong/Transcend/VQADataset/ValTestSet/ExtractedQnFeatures/word2VecAddQnFeatures_valTest.json'
+	valImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Val.json'
+	valAnnotFile = '/media/jwong/Transcend/VQADataset/ValTestSet/AllValAnnotationsList.json'
+	
+	valProcessor = InputProcessor(valAnnotFile, valTestWVQnsFile, valImgFile, mostFreqAnswersFile)
+	valProcessor.pickleData(xfile=xValPickle, yfile=yValPickle)
+	print('Val files completed.')
+	del valProcessor
+	
+	testImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Test.json'
+	testAnnotFile = '/media/jwong/Transcend/VQADataset/ValTestSet/AllTestAnnotationsList.json'
+	valProcessor = InputProcessor(testAnnotFile, valTestWVQnsFile, testImgFile, mostFreqAnswersFile)
+	valProcessor.pickleData(xfile=xTestPickle, yfile=yTestPickle)
+	
+	
+	
