@@ -42,13 +42,11 @@ class XYBatchProducer:
         for annot in annotBatch:
             singleAns = self.resolveAnswer(annot['answers'])
             
-            #encode ans
+            #encode ans if within ans classes
             if (singleAns not in self.ansClassMap):
                 self.unclassifiedAns += 1
                 continue
-            ansVec = [0] * self.ansClassLen
-            ansVec[self.ansClassMap[singleAns]] = 1 
-            self.ylabels.append(ansVec)
+            self.ylabels.append(self.ansClassMap[singleAns])
             
             #encode qn and image
             qnVec = self.qnProcessor.getEncodedQn(annot['question_id'])
@@ -62,14 +60,6 @@ class XYBatchProducer:
                 print('Number of ans processed: ' + str(self.numOfAns))
 
         print('Batch size produced: ' + str(self.numOfAns))
-
-    def encodeAns(self, ans, ansClassMap, ansClassLen):
-        ansVec = [0] * ansClassLen
-        if (ans in ansClassMap):
-            ansVec[ansClassMap[ans]] = 1
-        else:
-            self.unclassifiedAns += 1
-        return ansVec
 
     def resolveAnswer(self, possibleAnswersList):
         answers = []
@@ -87,7 +77,7 @@ class XYBatchProducer:
         ansClassMap = {}
         for word in ansVec:
             ansClassMap[word] = index
-            index = index + 1 
+            index += 1 
 
         return ansVec, ansClassMap
     
@@ -108,8 +98,8 @@ def main():
     
     print('Loading files...')
     ###########-----------------------------------------Train------------------------
-    xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/cleanWVsum1000Trainx'
-    yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/cleanWVsum1000Trainy'
+    xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainx'
+    yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainy'
     
     trainWVQnsFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedQnFeatures/word2VecAddQnFeatures_Train.json'
     trainImgFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
@@ -125,7 +115,8 @@ def main():
     
     pickleData(dataX[:third], dataY[:third], xTrainPickle+'1.pkl', yTrainPickle+'1.pkl')
     pickleData(dataX[third:2*third], dataY[third:2*third], xTrainPickle+'2.pkl', yTrainPickle+'2.pkl')
-    pickleData(dataX[2*third:], dataY[2*third:], xTrainPickle+'2.pkl', yTrainPickle+'3.pkl')
+    pickleData(dataX[2*third:], dataY[2*third:], xTrainPickle+'3.pkl', yTrainPickle+'3.pkl')
+    pickleData(dataX, dataY, xTrainPickle+'All.pkl', yTrainPickle+'All.pkl')
         
     
     print('Train files completed. Each batch file has ' + str(third))
@@ -137,8 +128,8 @@ def main():
     
     ###########-----------------------------------------Val------------------------
     
-    xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsum1000valx.pkl'
-    yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsum1000valy.pkl'
+    xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000valx.pkl'
+    yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000valy.pkl'
     
     
     valTestWVQnsFile = '/media/jwong/Transcend/VQADataset/ValTestSet/ExtractedQnFeatures/word2VecAddQnFeatures_valTest.json'
@@ -153,14 +144,16 @@ def main():
         
     dataX, dataY = valProcessor.getData()
     pickleData(dataX, dataY, xValPickle, yValPickle)
-    print('Val files completed.')
+    print('Val files completed for 1000.')
     del valProcessor
+    del dataX[:]
+    del dataY[:]
     
     ###########-----------------------------------------test------------------------
     valTestWVQnsFile = '/media/jwong/Transcend/VQADataset/ValTestSet/ExtractedQnFeatures/word2VecAddQnFeatures_valTest.json'    
 
-    xTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsum1000testx.pkl'
-    yTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsum1000testy.pkl'
+    xTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000testx.pkl'
+    yTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000testy.pkl'
     
     testImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Test.json'
     
@@ -172,17 +165,19 @@ def main():
     
     dataX, dataY = testProcessor.getData()
     pickleData(dataX, dataY, xTestPickle, yTestPickle)
-    
-    print('Test files Completed.')
+    del testProcessor
+    del dataX[:]
+    del dataY[:]
+    print('Test files Completed for 1000.')
 
 def main2():
-    
+    #clean sets with all train answers
     mostFreqAnswersFile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/allTrainAnswers.csv'
     
-    print('Loading files...')
+    print('Loading files for all train...')
     ###########-----------------------------------------Train------------------------
-    xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/cleanWVsumAllAnsTrainx'
-    yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/cleanWVsumAllAnsTrainy'
+    xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsumAllAnsTrainx'
+    yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsumAllAnsTrainy'
     
     trainWVQnsFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedQnFeatures/word2VecAddQnFeatures_Train.json'
     trainImgFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
@@ -198,10 +193,10 @@ def main2():
     
     pickleData(dataX[:third], dataY[:third], xTrainPickle+'1.pkl', yTrainPickle+'1.pkl')
     pickleData(dataX[third:2*third], dataY[third:2*third], xTrainPickle+'2.pkl', yTrainPickle+'2.pkl')
-    pickleData(dataX[2*third:], dataY[2*third:], xTrainPickle+'2.pkl', yTrainPickle+'3.pkl')
-        
+    pickleData(dataX[2*third:], dataY[2*third:], xTrainPickle+'3.pkl', yTrainPickle+'3.pkl')
+    pickleData(dataX, dataY, xTrainPickle+'All.pkl', yTrainPickle+'All.pkl')
     
-    print('Train files completed.')
+    print('Train files completed(AllAns).')
     print('Unclassified train answers= ' + str(trainProcessor.unclassifiedAns))
     del trainProcessor
     del dataX[:]
@@ -210,8 +205,8 @@ def main2():
     
     ###########-----------------------------------------Val------------------------
     
-    xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsumAllAnsvalx.pkl'
-    yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsumAllAnsvaly.pkl'
+    xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsumAllAnsvalx.pkl'
+    yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsumAllAnsvaly.pkl'
     
     
     valTestWVQnsFile = '/media/jwong/Transcend/VQADataset/ValTestSet/ExtractedQnFeatures/word2VecAddQnFeatures_valTest.json'
@@ -226,14 +221,16 @@ def main2():
         
     dataX, dataY = valProcessor.getData()
     pickleData(dataX, dataY, xValPickle, yValPickle)
-    print('Val files completed.')
+    print('Val files completed (AllAns).')
     del valProcessor
+    del dataX[:]
+    del dataY[:]
     
     ###########-----------------------------------------test------------------------
     valTestWVQnsFile = '/media/jwong/Transcend/VQADataset/ValTestSet/ExtractedQnFeatures/word2VecAddQnFeatures_valTest.json'    
 
-    xTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsumAllAnstestx.pkl'
-    yTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/cleanWVsumAllAnstesty.pkl'
+    xTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsumAllAnstestx.pkl'
+    yTestPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsumAllAnstesty.pkl'
     
     testImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Test.json'
     
@@ -246,7 +243,7 @@ def main2():
     dataX, dataY = testProcessor.getData()
     pickleData(dataX, dataY, xTestPickle, yTestPickle)
     
-    print('Test files Completed.')
+    print('Test files Completed(AllAns).')
 
 if __name__ == "__main__":
     main()
