@@ -2,7 +2,7 @@ import json
 from collections import Counter
 import csv
 '''
-Output a file containing the 1000 most frequent answers
+Output a file containing the N most frequent answers
 '''
 def readAnnotationsFile(annotationsFile):
 	with open(annotationsFile) as annotFile:
@@ -21,13 +21,26 @@ def readAnnotationsFile(annotationsFile):
 
 	return allAnswers
 
-def getMostFreqAnswers(annotationsFile):
+def getMostFreqAnswers(annotationsFile, numOfAns):
 	allAnswers = readAnnotationsFile(annotationsFile)
-	mostFreqAnswers = Counter(allAnswers).most_common(1000)
+	mostFreqAnswers = Counter(allAnswers).most_common(numOfAns) #tuple
 	cleanedMostFreqAnswers = []
 	for answer in mostFreqAnswers:
 		cleanedMostFreqAnswers.append(answer[0])
-	return cleanedMostFreqAnswers
+	return cleanedMostFreqAnswers #list
+
+def getAllAnswers(annotationsFile):
+	allAnswers = readAnnotationsFile(annotationsFile)
+	answerSet = set()
+	answerList = []
+	numOfItems = 0
+	for answer in allAnswers:
+		if answer not in answerSet:
+			answerSet.add(answer)
+			answerList.append(answer)
+			numOfItems = numOfItems + 1
+	print('Number of items: ' + str(numOfItems))
+	return answerList
 
 def resolveAnswer(possibleAnswersList):
 	#Majority vote on the 10 possible answers
@@ -38,14 +51,23 @@ def resolveAnswer(possibleAnswersList):
 	return mostCommon[0][0]
 
 def writeToFile(fileName, mostFreqAnswers):
-    print('Writing to file: ' + fileName)
-    with open(fileName, 'w') as outputFile:
-        writer = csv.writer(outputFile)
-        writer.writerow(mostFreqAnswers)
-    print('Writing to file: Done')
+	print('Writing to file: ' + fileName)
+	with open(fileName, 'w') as outputFile:
+		writer = csv.writer(outputFile)
+		writer.writerow(mostFreqAnswers)
+	print('Writing to file: Done')
+
 
 if __name__ == "__main__":
 	annotationsFile = '/media/jwong/Transcend/VQADataset/TrainSet/mscoco_train_annotations.json'
+	
+	#N most freq answers
 	outputFile = '/media/jwong/Transcend/VQADataset/TrainSet/1000MostFreqAnswers.csv'
-	thousandMostFreq = getMostFreqAnswers(annotationsFile)
-	writeToFile(outputFile, thousandMostFreq)
+	#thousandMostFreq = getMostFreqAnswers(annotationsFile, 1000)
+	#writeToFile(outputFile, thousandMostFreq)
+
+	#GetAllAnswers
+	allAnsOutputFile = '/media/jwong/Transcend/VQADataset/TrainSet/allTrainAnswers.csv'
+	writeToFile(allAnsOutputFile, getAllAnswers(annotationsFile))
+
+

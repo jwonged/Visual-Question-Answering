@@ -2,6 +2,10 @@ import json
 import csv
 from nltk import word_tokenize
 
+'''
+Extracts the vocabulary for BOW from raw JSON question files
+'''
+
 class BOWVocabExtractor(object):
     def getAllQuestionDetails(self, fileName):
         print('Reading' + fileName)

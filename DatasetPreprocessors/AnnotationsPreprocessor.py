@@ -17,14 +17,14 @@ def preprocessTrainAnnotations():
 	annotationsTrainFile = '/media/jwong/Transcend/VQADataset/TrainSet/mscoco_train_annotations.json'
 	outTrainFileName = '/media/jwong/Transcend/VQADataset/TrainSet/Minibatches_PreprocessedAnnotations/TrainMiniBatch'
 	
-	with open(annotationsFile) as annotFile:
+	with open(annotationsTrainFile) as annotFile:
 			annotList = json.load(annotFile)['annotations']
 
 	start = 0
 	end = 10000
 	counter = 1
 	while True:
-		outFile = outFileName + str(counter) + '.json'
+		outFile = outTrainFileName + str(counter) + '.json'
 		print('Processing: ' + str(start) + ' to ' + str(end))
 		print('Writing to file: ' + outFile)
 		with open(outFile, 'w') as jsonOut:
@@ -105,8 +105,49 @@ def readCheck(outFile):
 	with open(outFile) as file:
 			annotData = json.load(file)
 
+def makeDummySet():
+	fileTrainPath = '/media/jwong/Transcend/VQADataset/TrainSet/trainMiniBatches/'
+	fileTrainName = 'TrainMiniBatch'
+	
+
+def combineFiles():
+	fileTrainPath = '/media/jwong/Transcend/VQADataset/TrainSet/trainMiniBatches/'
+	fileTrainName = 'TrainMiniBatch'
+	fileValPath = '/media/jwong/Transcend/VQADataset/ValSet/valMiniBatches/'
+	fileValName = 'valMiniBatch'
+	fileTestPath = '/media/jwong/Transcend/VQADataset/ValSet/testMiniBatches/'
+	fileTestName = 'testMiniBatch'
+
+	#check -- can append listtT?
+	fullAnnotList = []
+	for i in range(1,26):
+		with open(fileTrainPath + fileTrainName + str(i) + '.json') as file:
+			batchData = json.load(file)
+			fullAnnotList = fullAnnotList + batchData
+
+	with open(fileTrainPath + 'AllTrainAnnotationsList.json', 'w') as outFile:
+		json.dump(fullAnnotList, outFile)
+
+	fullValList = []
+	for i in range(1,8):
+		with open(fileValPath + fileValName + str(i) + '.json') as file:
+			batchData = json.load(file)
+			fullValList = fullValList + batchData
+
+	with open(fileValPath + 'AllValAnnotationsList.json', 'w') as outFile:
+		json.dump(fullValList, outFile)
+
+	fullValList = []
+	for i in range(1,8):
+		with open(fileTestPath + fileTestName + str(i) + '.json') as file:
+			batchData = json.load(file)
+			fullValList = fullValList + batchData
+
+	with open(fileTestPath + 'AllTestAnnotationsList.json', 'w') as outFile:
+		json.dump(fullValList, outFile)
+
 
 if __name__ == "__main__":
-	preprocessValTestAnnotations()
+	makeDummySet()
 
 	
