@@ -7,6 +7,7 @@ from InputReader import InputReader
 
 class SoftmaxLayer:
 	def trainFromFile(self, trainReader, valReader):
+		logs = 'BOWIMGresults.txt'
 		inputVecSize = 1324 #WordVec(300) + ImgFeatures (1024)
 		numOfClasses = 1000
 		batchSize = 32
@@ -35,34 +36,33 @@ class SoftmaxLayer:
 		saver = tf.train.Saver()
 		
 		#can also print session.run(crossEntropyLoss, feed_dict=feed_dict_val)
-		print('Training model...')
-		while(True):
-			if (trainReader.getIndexInEpoch() > 1000):
-				print('Saving model...')
-				saver.save(sess, 'BOWIMG-model')
-				break
-
-			trainX, trainY = trainReader.getNextXYBatch(batchSize)
-			print('Training with batch size: {}'.format(len(trainX)))
-			
-			sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
-
-			#Evaluate
-			if (trainReader.getIndexInEpoch()%(3*batchSize)==0):#%(trainReader.getEpochSize/batchSize *batchSize*20)==0):
-				trainAcc = sess.run(accuracy, feed_dict={x: trainX, ylabels: trainY})
+		
+		with open(logs, 'w') as logFile:
+			print('Training model...')
+			while(True):
+				if (trainReader.getEpoch() > 1):
+					print('Saving model...')
+					saver.save(sess, 'BOWIMG-model')
+					break
+	
+				trainX, trainY = trainReader.getNextXYBatch(batchSize)
+				#print('Training with batch size: {}'.format(len(trainX)))
 				
-				#if ((trainReader.getIndexInEpoch() > trainReader.getEpochSize()/2) 
-				#	and (trainReader.getIndexInEpoch() > (trainReader.getEpochSize()/2 + batchSize + 2))):
-				valX, valY = valReader.getNextXYBatch(batchSize)
-				valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
-				#print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', Val accuracy = ' + str(valAcc))
-				
-				
-				print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) 
-					+ ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' 
-					+ str(valAcc))
-				print("Epoch index {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}".format(trainReader.getIndexInEpoch(), trainAcc, valAcc))
-		print('Completed')
+				sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
+	
+				#Evaluate
+				if (trainReader.getIndexInEpoch()%(50*batchSize)==0):
+					trainAcc = sess.run(accuracy, feed_dict={x: trainX, ylabels: trainY})
+					
+					valX, valY = valReader.getWholeBatch()#getWholeBatch(batchSize)
+					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
+					#print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', Val accuracy = ' + str(valAcc))
+					
+					msg = 'Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' + str(valAcc)
+					logFile.write(msg+'\n')
+					print(msg)
+					print("Epoch index {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}".format(trainReader.getIndexInEpoch(), trainAcc, valAcc))
+			print('Completed')
 	
 	def continueTrainingFromSavedModel(self, trainReader, valReader):
 		batchSize = 32
@@ -203,14 +203,17 @@ class SoftmaxLayer:
 		#endT = time.time()
 
 def train():
-	xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainx1.pkl'
-	yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainy1.pkl'
+	xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000TrainxAll.pkl'
+	yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000TrainyAll.pkl'
+	#xTrainPickle1 = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainx1.pkl'
+	#yTrainPickle1 = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainy1.pkl'
 	
 	trainReader = InputReader(xTrainPickle, yTrainPickle)
 	
+	
 	model = SoftmaxLayer()
-	#model.trainFromFile(trainReader, trainReader)
-	model.continueTrainingFromSavedModel(trainReader, trainReader)
+	model.trainFromFile(trainReader, trainReader)
+	#model.continueTrainingFromSavedModel(trainReader, trainReader)
 	
 
 if __name__ == '__main__':
