@@ -37,29 +37,39 @@ class SoftmaxLayer:
 		
 		#can also print session.run(crossEntropyLoss, feed_dict=feed_dict_val)
 		
+		currentEpoch = 0
+		
 		with open(logs, 'w') as logFile:
 			print('Training model...')
 			while(True):
-				if (trainReader.getEpoch() > 1):
+				if (trainReader.getEpoch() > currentEpoch):
+					currentEpoch += 1
 					print('Saving model...')
 					saver.save(sess, 'BOWIMG-model')
-					break
-	
-				trainX, trainY = trainReader.getNextXYBatch(batchSize)
-				#print('Training with batch size: {}'.format(len(trainX)))
+					
+					valX, valY = valReader.getWholeBatch()
+					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
+					
+					msg = "Epoch {} --  Val Accuracy: {2:>6.1%}".format(trainReader.getEpoch(),valAcc)
+					logFile.write(msg+'\n')
+					print(msg)
 				
+				if (currentEpoch > 15):
+					break
+				
+				#Train
+				trainX, trainY = trainReader.getNextXYBatch(batchSize)
 				sess.run(trainModel, feed_dict={x: trainX, ylabels: trainY})
 	
 				#Evaluate
-				if (trainReader.getIndexInEpoch()%(50*batchSize)==0):
+				if (trainReader.getIndexInEpoch()%(1000*batchSize)==0):
 					trainAcc = sess.run(accuracy, feed_dict={x: trainX, ylabels: trainY})
 					
 					valX, valY = valReader.getWholeBatch()#getWholeBatch(batchSize)
 					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
-					#print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', Val accuracy = ' + str(valAcc))
 					
 					#msg = 'Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' + str(valAcc)
-					msg = "Epoch index {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}".format(trainReader.getIndexInEpoch(), trainAcc, valAcc)
+					msg = "Epoch {}, index {} -- Train Accuracy: {1:>6.1%}, Val Accuracy: {2:>6.1%}".format(trainReader.getEpoch(), trainReader.getIndexInEpoch(), trainAcc, valAcc)
 					logFile.write(msg+'\n')
 					print(msg)
 			print('Completed')
@@ -98,7 +108,6 @@ class SoftmaxLayer:
 				
 				valX, valY = valReader.getNextXYBatch(batchSize)
 				valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
-				
 				
 				print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) 
 					+ ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' 
