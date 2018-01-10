@@ -58,10 +58,10 @@ class SoftmaxLayer:
 					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
 					#print('Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', Val accuracy = ' + str(valAcc))
 					
-					msg = 'Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' + str(valAcc)
+					#msg = 'Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' + str(valAcc)
+					msg = "Epoch index {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}".format(trainReader.getIndexInEpoch(), trainAcc, valAcc)
 					logFile.write(msg+'\n')
 					print(msg)
-					print("Epoch index {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}".format(trainReader.getIndexInEpoch(), trainAcc, valAcc))
 			print('Completed')
 	
 	def continueTrainingFromSavedModel(self, trainReader, valReader):
@@ -208,12 +208,16 @@ def train():
 	#xTrainPickle1 = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainx1.pkl'
 	#yTrainPickle1 = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainy1.pkl'
 	
+	xValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000valx.pkl'
+	yValPickle = '/media/jwong/Transcend/VQADataset/ValTestSet/XYValTestData/sparseCleanWVsum1000valy.pkl'
+	
 	trainReader = InputReader(xTrainPickle, yTrainPickle)
+	valReader = InputReader(xValPickle, yValPickle)
 	
 	
 	model = SoftmaxLayer()
-	model.trainFromFile(trainReader, trainReader)
-	#model.continueTrainingFromSavedModel(trainReader, trainReader)
+	model.trainFromFile(trainReader, valReader)
+	#model.continueTrainingFromSavedModel(trainReader, valReader)
 	
 
 if __name__ == '__main__':
