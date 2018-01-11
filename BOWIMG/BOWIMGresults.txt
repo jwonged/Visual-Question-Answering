@@ -1,0 +1,64 @@
+Epoch 0, index 32000 -- Train Accuracy:  46.9%, Val Accuracy:  31.7%
+Epoch 0, index 64000 -- Train Accuracy:  53.1%, Val Accuracy:  34.9%
+Epoch 0, index 96000 -- Train Accuracy:  68.8%, Val Accuracy:  36.8%
+Epoch 0, index 128000 -- Train Accuracy:  53.1%, Val Accuracy:  36.5%
+Epoch 0, index 160000 -- Train Accuracy:  43.8%, Val Accuracy:  37.3%
+Epoch 0, index 192000 -- Train Accuracy:  43.8%, Val Accuracy:  37.3%
+Epoch 1 --  Val Accuracy:  36.9%
+Epoch 1, index 32000 -- Train Accuracy:  50.0%, Val Accuracy:  38.1%
+Epoch 1, index 64000 -- Train Accuracy:  59.4%, Val Accuracy:  38.2%
+Epoch 1, index 96000 -- Train Accuracy:  68.8%, Val Accuracy:  39.3%
+Epoch 1, index 128000 -- Train Accuracy:  50.0%, Val Accuracy:  39.0%
+Epoch 1, index 160000 -- Train Accuracy:  37.5%, Val Accuracy:  39.3%
+Epoch 1, index 192000 -- Train Accuracy:  46.9%, Val Accuracy:  38.9%
+Epoch 2 --  Val Accuracy:  38.4%
+Epoch 2, index 32000 -- Train Accuracy:  53.1%, Val Accuracy:  39.5%
+Epoch 2, index 64000 -- Train Accuracy:  59.4%, Val Accuracy:  39.3%
+Epoch 2, index 96000 -- Train Accuracy:  68.8%, Val Accuracy:  40.4%
+Epoch 2, index 128000 -- Train Accuracy:  50.0%, Val Accuracy:  40.1%
+Epoch 2, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  40.3%
+Epoch 2, index 192000 -- Train Accuracy:  46.9%, Val Accuracy:  39.8%
+Epoch 3 --  Val Accuracy:  39.2%
+Epoch 3, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  40.3%
+Epoch 3, index 64000 -- Train Accuracy:  56.2%, Val Accuracy:  40.2%
+Epoch 3, index 96000 -- Train Accuracy:  68.8%, Val Accuracy:  41.1%
+Epoch 3, index 128000 -- Train Accuracy:  50.0%, Val Accuracy:  40.9%
+Epoch 3, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  40.9%
+Epoch 3, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  40.4%
+Epoch 4 --  Val Accuracy:  39.7%
+Epoch 4, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  41.0%
+Epoch 4, index 64000 -- Train Accuracy:  56.2%, Val Accuracy:  40.7%
+Epoch 4, index 96000 -- Train Accuracy:  71.9%, Val Accuracy:  41.6%
+Epoch 4, index 128000 -- Train Accuracy:  50.0%, Val Accuracy:  41.4%
+Epoch 4, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  41.5%
+Epoch 4, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  41.0%
+Epoch 5 --  Val Accuracy:  40.2%
+Epoch 5, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  41.3%
+Epoch 5, index 64000 -- Train Accuracy:  56.2%, Val Accuracy:  41.1%
+Epoch 5, index 96000 -- Train Accuracy:  71.9%, Val Accuracy:  42.0%
+Epoch 5, index 128000 -- Train Accuracy:  50.0%, Val Accuracy:  41.8%
+Epoch 5, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  41.8%
+Epoch 5, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  41.4%
+Epoch 6 --  Val Accuracy:  40.5%
+Epoch 6, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  41.7%
+Epoch 6, index 64000 -- Train Accuracy:  59.4%, Val Accuracy:  41.4%
+Epoch 6, index 96000 -- Train Accuracy:  78.1%, Val Accuracy:  42.4%
+Epoch 6, index 128000 -- Train Accuracy:  53.1%, Val Accuracy:  42.1%
+Epoch 6, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  42.1%
+Epoch 6, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  41.7%
+Epoch 7 --  Val Accuracy:  40.9%
+Epoch 7, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  42.0%
+Epoch 7, index 64000 -- Train Accuracy:  59.4%, Val Accuracy:  41.8%
+Epoch 7, index 96000 -- Train Accuracy:  78.1%, Val Accuracy:  42.6%
+Epoch 7, index 128000 -- Train Accuracy:  53.1%, Val Accuracy:  42.4%
+Epoch 7, index 160000 -- Train Accuracy:  40.6%, Val Accuracy:  42.4%
+Epoch 7, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  42.0%
+Epoch 8 --  Val Accuracy:  41.1%
+Epoch 8, index 32000 -- Train Accuracy:  59.4%, Val Accuracy:  42.3%
+Epoch 8, index 64000 -- Train Accuracy:  59.4%, Val Accuracy:  42.0%
+Epoch 8, index 96000 -- Train Accuracy:  78.1%, Val Accuracy:  42.9%
+Epoch 8, index 128000 -- Train Accuracy:  59.4%, Val Accuracy:  42.6%
+Epoch 8, index 160000 -- Train Accuracy:  43.8%, Val Accuracy:  42.6%
+Epoch 8, index 192000 -- Train Accuracy:  50.0%, Val Accuracy:  42.2%
+Epoch 9 --  Val Accuracy:  41.3%
+Epoch 9, index 32000 -- Train Accuracy:  62.5%
