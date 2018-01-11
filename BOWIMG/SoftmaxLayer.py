@@ -50,7 +50,7 @@ class SoftmaxLayer:
 					valX, valY = valReader.getWholeBatch()
 					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
 					
-					msg = "Epoch {} --  Val Accuracy: {2:>6.1%}".format(trainReader.getEpoch(),valAcc)
+					msg = "Epoch {0} --  Val Accuracy: {1:>6.1%}".format(trainReader.getEpoch(),valAcc)
 					logFile.write(msg+'\n')
 					print(msg)
 				
@@ -69,7 +69,7 @@ class SoftmaxLayer:
 					valAcc = sess.run(accuracy, feed_dict={x: valX, ylabels: valY})
 					
 					#msg = 'Epoch_index = ' + str(trainReader.getIndexInEpoch()) + ', train accuracy = ' + str(trainAcc) + ', val accuracy = ' + str(valAcc)
-					msg = "Epoch {}, index {} -- Train Accuracy: {1:>6.1%}, Val Accuracy: {2:>6.1%}".format(trainReader.getEpoch(), trainReader.getIndexInEpoch(), trainAcc, valAcc)
+					msg = "Epoch {0}, index {1} -- Train Accuracy: {2:>6.1%}, Val Accuracy: {3:>6.1%}".format(trainReader.getEpoch(), trainReader.getIndexInEpoch(), trainAcc, valAcc)
 					logFile.write(msg+'\n')
 					print(msg)
 			print('Completed')
