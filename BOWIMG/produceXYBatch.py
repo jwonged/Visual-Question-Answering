@@ -244,10 +244,23 @@ def main2():
     pickleData(dataX, dataY, xTestPickle, yTestPickle)
     
     print('Test files Completed(AllAns).')
+    
+def makeDummy():
+    xTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainx1.pkl'
+    yTrainPickle = '/media/jwong/Transcend/VQADataset/TrainSet/XYTrainData/sparseCleanWVsum1000Trainy1.pkl'
+    
+    dummySetDirX = '/media/jwong/Transcend/VQADataset/DummySets/DummySparseCleanWVsum1000Trainx.pkl'
+    dummySetDirY = '/media/jwong/Transcend/VQADataset/DummySets/DummySparseCleanWVsum1000Trainy.pkl'
+    
+    print('Reading ' + xTrainPickle)
+    with open(xTrainPickle, 'rb') as jFile:
+            dataX = pickle.load(jFile)
+    print('Reading ' + yTrainPickle)
+    with open(yTrainPickle, 'rb') as jFile:
+            dataY = pickle.load(jFile)
+    print('Reading ' + dummySetDirX)
+    pickleData(dataX[:10000], dataY[:10000], dummySetDirX, dummySetDirY)
+    print('Completed.')
 
 if __name__ == "__main__":
-    main()
-    print('First main fully Completed.')
-    main2()
-    print('Second main fully Completed.')
-    
+    makeDummy()
