@@ -33,7 +33,7 @@ def main():
     print 'Writing vectors to "', outputfile
     print 'Writing to json file "', jsonFile
  
-    # Setting this to CPU, but feel free to use GPU if you have CUDA installed
+    # Can set to GPU with CUDA installed
     caffe.set_mode_cpu()
     # Loading the Caffe model, setting preprocessing parameters
     net = caffe.Classifier(model_prototxt, model_trained,
@@ -48,6 +48,7 @@ def main():
  
     #Names & sizes of network layers
     #print [(k, v.data.shape) for k, v in net.blobs.items()]
+    #exit()
 
     resultJSONData = {}
     errorMessages = []
