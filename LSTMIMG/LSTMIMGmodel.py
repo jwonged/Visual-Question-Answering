@@ -17,13 +17,12 @@ class LSTMIMGmodel(object):
     Uses Bi-LSTM to a fully connected layer
     '''
 
-
     def __init__(self, config):
         self.config = config
         self.logFile = open(config.logFile, 'w')
+        self.logFile.write('Initializing LSTMIMG')
         self.sess   = None
         self.saver  = None
-        self.logFile.write('Initializing LSTMIMG')
 
     def construct(self):
         #add placeholders
@@ -58,7 +57,7 @@ class LSTMIMGmodel(object):
         self.word_embeddings =  tf.nn.dropout(word_embeddings, self.dropout)
         
         #add logits
-        LSTM_num_units = 300
+        LSTM_num_units = 300 #+ 1024
         with tf.variable_scope("bi-lstm"):
             cell_fw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
             cell_bw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
@@ -190,6 +189,19 @@ class LSTMIMGmodel(object):
         Returns:
             dict {placeholder: value}
         """
+        
+        word_ids, sequence_lengths = self.padQuestionIDs(words, 0)
+        
+        feed = {
+            self.word_ids : word_ids
+            self.sequence_length : sequence_lengths
+            self.labels : labels
+            self.lr : self.config.lossRate
+            self.dropout : self.config.dropoutVal
+        }
+        
+        return feed, sequence_lengths
+        
         # perform padding of the given data
         if self.config.use_chars:
             char_ids, word_ids = zip(*words)
@@ -221,54 +233,27 @@ class LSTMIMGmodel(object):
 
         return feed, sequence_lengths
     
-    def _pad_sequences(self, sequences, pad_tok, max_length):
-        """Args:
-            sequences: a generator of list or tuple
-            pad_tok: the char to pad with
-        Returns:
-            a list of list where each sublist has same length
-        """
-        sequence_padded, sequence_length = [], []
-    
-        for seq in sequences:
-            seq = list(seq)
-            seq_ = seq[:max_length] + [pad_tok]*max(max_length - len(seq), 0)
-            sequence_padded +=  [seq_]
-            sequence_length += [min(len(seq), max_length)]
-
-    return sequence_padded, sequence_length
-
-    def pad_sequences(self, sequences, pad_tok, nlevels=1):
-        """
-        Args:
-            sequences: a generator of list or tuple
-            pad_tok: the char to pad with
-            nlevels: "depth" of padding, for the case where we have characters ids
-        Returns:
-            a list of list where each sublist has same length
-        """
-        if nlevels == 1:
-            max_length = max(map(lambda x : len(x), sequences))
-            sequence_padded, sequence_length = _pad_sequences(sequences,
-                                                pad_tok, max_length)
-    
-        elif nlevels == 2:
-            max_length_word = max([max(map(lambda x: len(x), seq))
-                                   for seq in sequences])
-            sequence_padded, sequence_length = [], []
-            for seq in sequences:
-                # all words are same length now
-                sp, sl = _pad_sequences(seq, pad_tok, max_length_word)
-                sequence_padded += [sp]
-                sequence_length += [sl]
-    
-            max_length_sentence = max(map(lambda x : len(x), sequences))
-            sequence_padded, _ = _pad_sequences(sequence_padded,
-                    [pad_tok]*max_length_word, max_length_sentence)
-            sequence_length, _ = _pad_sequences(sequence_length, 0,
-                    max_length_sentence)
-
-    return sequence_padded, sequence_length
+    def padQuestionIDs(self, questions, padding):
+        ''' args: 
+                questions: list of list of word IDs
+                padding: symbol to pad with
+            Pads each list to be same as max length
+        '''
+        #Get length of longest qn
+        maxLength = max(map(lambda x : len(x), questions))
+        
+        paddedQuestions, qnLengths = [], []
+        for qn in questions:
+            qn = list(qn) #ensure list format
+            if (len(qn) < maxLength):
+                paddedQn = qn + [padding]*(maxLength - len(qn))
+                paddedQuestions.append(paddedQn)
+            else:
+                paddedQuestions.append(qn)
+            qnLengths.append(maxLength)
+            
+        return paddedQuestions, qnLengths
+            
             
     def destruct(self):
         self.logFile.close()
