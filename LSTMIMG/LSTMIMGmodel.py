@@ -26,9 +26,14 @@ class LSTMIMGmodel(object):
 
     def construct(self):
         #add placeholders
-        self.logFile('Constructing model...')
+        self.logFile.write('Constructing model...')
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
+        
+        # shape = (batch size, length of image feature vector)
+        self.img_vecs = tf.placeholder(tf.float32, 
+                                       shape=[None, self.config.imgVecSize], 
+                                       name="img_vecs")
 
         # shape = (batch size)
         self.sequence_lengths = tf.placeholder(tf.int32, shape=[None], name="sequence_lengths")
@@ -51,13 +56,23 @@ class LSTMIMGmodel(object):
                     trainable=self.config.trainEmbeddings)
         
         #embedding matrix, word_ids
-        word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
+        self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")
         
-        self.word_embeddings =  tf.nn.dropout(word_embeddings, self.dropout)
+        #self.word_embeddings =  tf.nn.dropout(word_embeddings, self.dropout)
         
+        
+        #Handle input according to model structure
+        if self.config.modelStruct == 'imagePerWord':
+            #(dim of input to each LSTM cell)
+            LSTM_num_units = self.config.wordVecSize + self.config.imgVecSize 
+            self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
+        else:
+            LSTM_num_units = self.config.wordVecSize 
+            self.LSTMinput = self.word_embeddings
+            
+            
         #add logits
-        LSTM_num_units = 300 #+ 1024
         with tf.variable_scope("bi-lstm"):
             cell_fw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
             cell_bw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
@@ -65,36 +80,43 @@ class LSTMIMGmodel(object):
             #In [batch_size, max_time, ...]
             #fw, bw, inputs, seq len
             #Out [batch_size, max_time, cell_output_size] output, outputState
-            (fwOutput, bwOutput), _ = tf.nn.bidirectional_dynamic_rnn(
+            (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
                 cell_fw, cell_bw, 
                 self.word_embeddings, 
                 sequence_length=self.sequence_lengths, dtype=tf.float32)
-            lstmOutput = tf.concat([fwOutput, bwOutput], axis=-1)
+            lstmOutput = tf.concat([fw_state.c, bw_state.c], axis=-1)
             
             nnOutput = tf.nn.dropout(lstmOutput, self.dropout)
+            
+        #Handle output according to model structure
+        if self.config.modelStruct == 'imagePerWord':
+            self.LSTMOutput = nnOutput
+            LSTMOutputSize = 2*LSTM_num_units
+        else:
+            self.LSTMOutput = tf.concat([nnOutput, self.img_vecs], axis=-1)
+            LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize
         
-        #connected layer
+        #fully connected layer
         with tf.variable_scope("proj"):
             W = tf.get_variable("W", dtype=tf.float32,
-                    shape=[2*LSTM_num_units, self.config.nOutClasses])
+                    shape=[LSTMOutputSize, self.config.nOutClasses])
 
             b = tf.get_variable("b", shape=[self.config.nOutClasses],
                     dtype=tf.float32, initializer=tf.zeros_initializer())
-
-            nsteps = tf.shape(nnOutput)[1]
-            output = tf.reshape(nnOutput, [-1, 2*LSTM_num_units])
-            pred = tf.matmul(output, W) + b
-            self.logits = tf.reshape(pred, [-1, nsteps, self.config.nOutClasses])
+            
+            y = tf.matmul(self.LSTMOutput, W) + b
         
-        #predict
-        self.labels_pred = tf.cast(tf.argmax(self.logits, axis=-1), tf.int32)
+        #predict & get accuracy
+        self.labels_pred = tf.cast(tf.argmax(y, axis=1), tf.int32)
+        is_correct_prediction = tf.equal(self.labels_pred, self.labels)
+        self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
         #define losses
-        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                    logits=self.logits, labels=self.labels)
-        mask = tf.sequence_mask(self.sequence_lengths)
-        losses = tf.boolean_mask(losses, mask)
-        self.loss = tf.reduce_mean(losses)
+        crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    logits=y, labels=self.labels)
+        #mask = tf.sequence_mask(self.sequence_lengths)
+        #losses = tf.boolean_mask(crossEntropyLoss, mask)
+        self.loss = tf.reduce_mean(crossEntropyLoss)
 
         # for tensorboard
         tf.summary.scalar("loss", self.loss)
@@ -111,9 +133,9 @@ class LSTMIMGmodel(object):
             if self.config.max_gradient_norm > 0: # gradient clipping if clip is positive
                 grads, vs     = zip(*optimizer.compute_gradients(self.loss))
                 grads, gnorm  = tf.clip_by_global_norm(grads, self.config.max_gradient_norm)
-                self.train_op = optimizer.apply_gradients(zip(grads, vs))
+                self.train_op = optimizer.apply_gradients(zip(grads, vs), name='trainModel')
             else:
-                self.train_op = optimizer.minimize(self.loss)
+                self.train_op = optimizer.minimize(self.loss, name='trainModel')
                 
         #init vars and session
         self.sess = tf.Session()
@@ -123,8 +145,8 @@ class LSTMIMGmodel(object):
         self.logFile.write('Model constructed.')
         print('Complete')
     
+    
     def train(self, trainReader, valReader):
-        
         
         self.add_summary()
         highestScore = 0
@@ -135,24 +157,26 @@ class LSTMIMGmodel(object):
             print(msg)
             self.logFile.write(msg)
 
-            score = self.run_epoch(train, dev, epoch)
+            score = self._run_epoch(trainReader, valReader, nEpoch)
             self.config.lossRate *= self.config.lossRateDecay
 
             # early stopping and saving best parameters
-            if score >= best_score:
+            if score >= highestScore:
                 nEpochWithoutImprovement = 0
                 self.save_session()
                 best_score = score
-                self.logger.info("- new best score!")
+                self.logFile.write('New score')
             else:
                 nEpochWithoutImprovement += 1
-                if nEpochWithoutImprovement >= self.config.nEpochImproveStop:
-                    
-                    self.logger.info("- early stopping {} epochs without "\
-                            "improvement".format(nepoch_no_imprv))
+                if nEpochWithoutImprovement >= self.config.nEpochsWithoutImprov:
+                    self.logFile.write('Early stopping at epoch {} with {} epochs\
+                                 without improvement'.format(nEpoch+1, nEpochWithoutImprovement))
                     break
     
-    def run_epoch(self, train, dev, epoch):
+    def _run_epoch(self, trainReader, valReader, nEpoch):
+        '''
+        Runs 1 epoch and returns val score
+        '''
         # Potentially add progbar here
         batch_size = self.config.batch_size
         nbatches = (len(train) + batch_size - 1) // batch_size
@@ -178,70 +202,35 @@ class LSTMIMGmodel(object):
 
         return metrics["f1"]
     
-    def _get_feed_dict(self, words, labels=None, lr=None, dropout=None):
-        """Given some data, pad it and build a feed dictionary
+    def _get_feed_dict(self, words, labels):
+        '''Get dictionary for feeding to LSTM
         Args:
-            words: list of sentences. A sentence is a list of ids of a list of
-                words. A word is a list of ids
-            labels: list of ids
-            lr: (float) learning rate
-            dropout: (float) keep prob
+            words: list of list of word IDs (ie list of qns)
         Returns:
-            dict {placeholder: value}
-        """
+            feed: dict {placeholder: value}
+        '''
         
         word_ids, sequence_lengths = self.padQuestionIDs(words, 0)
         
         feed = {
-            self.word_ids : word_ids
-            self.sequence_length : sequence_lengths
-            self.labels : labels
-            self.lr : self.config.lossRate
+            self.word_ids : word_ids,
+            self.sequence_length : sequence_lengths,
+            self.labels : labels,
+            self.lr : self.config.lossRate,
             self.dropout : self.config.dropoutVal
         }
         
-        return feed, sequence_lengths
-        
-        # perform padding of the given data
-        if self.config.use_chars:
-            char_ids, word_ids = zip(*words)
-            word_ids, sequence_lengths = pad_sequences(word_ids, 0)
-            char_ids, word_lengths = pad_sequences(char_ids, pad_tok=0,
-                nlevels=2)
-        else:
-            word_ids, sequence_lengths = pad_sequences(words, 0)
-
-        # build feed dictionary
-        feed = {
-            self.word_ids: word_ids,
-            self.sequence_lengths: sequence_lengths
-        }
-
-        if self.config.use_chars:
-            feed[self.char_ids] = char_ids
-            feed[self.word_lengths] = word_lengths
-
-        if labels is not None:
-            labels, _ = pad_sequences(labels, 0)
-            feed[self.labels] = labels
-
-        if lr is not None:
-            feed[self.lr] = lr
-
-        if dropout is not None:
-            feed[self.dropout] = dropout
-
-        return feed, sequence_lengths
+        return feed
     
     def padQuestionIDs(self, questions, padding):
-        ''' args: 
-                questions: list of list of word IDs
-                padding: symbol to pad with
-            Pads each list to be same as max length
         '''
-        #Get length of longest qn
+        Pads each list to be same as max length
+        args:
+            questions: list of list of word IDs (ie a batch of qns)
+            padding: symbol to pad with
+        '''
         maxLength = max(map(lambda x : len(x), questions))
-        
+        #Get length of longest qn
         paddedQuestions, qnLengths = [], []
         for qn in questions:
             qn = list(qn) #ensure list format
@@ -250,15 +239,14 @@ class LSTMIMGmodel(object):
                 paddedQuestions.append(paddedQn)
             else:
                 paddedQuestions.append(qn)
-            qnLengths.append(maxLength)
+            qnLengths.append(len(qn))
             
         return paddedQuestions, qnLengths
-            
-            
+    
     def destruct(self):
         self.logFile.close()
         
-        
+    '''
         
         
         
