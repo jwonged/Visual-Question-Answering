@@ -10,13 +10,11 @@ import pickle
 
 def runtrain():
     config = Config()
-    '''
     trainReader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
                                  config.trainImgFile, 
                                  config.ansClass1000File, 
                                  config.vocabFile)
-    checkReaderVals(trainReader)
     
     
     valReader = InputProcessor(config.valAnnotFile, 
@@ -24,12 +22,12 @@ def runtrain():
                                  config.valImgFile, 
                                  config.ansClass1000File, 
                                  config.vocabFile)
-    '''
-    dumReader = DummyReader()
+    
+    #dumReader = DummyReader()
     
     model = LSTMIMGmodel(config)
     model.construct()
-    model.train(dumReader, dumReader)
+    model.train(trainReader, valReader)
     model.destruct()
             
 class DummyReader():

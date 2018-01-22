@@ -99,14 +99,15 @@ class LSTMIMGmodel(object):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            W = tf.get_variable("W", dtype=tf.float32,
-                    shape=[LSTMOutputSize, self.config.nOutClasses])
-
-            b = tf.get_variable("b", shape=[self.config.nOutClasses],
-                    dtype=tf.float32, initializer=tf.zeros_initializer())
+            fchLayer = self._fullyConnectedLayer(self, self.LSTMOutput,
+                                LSTMOutputSize, 
+                                self.config.nOutClasses, 
+                                use_sig=True)
+            y = self._fullyConnectedLayer(self, self.LSTMOutput,
+                                LSTMOutputSize, 
+                                self.config.nOutClasses, 
+                                use_sig=False)
             
-            y = tf.matmul(self.LSTMOutput, W) + b #shape=[batch_size, numClasses]
-        
         #predict & get accuracy
         self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
@@ -146,6 +147,21 @@ class LSTMIMGmodel(object):
         self.logFile.write('Model constructed.')
         print('Complete Model Construction')
     
+    def _fullyConnectedLayer(self, input, inputSize, outputSize, use_sig):
+        W = tf.get_variable("W", dtype=tf.float32,
+                    shape=[inputSize, outputSize])
+
+        b = tf.get_variable("b", shape=[outputSize],
+                    dtype=tf.float32, initializer=tf.zeros_initializer())
+            
+        layer = tf.matmul(input, W) + b #shape=[batch_size, numClasses]
+        
+        if use_sig:
+            layer = tf.nn.sigmoid(layer)
+            
+        return layer
+        
+        
     
     def train(self, trainReader, valReader):
         print('Starting model training')
@@ -200,7 +216,7 @@ class LSTMIMGmodel(object):
             _, _ = self.sess.run(
                 [self.train_op, self.loss], feed_dict=feed)
             
-            if (i%100==0):
+            if (i%1000==0):
                 #every 2000 batches
                 feed[self.dropout] = 1.0
                 trainAcc = self.sess.run(self.accuracy, feed_dict=feed)
@@ -215,12 +231,6 @@ class LSTMIMGmodel(object):
         print('Epoch {0}: val Score={1:>6.1%}'.format(
                     nEpoch, epochScore))
         return epochScore
-        #metrics = self.run_evaluate(dev)
-        #msg = " - ".join(["{} {:04.2f}".format(k, v)
-        #        for k, v in metrics.items()])
-        #self.logger.info(msg)
-
-        #return metrics["f1"]
     
     def runVal(self, valReader):
         """Evaluates performance on test set
@@ -229,63 +239,24 @@ class LSTMIMGmodel(object):
         Returns:
             metrics: (dict) metrics["acc"] = 98.4, ...
         """
-        batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = valReader.getWholeBatch()
-        
-        feed = {
-                self.word_ids : batchOfQnsAsWordIDs,
-                self.sequence_lengths : qnLengths,
-                self.img_vecs : img_vecs,
-                self.labels : labels,
-                self.dropout : 1.0
-            }
-        valAcc = self.sess.run(self.accuracy, feed_dict=feed)
-        return valAcc
-        '''
-        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels) in enumerate(
-            valReader.getNextBatch(self.config.batch_size)):
+        accuracies = []
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels in valReader.getNextBatch(
+            self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
-                self.sequence_length : seqLens,
+                self.sequence_lengths : seqLens,
                 self.img_vecs : img_vecs,
                 self.labels : labels,
                 self.dropout : 1.0
             }
-            labelPredictions = self.sess.run(self.labels_pred, feed_dict=feed)
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
-            
+            for lab, labPreds in zip(labels, labels_pred):
+                accuracies.append(lab==labPreds)
         
-        accs = []
-        correct_preds, total_correct, total_preds = 0., 0., 0.
-        for words, labels in minibatches(test, self.config.batch_size):
-            labels_pred, sequence_lengths = self.predict_batch(words)
-
-            for lab, lab_pred, length in zip(labels, labels_pred,
-                                             sequence_lengths):
-                lab      = lab[:length]
-                lab_pred = lab_pred[:length]
-                accs    += [a==b for (a, b) in zip(lab, lab_pred)]
-
-                lab_chunks      = set(get_chunks(lab, self.config.vocab_tags))
-                lab_pred_chunks = set(get_chunks(lab_pred,
-                                                 self.config.vocab_tags))
-
-                correct_preds += len(lab_chunks & lab_pred_chunks)
-                total_preds   += len(lab_pred_chunks)
-                total_correct += len(lab_chunks)
-
-        p   = correct_preds / total_preds if correct_preds > 0 else 0
-        r   = correct_preds / total_correct if correct_preds > 0 else 0
-        f1  = 2 * p * r / (p + r) if correct_preds > 0 else 0
-        acc = np.mean(accs)
-
-        return {"acc": 100*acc, "f1": 100*f1}
+        valAcc = np.mean(accuracies)
+        return valAcc
     
-    def add_summary(self):
-        self.merged      = tf.summary.merge_all()
-        self.file_writer = tf.summary.FileWriter(self.config.dir_output,
-                self.sess.graph)
-        
-    '''
     def loadTrainedModel(self):
         self.sess = tf.Session()
         self.saver = saver = tf.train.import_meta_graph('LSTMIMG-proto.meta')

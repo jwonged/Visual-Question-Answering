@@ -34,9 +34,6 @@ class InputProcessor(object):
         print('Reading ' + vocabFile)
         self.mapWordToID = self._loadVocabFromFile(vocabFile)
         
-        self.index = 0
-        self.epoch = 0
-        
     def _readJsonFile(self, fileName):
         with open(fileName) as jsonFile:
             return json.load(jsonFile)
@@ -84,9 +81,7 @@ class InputProcessor(object):
                 yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
                 batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = [], [], [], []
                 
-            if self.annots[self.index]['answers'] in self.mapAnsToClass:
-                annot = self.annots[self.index]
-                
+            if annot['answers'] in self.mapAnsToClass:
                 #process question
                 rawQn = self.rawQns[str(annot['question_id'])]
                 qnAsWordIDs = self._mapQnToIDs(rawQn)
@@ -100,8 +95,6 @@ class InputProcessor(object):
                 #process label
                 labelClass = self.mapAnsToClass[annot['answers']]
                 labels.append(labelClass)
-            
-            self.index += 1
         
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
@@ -110,8 +103,7 @@ class InputProcessor(object):
     def getWholeBatch(self):
         batchOfQnsAsWordIDs, img_vecs, labels = [], [], []
         for annot in self.annots:
-            if self.annots[self.index]['answers'] in self.mapAnsToClass:
-                annot = self.annots[self.index]
+            if annot['answers'] in self.mapAnsToClass:
                 
                 #process question
                 rawQn = self.rawQns[str(annot['question_id'])]
@@ -151,42 +143,6 @@ class InputProcessor(object):
             
         return paddedQuestions, qnLengths
     
-    '''
-    Deprecated nextBatch func
-    def getNextBatch(self, batchSize):
-        if (self.index + batchSize > self.size-1):
-            batchSize = self.size - self.index - 1
-            self.epoch += 1
-        
-        qnAsWordIDsBatch, seqLens, img_vecs, labels = [], [], [], []
-         
-        while (len(qnAsWordIDsBatch) < batchSize):
-            if self.annots[self.index]['answers'] in self.mapAnsToClass:
-                annot = self.annots[self.index]
-                
-                #process question
-                rawQn = self.rawQns[str(annot['question_id'])]
-                qnAsWordIDs = self._mapQnToIDs(rawQn)
-                qnAsWordIDsBatch.append(qnAsWordIDs)
-                
-                #process img
-                img_vec = self.imgData[str(annot['image_id'])][0]
-                img_vecs.append(img_vec)
-                
-                #process label
-                labelClass = self.mapAnsToClass[annot['answers']]
-                labels.append(labelClass)
-                 
-            else:
-                print('Not in class!!!')
-            
-            self.index += 1
-        #pad sequence
-        
-        if (self.index >= self.size -1):
-            self.index = 0
-        return qnAsWordIDsBatch, seqLens, img_vecs, labels
-    '''
     
     
         
