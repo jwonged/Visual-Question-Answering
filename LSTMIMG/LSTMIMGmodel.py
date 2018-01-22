@@ -222,14 +222,16 @@ class LSTMIMGmodel(object):
                 trainAcc = self.sess.run(self.accuracy, feed_dict=feed)
                 valAcc = self.runVal(valReader)
                 print('Val acc = {}'.format(valAcc))
-                resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}'.format(
+                resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
                     nEpoch, i, valAcc, trainAcc)
                 self.logFile.write(resMsg)
                 print(resMsg)
             
         epochScore = self.runVal(valReader)
-        print('Epoch {0}: val Score={1:>6.1%}'.format(
-                    nEpoch, epochScore))
+        epMsg = 'Epoch {0}: val Score={1:>6.1%}\n'.format(
+                    nEpoch, epochScore)
+        print(epMsg)
+        self.logFile.write(epMsg)
         return epochScore
     
     def runVal(self, valReader):
@@ -271,9 +273,6 @@ class LSTMIMGmodel(object):
         self.labels = graph.get_tensor_by_name('labels:0')
         
         self.saver = tf.train.Saver()
-    
-    
-        
         
     def destruct(self):
         self.logFile.close()
