@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf 
 import numpy as np
 import pickle
+import os
 
 from HelperFunctions import getPretrainedw2v
 
@@ -20,13 +21,13 @@ class LSTMIMGmodel(object):
     def __init__(self, config):
         self.config = config
         self.logFile = open(config.logFile, 'w')
-        self.logFile.write('Initializing LSTMIMG')
+        self.logFile.write('Initializing LSTMIMG\n')
         self.sess   = None
         self.saver  = None
 
     def construct(self):
         #add placeholders
-        self.logFile.write('Constructing model...')
+        self.logFile.write('Constructing model...\n')
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
         
@@ -77,10 +78,10 @@ class LSTMIMGmodel(object):
             cell_fw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
             cell_bw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
             
-            #In [batch_size, max_time, ...]
             #fw, bw, inputs, seq len
+            #checked: shape of fw_out = [?, ?, 2*LSTM_num_units]
             #Out [batch_size, max_time, cell_output_size] output, outputState
-            (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
+            (fw_out, bw_out), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
                 cell_fw, cell_bw, 
                 self.word_embeddings, 
                 sequence_length=self.sequence_lengths, dtype=tf.float32)
@@ -94,7 +95,7 @@ class LSTMIMGmodel(object):
             LSTMOutputSize = 2*LSTM_num_units
         else:
             self.LSTMOutput = tf.concat([nnOutput, self.img_vecs], axis=-1)
-            LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize
+            LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize #img=[?,1024]
         
         #fully connected layer
         with tf.variable_scope("proj"):
@@ -104,10 +105,10 @@ class LSTMIMGmodel(object):
             b = tf.get_variable("b", shape=[self.config.nOutClasses],
                     dtype=tf.float32, initializer=tf.zeros_initializer())
             
-            y = tf.matmul(self.LSTMOutput, W) + b
+            y = tf.matmul(self.LSTMOutput, W) + b #shape=[batch_size, numClasses]
         
         #predict & get accuracy
-        self.labels_pred = tf.cast(tf.argmax(y, axis=1), tf.int32)
+        self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
@@ -119,7 +120,7 @@ class LSTMIMGmodel(object):
         self.loss = tf.reduce_mean(crossEntropyLoss)
 
         # for tensorboard
-        tf.summary.scalar("loss", self.loss)
+        #tf.summary.scalar("loss", self.loss)
         
         #train optimizer
         with tf.variable_scope("train_step"):
@@ -143,12 +144,12 @@ class LSTMIMGmodel(object):
         self.saver = tf.train.Saver()
         
         self.logFile.write('Model constructed.')
-        print('Complete')
+        print('Complete Model Construction')
     
     
     def train(self, trainReader, valReader):
-        
-        self.add_summary()
+        print('Starting model training')
+        #self.add_summary()
         highestScore = 0
         nEpochWithoutImprovement = 0
         
@@ -163,8 +164,8 @@ class LSTMIMGmodel(object):
             # early stopping and saving best parameters
             if score >= highestScore:
                 nEpochWithoutImprovement = 0
-                self.save_session()
-                best_score = score
+                self._save_session()
+                highestScore = score
                 self.logFile.write('New score')
             else:
                 nEpochWithoutImprovement += 1
@@ -173,84 +174,137 @@ class LSTMIMGmodel(object):
                                  without improvement'.format(nEpoch+1, nEpochWithoutImprovement))
                     break
     
+    def _save_session(self):
+        #if not os.path.exists(self.config.dir_model):
+        #    os.makedirs(self.config.dir_model)
+        self.saver.save(self.sess, self.config.saveModelFile)
+    
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
         Runs 1 epoch and returns val score
         '''
         # Potentially add progbar here
         batch_size = self.config.batch_size
-        nbatches = (len(train) + batch_size - 1) // batch_size
-
-        # iterate over dataset
-        for i, (words, labels) in enumerate(minibatches(train, batch_size)):
-            fd, _ = self.get_feed_dict(words, labels, self.config.lr,
-                    self.config.dropout)
-
-            _, train_loss, summary = self.sess.run(
-                    [self.train_op, self.loss, self.merged], feed_dict=fd)
-
-            prog.update(i + 1, [("train loss", train_loss)])
-
-            # tensorboard
-            if i % 10 == 0:
-                self.file_writer.add_summary(summary, epoch*nbatches + i)
-
-        metrics = self.run_evaluate(dev)
-        msg = " - ".join(["{} {:04.2f}".format(k, v)
-                for k, v in metrics.items()])
-        self.logger.info(msg)
-
-        return metrics["f1"]
-    
-    def _get_feed_dict(self, words, labels):
-        '''Get dictionary for feeding to LSTM
-        Args:
-            words: list of list of word IDs (ie list of qns)
-        Returns:
-            feed: dict {placeholder: value}
-        '''
         
-        word_ids, sequence_lengths = self.padQuestionIDs(words, 0)
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels) in enumerate(
+            trainReader.getNextBatch(batch_size)):
+            
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.labels : labels,
+                self.lr : self.config.lossRate,
+                self.dropout : self.config.dropoutVal
+            }
+            _, _ = self.sess.run(
+                [self.train_op, self.loss], feed_dict=feed)
+            
+            if (i%100==0):
+                #every 2000 batches
+                feed[self.dropout] = 1.0
+                trainAcc = self.sess.run(self.accuracy, feed_dict=feed)
+                valAcc = self.runVal(valReader)
+                print('Val acc = {}'.format(valAcc))
+                resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}'.format(
+                    nEpoch, i, valAcc, trainAcc)
+                self.logFile.write(resMsg)
+                print(resMsg)
+            
+        epochScore = self.runVal(valReader)
+        print('Epoch {0}: val Score={1:>6.1%}'.format(
+                    nEpoch, epochScore))
+        return epochScore
+        #metrics = self.run_evaluate(dev)
+        #msg = " - ".join(["{} {:04.2f}".format(k, v)
+        #        for k, v in metrics.items()])
+        #self.logger.info(msg)
+
+        #return metrics["f1"]
+    
+    def runVal(self, valReader):
+        """Evaluates performance on test set
+        Args:
+            test: dataset that yields tuple of (sentences, tags)
+        Returns:
+            metrics: (dict) metrics["acc"] = 98.4, ...
+        """
+        batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = valReader.getWholeBatch()
         
         feed = {
-            self.word_ids : word_ids,
-            self.sequence_length : sequence_lengths,
-            self.labels : labels,
-            self.lr : self.config.lossRate,
-            self.dropout : self.config.dropoutVal
-        }
-        
-        return feed
-    
-    def padQuestionIDs(self, questions, padding):
+                self.word_ids : batchOfQnsAsWordIDs,
+                self.sequence_lengths : qnLengths,
+                self.img_vecs : img_vecs,
+                self.labels : labels,
+                self.dropout : 1.0
+            }
+        valAcc = self.sess.run(self.accuracy, feed_dict=feed)
+        return valAcc
         '''
-        Pads each list to be same as max length
-        args:
-            questions: list of list of word IDs (ie a batch of qns)
-            padding: symbol to pad with
-        '''
-        maxLength = max(map(lambda x : len(x), questions))
-        #Get length of longest qn
-        paddedQuestions, qnLengths = [], []
-        for qn in questions:
-            qn = list(qn) #ensure list format
-            if (len(qn) < maxLength):
-                paddedQn = qn + [padding]*(maxLength - len(qn))
-                paddedQuestions.append(paddedQn)
-            else:
-                paddedQuestions.append(qn)
-            qnLengths.append(len(qn))
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels) in enumerate(
+            valReader.getNextBatch(self.config.batch_size)):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_length : seqLens,
+                self.img_vecs : img_vecs,
+                self.labels : labels,
+                self.dropout : 1.0
+            }
+            labelPredictions = self.sess.run(self.labels_pred, feed_dict=feed)
             
-        return paddedQuestions, qnLengths
+            
+        
+        accs = []
+        correct_preds, total_correct, total_preds = 0., 0., 0.
+        for words, labels in minibatches(test, self.config.batch_size):
+            labels_pred, sequence_lengths = self.predict_batch(words)
+
+            for lab, lab_pred, length in zip(labels, labels_pred,
+                                             sequence_lengths):
+                lab      = lab[:length]
+                lab_pred = lab_pred[:length]
+                accs    += [a==b for (a, b) in zip(lab, lab_pred)]
+
+                lab_chunks      = set(get_chunks(lab, self.config.vocab_tags))
+                lab_pred_chunks = set(get_chunks(lab_pred,
+                                                 self.config.vocab_tags))
+
+                correct_preds += len(lab_chunks & lab_pred_chunks)
+                total_preds   += len(lab_pred_chunks)
+                total_correct += len(lab_chunks)
+
+        p   = correct_preds / total_preds if correct_preds > 0 else 0
+        r   = correct_preds / total_correct if correct_preds > 0 else 0
+        f1  = 2 * p * r / (p + r) if correct_preds > 0 else 0
+        acc = np.mean(accs)
+
+        return {"acc": 100*acc, "f1": 100*f1}
     
+    def add_summary(self):
+        self.merged      = tf.summary.merge_all()
+        self.file_writer = tf.summary.FileWriter(self.config.dir_output,
+                self.sess.graph)
+        
+    '''
+    def loadTrainedModel(self):
+        self.sess = tf.Session()
+        self.saver = saver = tf.train.import_meta_graph('LSTMIMG-proto.meta')
+        saver.restore(self.sess, tf.train.latest_checkpoint('/media/jwong/Transcend/VQADataset/DummySets/'))
+        
+        graph = tf.get_default_graph()
+        self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
+        self.accuracy = graph.get_tensor_by_name('accuracy:0')
+        self.word_ids = graph.get_tensor_by_name('word_ids:0')
+        self.img_vecs = graph.get_tensor_by_name('img_vecs:0')
+        self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
+        self.labels = graph.get_tensor_by_name('labels:0')
+        
+        self.saver = tf.train.Saver()
+    
+    
+        
+        
     def destruct(self):
         self.logFile.close()
         
-    '''
-        
-        
-        
-        
-    
-    
     
