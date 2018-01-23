@@ -15,7 +15,7 @@ class Config(object):
     modelStruct = 'imageAfterLSTM'
     
     nOutClasses = 1000  #1000 or 17140
-    batch_size = 20
+    batch_size = 32
     imgVecSize = 1024
     wordVecSize = 300
     

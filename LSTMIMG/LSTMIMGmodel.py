@@ -99,14 +99,15 @@ class LSTMIMGmodel(object):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            fchLayer = self._fullyConnectedLayer(self, self.LSTMOutput,
-                                LSTMOutputSize, 
-                                self.config.nOutClasses, 
-                                use_sig=True)
-            y = self._fullyConnectedLayer(self, self.LSTMOutput,
-                                LSTMOutputSize, 
-                                self.config.nOutClasses, 
-                                use_sig=False)
+            fchLayer = self._fullyConnectedLayer(x=self.LSTMOutput,
+                                inputSize=LSTMOutputSize, 
+                                outputSize=LSTMOutputSize/2, 
+                                use_sig=True, num=1)
+            
+            y = self._fullyConnectedLayer(x=fchLayer,
+                                inputSize=LSTMOutputSize/2, 
+                                outputSize=self.config.nOutClasses, 
+                                use_sig=False, num=2)
             
         #predict & get accuracy
         self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
@@ -147,14 +148,13 @@ class LSTMIMGmodel(object):
         self.logFile.write('Model constructed.')
         print('Complete Model Construction')
     
-    def _fullyConnectedLayer(self, input, inputSize, outputSize, use_sig):
-        W = tf.get_variable("W", dtype=tf.float32,
-                    shape=[inputSize, outputSize])
+    def _fullyConnectedLayer(self, x, inputSize, outputSize, use_sig, num):
+        W = tf.get_variable("W"+str(num), dtype=tf.float32, shape=[inputSize, outputSize])
 
-        b = tf.get_variable("b", shape=[outputSize],
-                    dtype=tf.float32, initializer=tf.zeros_initializer())
+        b = tf.get_variable("b"+str(num), shape=[outputSize], dtype=tf.float32, 
+                            initializer=tf.zeros_initializer())
             
-        layer = tf.matmul(input, W) + b #shape=[batch_size, numClasses]
+        layer = tf.matmul(x, W) + b #shape=[batch_size, numClasses]
         
         if use_sig:
             layer = tf.nn.sigmoid(layer)
