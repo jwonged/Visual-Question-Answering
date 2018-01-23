@@ -99,15 +99,16 @@ class LSTMIMGmodel(object):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            fchLayer = self._fullyConnectedLayer(x=self.LSTMOutput,
-                                inputSize=LSTMOutputSize, 
-                                outputSize=LSTMOutputSize/2, 
-                                use_sig=True, num=1)
+            hidden_layer = tf.layers.dense(inputs=self.LSTMOutput,
+                                           units=LSTMOutputSize/2,
+                                           activation=tf.sigmoid,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer)
             
-            y = self._fullyConnectedLayer(x=fchLayer,
-                                inputSize=LSTMOutputSize/2, 
-                                outputSize=self.config.nOutClasses, 
-                                use_sig=False, num=2)
+            y = tf.layers.dense(inputs=hidden_layer,
+                                           units=self.config.nOutClasses,
+                                           activation=None,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer)
+
             
         #predict & get accuracy
         self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
@@ -147,21 +148,6 @@ class LSTMIMGmodel(object):
         
         self.logFile.write('Model constructed.')
         print('Complete Model Construction')
-    
-    def _fullyConnectedLayer(self, x, inputSize, outputSize, use_sig, num):
-        W = tf.get_variable("W"+str(num), dtype=tf.float32, shape=[inputSize, outputSize])
-
-        b = tf.get_variable("b"+str(num), shape=[outputSize], dtype=tf.float32, 
-                            initializer=tf.zeros_initializer())
-            
-        layer = tf.matmul(x, W) + b #shape=[batch_size, numClasses]
-        
-        if use_sig:
-            layer = tf.nn.sigmoid(layer)
-            
-        return layer
-        
-        
     
     def train(self, trainReader, valReader):
         print('Starting model training')
