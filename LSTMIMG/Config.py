@@ -11,7 +11,7 @@ class Config(object):
     def __init__(self):
         pass
     
-    #'imagePerWord' or 'imageAsFirstWord'
+    #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
     
     nOutClasses = 1000  #1000 or 17140
@@ -27,13 +27,26 @@ class Config(object):
     lossRateDecay = 0.9 #noDecay = 1
     max_gradient_norm = 4 #for clipping
     
-    logFile = 'LSTMIMGresults.txt'
+    unkWord = '<UNK>'
+    probSingleToUNK = 0.1
+    shuffle = True
+    trainEmbeddings = True
+    
+    logFile = 'LSTMIMGresults2401.txt'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     
-    trainEmbeddings = False
+    '''Pickle file Contains:
+            singleCountWords , wordToIDmap, 
+            classToAnsMap, ansToClassMap (not yet)
+    '''
+    preprocessedVQAMapsFile = '/media/jwong/Transcend/VQADataset/preprocessedVQAmaps.pkl'
+    
+    
     pretrainedw2v = '/media/jwong/Transcend/GoogleNews-vectors-negative300.txt'
-    shortenedEmbeddingsFile = '/media/jwong/Transcend/VQADataset/cutW2VEmbeddings.npz'
-    fullDatasetVocab = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
+    shortenedEmbeddingsWithUNKFile = '/media/jwong/Transcend/VQADataset/cutW2VEmbeddingsWithUNK.npz'
+    
+    #empty for now
+    datasetVocabWithUNK = '/media/jwong/Transcend/VQADataset/FullVQAVocabWwithUNK.txt'
     
     #Qn_ID --> 'qn'
     rawQnTrain = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
@@ -73,12 +86,30 @@ class Config(object):
     
     #contains vocab from train/val/test questions and answers
     vocabFile = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
-    
+    fullDatasetVocab2301 = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
+    shortenedEmbeddingsWithoutUNKFile = '/media/jwong/Transcend/VQADataset/cutW2VEmbeddings.npz'
+
     #other options currently manual
     #Sentence padding = pad to max len
     #Handling words not in embeddings = ignore (or give UNK vec)
     #LSTM input = 1st word as img or concat word+img on each time step
 
+
+import pickle
+class mappers(object):
+    def __init__(self):
+        config = Config()
+        with open(config.preprocessedVQAMapsFile, 'rb') as f:
+            data = pickle.load(f)
+        
+        self.mapWordToID = data['wordToIDmap']
+        self.singleCountWords = data['singleCountWords']
+        self.classToAnsMap = data['classToAnsMap']
+        self.ansToClassMap = data['ansToClassMap']
+        
+    def getSingleCountWords(self):
+        return self.singleCountWords
     
-    
+    def getMapWordToID(self):
+        return self.mapWordToID
     

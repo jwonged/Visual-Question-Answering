@@ -5,13 +5,14 @@ Created on 23 Jan 2018
 '''
 import unittest
 from LSTMIMG.VQAPreprocessor import VQAPreprocessor
+from LSTMIMG.Config import Config
 
 
 class Test(unittest.TestCase):
 
 
     def setUp(self):
-        self.processor = VQAPreprocessor(5)
+        self.processor = VQAPreprocessor(Config())
 
 
     def tearDown(self):
@@ -21,7 +22,7 @@ class Test(unittest.TestCase):
     def test_getWordFreqsFromQnFile(self):
         rawQnTrain = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
     
-        self.processor._getWordFreqsFromQnFile(rawQnTrain)
+        self.processor.getVocabForEmbeddings()
 
 
 if __name__ == "__main__":

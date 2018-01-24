@@ -14,14 +14,15 @@ def runtrain():
                                  config.rawQnTrain, 
                                  config.trainImgFile, 
                                  config.ansClass1000File, 
-                                 config.vocabFile)
-    
+                                 config,
+                                 is_training=True)
     
     valReader = InputProcessor(config.valAnnotFile, 
                                  config.rawQnValTestFile, 
                                  config.valImgFile, 
                                  config.ansClass1000File, 
-                                 config.vocabFile)
+                                 config,
+                                 is_training=True)
     
     #dumReader = DummyReader()
     

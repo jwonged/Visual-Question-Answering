@@ -1,0 +1,9 @@
+Initializing LSTMIMG
+Constructing model...
+Model constructed.Epoch 1 Epoch 0, batch 0: val Score=  0.0%, trainAcc=  0.0%
+Epoch 0, batch 1000: val Score= 26.9%, trainAcc= 31.2%
+Epoch 0, batch 2000: val Score= 26.9%, trainAcc= 21.9%
+Epoch 0, batch 3000: val Score= 26.6%, trainAcc= 25.0%
+Epoch 0, batch 4000: val Score= 26.0%, trainAcc= 25.0%
+Epoch 0, batch 5000: val Score= 30.0%, trainAcc= 37.5%
+Epoch 0, batch 6000: val Score= 30.6%, trainAcc= 28.1%

@@ -6,15 +6,22 @@ Created on 23 Jan 2018
 import json
 from nltk import word_tokenize
 from collections import Counter
+import pickle
+from Config import Config
+import numpy as np
 
 class VQAPreprocessor(object):
-    '''
-    classdocs
-    '''
-
-
     def __init__(self, config):
         self.config = config
+        
+        self.trainFile = config.rawQnTrain
+        self.valTestFile = config.rawQnValTestFile
+        
+        self.wordToIDmap = None
+        self.singleCountTrainWords = None
+        self.ansToClassMap = None
+        self.classToAnsMap = None
+        
     
     def _getWord2VecVocabSet(self):
         print('Reading {}'.format(self.config.pretrainedw2v))
@@ -22,11 +29,12 @@ class VQAPreprocessor(object):
         with open(self.config.pretrainedw2v) as f:
             for line in f:
                 word = line.strip().split(' ')[0]
-                vocab.add(word)
+                vocab.add(word.lower())
         print('Extracted {} words from word2vec'.format(len(vocab)))
         return vocab
 
-    def _getWordFreqsFromQnFile(self,fileName):
+    def _getWordFromQnFile(self,fileName):
+        #Retrieves vocab set and list of all words in qn file
         print('Reading {}'.format(fileName))
         with open(fileName) as qnFile:
             qnmap = json.load(qnFile)
@@ -43,67 +51,93 @@ class VQAPreprocessor(object):
         return vocab, wordList
     
     def _getSingleCountWords(self, allWords):
+        #args: list of all words
+        #returns set of words with count == 1
         singleCountWords = set()
         wordCounts = Counter(allWords)
-        numWords = 0
         for word, count in wordCounts.iteritems():
-            numWords +=1
             if count == 1:
                 singleCountWords.add(word)
                 
         return singleCountWords
     
-    def _getVocabFromAnsFile(fileName):
+    def getVocabForEmbeddings(self):
+        '''
+        Embedding vocab includes:
+            - all vocab in training (some will be initialized to empty vecs)
+            - all vocab in val/test which are in pretrained w2v
+            - UNK
+        '''
+        trainVocab, trainWordList = self._getWordFromQnFile(self.trainFile)
+        valTestVocab, _ = self._getWordFromQnFile(self.valTestFile)
+        
+        word2vecVocab = self._getWord2VecVocabSet()
+        
+        allDatasetVocab = trainVocab.union(valTestVocab)
+        
+        wordsForEmbeddings = allDatasetVocab.intersection(word2vecVocab)
+        wordsForEmbeddings = wordsForEmbeddings.union(trainVocab)
+        wordsForEmbeddings.add(self.config.unkWord)
+        
+        singleCountTrainWords = self._getSingleCountWords(trainWordList)
+        print('All dataset vocab: {}, wordsForEmbeddingsAfterTrain: {}'.format(
+            len(allDatasetVocab), len(wordsForEmbeddings)))
+        print('Single count words: {}'.format(len(singleCountTrainWords)))
+        
+        self.wordToIDmap = {}
+        for word_id, word in enumerate(wordsForEmbeddings):
+            self.wordToIDmap[word] = word_id
+        self.singleCountTrainWords = singleCountTrainWords
+        print('map: {}'.format(len(self.wordToIDmap)))
+    
+    def saveToFile(self):
+        data = {}
+        data['singleCountWords'] = self.singleCountTrainWords
+        data['ansToClassMap'] = self.ansToClassMap # not in use
+        data['wordToIDmap'] = self.wordToIDmap
+        data['classToAnsMap'] = self.classToAnsMap # not in use
+        
+        with open(self.config.preprocessedVQAMapsFile, 'wb') as f:
+            pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        print('Saved to {}'.format(self.config.preprocessedVQAMapsFile))
+        
+    def shortenEmbeddingsFile(self):
+        embeddingVecs = np.random.uniform(low=-1.0, 
+                                          high=1.0, 
+                                          size=[len(self.wordToIDmap), 300])
+        
+        with open(self.config.pretrainedw2v) as f:
+            for line in f:
+                line = line.strip().split(' ')
+                word = line[0].lower()
+                if word in self.wordToIDmap:
+                    vec = [float(val) for val in line[1:]]
+                    word_id = self.wordToIDmap[word]
+                    embeddingVecs[word_id] = np.asarray(vec)
+        
+        np.savez_compressed(self.config.shortenedEmbeddingsWithUNKFile, vectors=embeddingVecs)
+        print('Written np array of shape {} to file {}'.format(
+            embeddingVecs.shape, self.config.shortenedEmbeddingsWithUNKFile))
+        print(embeddingVecs[1000])
+
+    def _getAnsClassesFromFile(self, fileName):
         print('Reading {}'.format(fileName))
         with open(fileName) as annotFile:
             annotBatch = json.load(annotFile)
         
-        vocab = set()
+        ansClasses = set()
         for annot in annotBatch:
-            for word in word_tokenize(annot["answers"]):
-                vocab.add(word)
-        print('Extracted {} words from {}'.format(len(vocab), fileName))
-        return vocab
-        
-    def getAllDatasetVocab():
-        
-        vocab.add('<UNK>')
-        """Writes a vocab to a file
-        Writes one word per line.
-        Args:
-            vocab: iterable that yields word
-            filename: path to vocab file
-        Returns:
-            write a word per line
-        """
-        vocabOut = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
-        datasetVocab = set()
-        
-        #add question vocab to set
-        qnTrain = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
-        valTestQnFile = '/media/jwong/Transcend/VQADataset/ValTestSet/Questions_Val_mscoco/preprocessedValTestQnsOpenEnded.json'
-        datasetVocab = datasetVocab.union(_getVocabFromQnFile(qnTrain))
-        datasetVocab = datasetVocab.union(_getVocabFromQnFile(valTestQnFile))
-        print('Set now contains {} words'.format(len(datasetVocab)))
-        
-        #add answer vocab to set
-        trainAnnotOut = '/media/jwong/Transcend/VQADataset/TrainSet/LSTMIMGData/AllTrainAnnotResolvedList.json'
-        valAnnotOut = '/media/jwong/Transcend/VQADataset/ValTestSet/LSTMIMGData/AllValAnnotResolvedList.json'
-        testAnnotOut = '/media/jwong/Transcend/VQADataset/ValTestSet/LSTMIMGData/AllTestAnnotResolvedList.json'
-        datasetVocab = datasetVocab.union(_getVocabFromAnsFile(trainAnnotOut))
-        datasetVocab = datasetVocab.union(_getVocabFromAnsFile(valAnnotOut))
-        datasetVocab = datasetVocab.union(_getVocabFromAnsFile(testAnnotOut))
-        print('Set now contains {} words'.format(len(datasetVocab)))
-        
-        #get intersection of word2vec vocab and dataset vocab
-        datasetVocab = datasetVocab.intersection(_getWord2VecVocabSet())
-        
-        print("Writing {} words to {}".format(len(datasetVocab), vocabOut))
-        with open(vocabOut, "w") as f:
-            for index, word in enumerate(datasetVocab, 1):
-                if index != len(datasetVocab):
-                    f.write("{}\n".format(word))
-                else:
-                    f.write(word)
-                    print('Written {} words'.format(index))
-        print("Completed writing {} words".format(len(datasetVocab)))
+            ansClasses.add(annot["answers"].lower())
+        print('Extracted {} classes from {}'.format(len(ansClasses), fileName))
+        return ansClasses
+    
+    def getAnsClassMaps(self):
+        pass
+
+if __name__ == '__main__':
+    config = Config()
+    processor = VQAPreprocessor(config)
+    processor.getVocabForEmbeddings()
+    processor.saveToFile()
+    processor.shortenEmbeddingsFile()
+    

@@ -24,9 +24,9 @@ class LSTMIMGmodel(object):
         self.logFile.write('Initializing LSTMIMG\n')
         self.sess   = None
         self.saver  = None
-
-    def construct(self):
-        #add placeholders
+    
+    def _addPlaceholders(self):
+        #add network placeholders
         self.logFile.write('Constructing model...\n')
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
@@ -45,10 +45,10 @@ class LSTMIMGmodel(object):
         # hyper parameters
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
-
-        
+    
+    def _addEmbeddings(self):
         #add word embeddings
-        pretrainedEmbeddings = getPretrainedw2v(self.config.shortenedEmbeddingsFile)
+        pretrainedEmbeddings = getPretrainedw2v(self.config.shortenedEmbeddingsWithUNKFile)
         
         with tf.variable_scope("words"):
             wordEmbedsVar = tf.Variable(pretrainedEmbeddings,
@@ -62,13 +62,25 @@ class LSTMIMGmodel(object):
         
         #self.word_embeddings =  tf.nn.dropout(word_embeddings, self.dropout)
         
+    def construct(self):
+        self._addPlaceholders()
+        
+        self._addEmbeddings()
         
         #Handle input according to model structure
         if self.config.modelStruct == 'imagePerWord':
+            print('Constructing imagePerWord model')
             #(dim of input to each LSTM cell)
             LSTM_num_units = self.config.wordVecSize + self.config.imgVecSize 
             self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
+        elif self.config.modelStruct == 'imageAsFirstWord':
+            imgMappingLayer = tf.layers.dense(inputs=self.img_vecs,
+                                           units=self.config.wordVecSize,
+                                           activation=tf.sigmoid,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            self.LSTMinput = tf.concat([self.word_embeddings, imgMappingLayer])
         else:
+            print('Constructing imageAfterLSTM model')
             LSTM_num_units = self.config.wordVecSize 
             self.LSTMinput = self.word_embeddings
             
@@ -102,12 +114,12 @@ class LSTMIMGmodel(object):
             hidden_layer = tf.layers.dense(inputs=self.LSTMOutput,
                                            units=LSTMOutputSize/2,
                                            activation=tf.sigmoid,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer)
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
             
             y = tf.layers.dense(inputs=hidden_layer,
                                            units=self.config.nOutClasses,
                                            activation=None,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer)
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
 
             
         #predict & get accuracy
@@ -125,6 +137,13 @@ class LSTMIMGmodel(object):
         # for tensorboard
         #tf.summary.scalar("loss", self.loss)
         
+        self._addOptimizer()
+        
+        #init vars and session
+        self._initSession()
+        
+    
+    def _addOptimizer(self):
         #train optimizer
         with tf.variable_scope("train_step"):
             if self.config.modelOptimizer == 'adam': 
@@ -140,15 +159,15 @@ class LSTMIMGmodel(object):
                 self.train_op = optimizer.apply_gradients(zip(grads, vs), name='trainModel')
             else:
                 self.train_op = optimizer.minimize(self.loss, name='trainModel')
-                
-        #init vars and session
+    
+    def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
         
         self.logFile.write('Model constructed.')
         print('Complete Model Construction')
-    
+        
     def train(self, trainReader, valReader):
         print('Starting model training')
         #self.add_summary()
@@ -168,7 +187,7 @@ class LSTMIMGmodel(object):
                 nEpochWithoutImprovement = 0
                 self._save_session()
                 highestScore = score
-                self.logFile.write('New score')
+                self.logFile.write('New score\n')
             else:
                 nEpochWithoutImprovement += 1
                 if nEpochWithoutImprovement >= self.config.nEpochsWithoutImprov:
@@ -202,7 +221,7 @@ class LSTMIMGmodel(object):
             _, _ = self.sess.run(
                 [self.train_op, self.loss], feed_dict=feed)
             
-            if (i%1000==0):
+            if (i%6000==0):
                 #every 2000 batches
                 feed[self.dropout] = 1.0
                 trainAcc = self.sess.run(self.accuracy, feed_dict=feed)

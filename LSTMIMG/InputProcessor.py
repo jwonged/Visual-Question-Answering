@@ -6,6 +6,9 @@ Created on 20 Jan 2018
 import json
 import csv
 from nltk import word_tokenize
+import pickle
+import numpy as np
+import random
 
 class InputProcessor(object):
     '''
@@ -18,7 +21,7 @@ class InputProcessor(object):
         vocabFile
     '''
 
-    def __init__(self, annotFile, qnFile, imgFile, ansClassFile, vocabFile):
+    def __init__(self, annotFile, qnFile, imgFile, ansClassFile, config, is_training):
         print('Reading ' + imgFile)
         self.imgData = self._readJsonFile(imgFile)
         
@@ -31,8 +34,16 @@ class InputProcessor(object):
         print('Reading ' + ansClassFile)
         self.mapAnsToClass = self._loadAnsMap(ansClassFile)
         
-        print('Reading ' + vocabFile)
-        self.mapWordToID = self._loadVocabFromFile(vocabFile)
+        print('Reading ' + config.preprocessedVQAMapsFile)
+        with open(config.preprocessedVQAMapsFile, 'rb') as f:
+            data = pickle.load(f)
+        
+        self.mapWordToID = data['wordToIDmap']
+        self.singleCountWords = data['singleCountWords']
+        self.is_training = is_training
+        self.config = config
+        if config.shuffle and is_training:
+            random.shuffle(self.annots)
         
     def _readJsonFile(self, fileName):
         with open(fileName) as jsonFile:
@@ -70,7 +81,14 @@ class InputProcessor(object):
         for word in wordList:
             word = word.strip()
             if word in self.mapWordToID:
-                idList.append(self.mapWordToID[word]) 
+                #prob chance of converting a single count word to UNK
+                if (self.is_training and word in self.singleCountWords and 
+                        np.random.uniform() < self.config.probSingleToUNK):
+                    idList.append(self.mapWordToID[self.config.unkWord])
+                else:
+                    idList.append(self.mapWordToID[word]) 
+            else:
+                idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
     def getNextBatch(self, batchSize):
@@ -96,6 +114,8 @@ class InputProcessor(object):
                 labelClass = self.mapAnsToClass[annot['answers']]
                 labels.append(labelClass)
         
+        if self.config.shuffle and self.is_training:
+            random.shuffle(self.annots)
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
             yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
