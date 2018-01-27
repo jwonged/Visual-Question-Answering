@@ -20,19 +20,21 @@ class Config(object):
     wordVecSize = 300
     
     nTrainEpochs = 30
-    nEpochsWithoutImprov = 2
+    nEpochsWithoutImprov = 3
     dropoutVal = 0.5
-    modelOptimizer = "GradDesc"
-    lossRate = 0.01 #0.001 for adam, 0.01 for gradDesc
-    lossRateDecay = 0.9 #noDecay = 1
-    max_gradient_norm = 4 #for clipping
+    modelOptimizer = "adam"
+    lossRate = 0.001 #0.001 for adam, 0.01 for gradDesc
+    lossRateDecay = 1 #noDecay = 1
+    max_gradient_norm = -1 #for clipping
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
     shuffle = True
     trainEmbeddings = True
     
-    logFile = 'LSTMIMGresults2401.txt'
+    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/DummyPred_mainResult2601LSTMIMG_adamConcatAfter.csv'
+    predictionsFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/LSTMIMGpreds2501.txt'
+    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/DummyRes_mainResult2601LSTMIMG_adamConcatAfter.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     
     '''Pickle file Contains:

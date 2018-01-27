@@ -32,7 +32,7 @@ class InputProcessor(object):
         self.rawQns = self._readJsonFile(qnFile)
         
         print('Reading ' + ansClassFile)
-        self.mapAnsToClass = self._loadAnsMap(ansClassFile)
+        self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
         
         print('Reading ' + config.preprocessedVQAMapsFile)
         with open(config.preprocessedVQAMapsFile, 'rb') as f:
@@ -54,12 +54,17 @@ class InputProcessor(object):
         with open(ansClassFile, 'rb') as ansFile:
             reader = csv.reader(ansFile, delimiter=',')
             ansVec = next(reader)
+        classToAnsMap = {}
         ansClassMap = {}
         for classIndex, word in enumerate(ansVec):
             word = word.strip()
             ansClassMap[word] = classIndex
+            classToAnsMap[classIndex] = word
         print('Read in answer mapping with {} answers'.format(len(ansClassMap)))
-        return ansClassMap
+        return ansClassMap, classToAnsMap
+    
+    def getAnsMap(self):
+        return self.classToAnsMap
     
     def _loadVocabFromFile(self, vocabFile):
         '''
@@ -75,11 +80,10 @@ class InputProcessor(object):
         return mapWordID
     
     def _mapQnToIDs(self, qn):
-        #currently ignoring words not in vocab -- need handle this
-        wordList = word_tokenize(qn)
+        #Convert str question to a list of word_ids
         idList = []
-        for word in wordList:
-            word = word.strip()
+        for word in word_tokenize(qn):
+            word = word.strip().lower()
             if word in self.mapWordToID:
                 #prob chance of converting a single count word to UNK
                 if (self.is_training and word in self.singleCountWords and 
@@ -88,37 +92,48 @@ class InputProcessor(object):
                 else:
                     idList.append(self.mapWordToID[word]) 
             else:
+                if self.is_training:
+                    print('This should never be printed - all train words in map')
                 idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
     def getNextBatch(self, batchSize):
-        batchOfQnsAsWordIDs, img_vecs, labels = [], [], []
+        batchOfQnsAsWordIDs, img_vecs, labels, rawQns, img_ids = [], [], [], [], []
         for annot in self.annots:
             if (len(batchOfQnsAsWordIDs) == batchSize):
                 batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
-                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = [], [], [], []
-                
-            if annot['answers'] in self.mapAnsToClass:
+                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids
+                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids = [], [], [], [], [], []
+            
+            #Leave out answers not in AnsClass for training; map to special num for val
+            if (not self.is_training) or (
+                self.is_training and annot['answers'] in self.mapAnsToClass):
                 #process question
                 rawQn = self.rawQns[str(annot['question_id'])]
                 qnAsWordIDs = self._mapQnToIDs(rawQn)
                 batchOfQnsAsWordIDs.append(qnAsWordIDs)
+                rawQns.append(rawQn)
                 
                 #process img
                 img_id = str(annot['image_id'])
                 img_vec = self.imgData[img_id][0]
                 img_vecs.append(img_vec)
+                img_ids.append(img_id)
                 
                 #process label
-                labelClass = self.mapAnsToClass[annot['answers']]
+                if annot['answers'] not in self.mapAnsToClass:
+                    if self.is_training:
+                        raise ValueError('Inconsistent State in processing label')
+                    labelClass = 7761875725
+                else:
+                    labelClass = self.mapAnsToClass[annot['answers']]
                 labels.append(labelClass)
         
         if self.config.shuffle and self.is_training:
             random.shuffle(self.annots)
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
+            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids
     
     def getWholeBatch(self):
         batchOfQnsAsWordIDs, img_vecs, labels = [], [], []
