@@ -21,7 +21,7 @@ class InputProcessor(object):
         vocabFile
     '''
 
-    def __init__(self, annotFile, qnFile, imgFile, ansClassFile, config, is_training):
+    def __init__(self, annotFile, qnFile, imgFile, config, is_training):
         print('Reading ' + imgFile)
         self.imgData = self._readJsonFile(imgFile)
         
@@ -31,12 +31,18 @@ class InputProcessor(object):
         print('Reading ' + qnFile)
         self.rawQns = self._readJsonFile(qnFile)
         
-        print('Reading ' + ansClassFile)
-        self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
+        #print('Reading ' + ansClassFile)
+        #self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
         
         print('Reading ' + config.preprocessedVQAMapsFile)
         with open(config.preprocessedVQAMapsFile, 'rb') as f:
             data = pickle.load(f)
+        
+        self.mapAnsToClass = data['ansToClassMap']
+        print('Using {} answer classes'.format(len(self.mapAnsToClass)))
+        
+        self.classToAnsMap = data['classToAnsMap']
+        self.classToAnsMap[-1] = -1
         
         self.mapWordToID = data['wordToIDmap']
         self.singleCountWords = data['singleCountWords']
@@ -50,6 +56,7 @@ class InputProcessor(object):
             return json.load(jsonFile)
     
     def _loadAnsMap(self, ansClassFile):
+        #only used when loading answers from csv
         #loads mapping: ans --> ans class index
         with open(ansClassFile, 'rb') as ansFile:
             reader = csv.reader(ansFile, delimiter=',')
@@ -61,6 +68,8 @@ class InputProcessor(object):
             ansClassMap[word] = classIndex
             classToAnsMap[classIndex] = word
         print('Read in answer mapping with {} answers'.format(len(ansClassMap)))
+        classToAnsMap[-1] = -1
+        classToAnsMap[7761875725] = '7761875725'
         return ansClassMap, classToAnsMap
     
     def getAnsMap(self):
@@ -124,7 +133,7 @@ class InputProcessor(object):
                 if annot['answers'] not in self.mapAnsToClass:
                     if self.is_training:
                         raise ValueError('Inconsistent State in processing label')
-                    labelClass = 7761875725
+                    labelClass = -1
                 else:
                     labelClass = self.mapAnsToClass[annot['answers']]
                 labels.append(labelClass)

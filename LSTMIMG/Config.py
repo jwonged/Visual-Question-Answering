@@ -14,32 +14,31 @@ class Config(object):
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
     
-    nOutClasses = 1000  #1000 or 17140
+    nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
     batch_size = 32
     imgVecSize = 1024
     wordVecSize = 300
     
     nTrainEpochs = 30
     nEpochsWithoutImprov = 3
-    dropoutVal = 0.5
-    modelOptimizer = "adam"
-    lossRate = 0.001 #0.001 for adam, 0.01 for gradDesc
-    lossRateDecay = 1 #noDecay = 1
-    max_gradient_norm = -1 #for clipping
+    dropoutVal = 0.5 #standard 0.5, 1.0 for none
+    modelOptimizer = 'adam'
+    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    lossRateDecay = 1 #noDecay = 1; usually ~0.9
+    max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/DummyPred_mainResult2601LSTMIMG_adamConcatAfter.csv'
-    predictionsFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/LSTMIMGpreds2501.txt'
-    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/DummyRes_mainResult2601LSTMIMG_adamConcatAfter.csv'
+    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_mainAnsClass3101LSTMIMG_lr2.csv'
+    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_main3101AnsClassLSTMIMG_lr2.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
-            classToAnsMap, ansToClassMap (not yet)
+            classToAnsMap, ansToClassMap
     '''
     preprocessedVQAMapsFile = '/media/jwong/Transcend/VQADataset/preprocessedVQAmaps.pkl'
     
@@ -90,11 +89,6 @@ class Config(object):
     vocabFile = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
     fullDatasetVocab2301 = '/media/jwong/Transcend/VQADataset/FullVQAVocab.txt'
     shortenedEmbeddingsWithoutUNKFile = '/media/jwong/Transcend/VQADataset/cutW2VEmbeddings.npz'
-
-    #other options currently manual
-    #Sentence padding = pad to max len
-    #Handling words not in embeddings = ignore (or give UNK vec)
-    #LSTM input = 1st word as img or concat word+img on each time step
 
 
 import pickle

@@ -11,6 +11,10 @@ from Config import Config
 import numpy as np
 
 class VQAPreprocessor(object):
+    '''
+    1) Produce vocab for qns
+    2) Shorten embeddings file
+    '''
     def __init__(self, config):
         self.config = config
         
@@ -93,9 +97,9 @@ class VQAPreprocessor(object):
     def saveToFile(self):
         data = {}
         data['singleCountWords'] = self.singleCountTrainWords
-        data['ansToClassMap'] = self.ansToClassMap # not in use
+        data['ansToClassMap'] = self.ansToClassMap 
         data['wordToIDmap'] = self.wordToIDmap
-        data['classToAnsMap'] = self.classToAnsMap # not in use
+        data['classToAnsMap'] = self.classToAnsMap 
         
         with open(self.config.preprocessedVQAMapsFile, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -125,18 +129,50 @@ class VQAPreprocessor(object):
         with open(fileName) as annotFile:
             annotBatch = json.load(annotFile)
         
+        listOfAllAnswers = []
         ansClasses = set()
         for annot in annotBatch:
-            ansClasses.add(annot["answers"].lower())
-        print('Extracted {} classes from {}'.format(len(ansClasses), fileName))
-        return ansClasses
+            listOfAllAnswers.append(annot["answers"].strip().lower())
+            ansClasses.add(annot["answers"].strip().lower())
+        print('Extracted {} unique answers from {}'.format(len(ansClasses), fileName))
+        return listOfAllAnswers
+    
+    def _getMostFreqAnswers(self, listOfAllAnswers):
+        mostFreqAnswers = Counter(listOfAllAnswers).most_common() #tuple
+        freqAnswers = set()
+        for (answer, count) in mostFreqAnswers:
+            if count > 3:
+                freqAnswers.add(answer)
+            else:
+                break
+        
+        return freqAnswers #list
     
     def getAnsClassMaps(self):
-        pass
+        ansClassList = self._getAnsClassesFromFile(self.config.trainAnnotFile)
+        ansClasses = self._getMostFreqAnswers(ansClassList)
+        
+        ansToClassMap = {}
+        classToAnsMap = {}
+        for index, ansWord in enumerate(ansClasses):
+            ansToClassMap[ansWord] = index
+            classToAnsMap[index] = ansWord
+        print('Extracted {} answer classes'.format(len(ansToClassMap)))
+        self.ansToClassMap = ansToClassMap
+        self.classToAnsMap = classToAnsMap
 
+def preprocessData():
+    config = Config()
+    processor = VQAPreprocessor(config)
+    processor.getAnsClassMaps()
+    processor.getVocabForEmbeddings()
+    processor.saveToFile()
+    processor.shortenEmbeddingsFile()
+    
 if __name__ == '__main__':
     config = Config()
     processor = VQAPreprocessor(config)
+    processor.getAnsClassMaps()
     processor.getVocabForEmbeddings()
     processor.saveToFile()
     processor.shortenEmbeddingsFile()

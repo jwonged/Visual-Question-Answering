@@ -1,0 +1,6 @@
+Initializing LSTMIMG
+Constructing model...
+Model constructed.Epoch 0 
+Epoch 0: val Score= 34.4%, train Score= 32.2%, total train predictions=215375.0
+New score
+Epoch 1 
