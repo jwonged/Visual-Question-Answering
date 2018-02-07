@@ -5,12 +5,13 @@ Created on 15 Jan 2018
 '''
 from LSTMIMGmodel import LSTMIMGmodel
 from Config import Config
+from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
 from InputProcessor import InputProcessor
 import pickle
 import csv
 
 def runtrain():
-    config = Config()
+    config = LSTMIMG_GPUConfig()
     
     trainReader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 

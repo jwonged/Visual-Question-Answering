@@ -1,9 +1,15 @@
 # Visual Question Answering
 
-## Dataset
+# Dataset
 http://visualqa.org/
 
-# Resources
+# Requirements
+Tensorflow - https://www.tensorflow.org/install/install_linux   
+NLTK - http://www.nltk.org/install.html   
+opencv (for shallow CNN) - https://docs.opencv.org/trunk/d2/de6/tutorial_py_setup_in_ubuntu.html   
+caffe (for pre-trained CNN) - http://caffe.berkeleyvision.org/install_apt.html   
+
+## Resources
 
 ### Word embeddings
 Word2Vec model - https://code.google.com/archive/p/word2vec/  
