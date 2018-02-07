@@ -160,14 +160,12 @@ class VQAPreprocessor(object):
         print('Extracted {} answer classes'.format(len(ansToClassMap)))
         self.ansToClassMap = ansToClassMap
         self.classToAnsMap = classToAnsMap
-
-def preprocessData():
-    config = Config()
-    processor = VQAPreprocessor(config)
-    processor.getAnsClassMaps()
-    processor.getVocabForEmbeddings()
-    processor.saveToFile()
-    processor.shortenEmbeddingsFile()
+        
+    def preprocessVQADataset(self):
+        self.getAnsClassMaps()
+        self.getVocabForEmbeddings()
+        self.saveToFile()
+        self.shortenEmbeddingsFile()
     
 if __name__ == '__main__':
     config = Config()

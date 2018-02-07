@@ -21,8 +21,10 @@ class SoftmaxLayer:
 		
 		#Loss - sparse softmax cross entropy for efficient label vector
 		ylabels = tf.placeholder(tf.int64, [None], name='ylabels') #Each label is only a single int corresponding to ans class index
-		crossEntropyLoss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=ylabels, logits=y))
-		trainModel = tf.train.GradientDescentOptimizer(0.01).minimize(crossEntropyLoss, name='trainModel')
+		crossEntropyLoss = tf.reduce_mean(
+			tf.nn.sparse_softmax_cross_entropy_with_logits(labels=ylabels, logits=y))
+		trainModel = tf.train.GradientDescentOptimizer(0.01).minimize(
+			crossEntropyLoss, name='trainModel')
 		
 		#accuracy
 		yPred = tf.argmax(tf.nn.softmax(y, name='yPred'),1) #Softmax redundant with argmax
