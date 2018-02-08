@@ -19,6 +19,7 @@ class Config(object):
     imgVecSize = 1024
     wordVecSize = 300
     LSTM_num_units = 512
+    elMult = True #False = concat; True = Mult
     
     nTrainEpochs = 30
     nEpochsWithoutImprov = 3

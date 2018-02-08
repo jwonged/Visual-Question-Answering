@@ -153,9 +153,14 @@ class LSTMIMGmodel(object):
         elif self.config.modelStruct == 'imageAsFirstWord':
             self.LSTMOutput = lstmOutput
             LSTMOutputSize = 2*LSTM_num_units
-        else:
-            self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
-            LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize #img=[?,1024]
+            
+        else: #imageAfterLSTM
+            if self.config.elMult:
+                self.LSTMOutput = tf.multiply(lstmOutput, self.img_vecs)
+                LSTMOutputSize = self.config.imgVecSize
+            else: #using concat
+                self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+                LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize #img=[?,1024]
         
         #fully connected layer
         with tf.variable_scope("proj"):
@@ -253,9 +258,10 @@ class LSTMIMGmodel(object):
                     break
     
     def _save_session(self):
+        pass
         #if not os.path.exists(self.config.dir_model):
         #    os.makedirs(self.config.dir_model)
-        self.saver.save(self.sess, self.config.saveModelFile)
+        #self.saver.save(self.sess, self.config.saveModelFile)
     
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
