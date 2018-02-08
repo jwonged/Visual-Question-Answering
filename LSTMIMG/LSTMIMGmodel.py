@@ -184,7 +184,7 @@ class LSTMIMGmodel(object):
             #                               activation=tf.tanh,
             #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
             hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
-                                           units=LSTMOutputSize/2,
+                                           units=1000,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             y = tf.layers.dense(inputs=hidden_layer2,
