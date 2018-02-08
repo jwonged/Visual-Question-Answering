@@ -140,7 +140,11 @@ class LSTMIMGmodel(object):
                 self.word_embeddings, 
                 sequence_length=self.sequence_lengths, dtype=tf.float32)
             print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
-            lstmOutput = tf.concat([fw_state.c, bw_state.c], axis=-1)
+            
+            fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
+            bw_out = tf.concat([bw_state.c, bw_state.h], axis=-1)
+            
+            lstmOutput = tf.concat([fw_out, bw_out], axis=-1)
             print('Shape of LSTM output after concat: {}'.format(lstmOutput.get_shape()))
             
             if self.config.dropoutVal < 1.0:
@@ -156,6 +160,10 @@ class LSTMIMGmodel(object):
             
         else: #imageAfterLSTM
             if self.config.elMult:
+                lstmOutput = tf.layers.dense(inputs=lstmOutput,
+                                           units=self.config.imgVecSize,
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
                 self.LSTMOutput = tf.multiply(lstmOutput, self.img_vecs)
                 LSTMOutputSize = self.config.imgVecSize
             else: #using concat
@@ -164,11 +172,11 @@ class LSTMIMGmodel(object):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            hidden_layer1 = tf.layers.dense(inputs=self.LSTMOutput,
-                                           units=LSTMOutputSize/2,
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            hidden_layer2 = tf.layers.dense(inputs=hidden_layer1,
+            #hidden_layer1 = tf.layers.dense(inputs=self.LSTMOutput,
+            #                               units=LSTMOutputSize/2,
+            #                               activation=tf.tanh,
+            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+            hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
                                            units=LSTMOutputSize/2,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
