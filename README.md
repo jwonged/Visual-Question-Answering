@@ -11,6 +11,10 @@ caffe (for pre-trained CNN) - http://caffe.berkeleyvision.org/install_apt.html
 
 ## Resources
 
+To get a file 'images.txt' containing the paths of all images in the folder /images:   
+find `pwd`/images -type f -exec echo {} \; > images.txt   
+   
+
 ### Word embeddings
 Word2Vec model - https://code.google.com/archive/p/word2vec/  
 gensim - https://radimrehurek.com/gensim/models/word2vec.html  
