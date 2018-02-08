@@ -159,14 +159,21 @@ class LSTMIMGmodel(object):
             LSTMOutputSize = 2*LSTM_num_units
             
         else: #imageAfterLSTM
+            print('Using imageAfterLSTM model')
             if self.config.elMult:
+                print('Using pointwise mult')
                 lstmOutput = tf.layers.dense(inputs=lstmOutput,
                                            units=self.config.imgVecSize,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-                self.LSTMOutput = tf.multiply(lstmOutput, self.img_vecs)
+                img_vecs = tf.layers.dense(inputs=self.img_vecs,
+                                           units=self.config.imgVecSize,
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+                self.LSTMOutput = tf.multiply(lstmOutput, img_vecs)
                 LSTMOutputSize = self.config.imgVecSize
             else: #using concat
+                print('Using concat')
                 self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
                 LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize #img=[?,1024]
         
