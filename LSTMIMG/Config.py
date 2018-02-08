@@ -34,8 +34,8 @@ class Config(object):
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_0802LSTMIMG_unit.csv'
-    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_0802LSTMIMG_unit.csv'
+    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_0802LSTMIMG_fcmult.csv'
+    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_0802LSTMIMG_fcmult.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     
     '''Pickle file Contains:
