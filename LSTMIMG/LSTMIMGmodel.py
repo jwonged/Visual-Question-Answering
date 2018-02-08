@@ -329,11 +329,11 @@ class LSTMIMGmodel(object):
                     correct_predictions += 1
                 total_predictions += 1
                 accuracies.append(lab==labPred)
-                self._logToCSV(
-                    nEpoch, qn, 
-                    self.classToAnsMap[labPred],
-                    self.classToAnsMap[lab], 
-                    labPred, lab, lab==labPred, img_id)
+                #self._logToCSV(
+                #    nEpoch, qn, 
+                #    self.classToAnsMap[labPred],
+                #    self.classToAnsMap[lab], 
+                #    labPred, lab, lab==labPred, img_id)
                 
         valAcc = np.mean(accuracies)
         return valAcc, correct_predictions, total_predictions

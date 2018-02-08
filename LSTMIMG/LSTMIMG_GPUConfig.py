@@ -24,7 +24,7 @@ class LSTMIMG_GPUConfig(object):
     nEpochsWithoutImprov = 3
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    lossRate = 0.0005 #0.001 for adam, 0.01 for gradDesc
     lossRateDecay = 1 #noDecay = 1; usually ~0.9
     max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
