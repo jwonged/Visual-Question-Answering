@@ -11,8 +11,8 @@ import pickle
 import csv
 
 def runtrain():
-    config = Config()
-    #config = LSTMIMG_GPUConfig()
+    #config = Config()
+    config = LSTMIMG_GPUConfig()
     
     trainReader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
