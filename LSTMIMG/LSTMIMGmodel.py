@@ -21,6 +21,8 @@ class LSTMIMGmodel(object):
 
     def __init__(self, config):
         self.config = config
+        with open(config.signalfile, 'w') as f:
+            f.write('Starting' + self._getDescription(config))
         
         f1 = open(config.logFile, 'wb')
         self.logFile = csv.writer(f1)
@@ -39,11 +41,11 @@ class LSTMIMGmodel(object):
     def _getDescription(self, config):
         info = 'model: {}, classes: {}, batchSize: {}, \
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
-             clip: {}, shuffle: {}, trainEmbeddings: {},'.format(
+             clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, '.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.lossRate,
                 config.lossRateDecay, config.max_gradient_norm, config.shuffle,
-                config.trainEmbeddings)
+                config.trainEmbeddings, config.LSTM_num_units)
         return info + 'fc: 3 layers'
     
     def _addPlaceholders(self):
@@ -93,7 +95,7 @@ class LSTMIMGmodel(object):
         if self.config.modelStruct == 'imagePerWord':
             print('Constructing imagePerWord model')
             #(dim of input to each LSTM cell)
-            LSTM_num_units = self.config.wordVecSize + self.config.imgVecSize 
+            #LSTM_num_units = self.config.wordVecSize + self.config.imgVecSize 
             self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
             
         elif self.config.modelStruct == 'imageAsFirstWord':
@@ -115,22 +117,24 @@ class LSTMIMGmodel(object):
             
             #add img embedding as first word to lstm input
             self.LSTMinput = tf.concat([imgMappingLayer2, self.word_embeddings], axis=1)
-            LSTM_num_units = self.config.wordVecSize
+            #LSTM_num_units = self.config.wordVecSize
             print('Shape of LSTM input: {}'.format(self.LSTMinput.get_shape()))
             
             #add 1 to all sequence lengths to account for extra img word
-            self.sequence_lengths = tf.add(self.sequence_lengths, tf.ones(tf.shape(self.sequence_lengths), dtype=tf.int32))
+            self.sequence_lengths = tf.add(
+                self.sequence_lengths, tf.ones(tf.shape(self.sequence_lengths), dtype=tf.int32))
         
         else:
             print('Constructing imageAfterLSTM model')
-            LSTM_num_units = self.config.wordVecSize 
+            #LSTM_num_units = self.config.wordVecSize 
             self.LSTMinput = self.word_embeddings
             
             
         #add logits
+        LSTM_num_units = self.config.LSTM_num_units
         with tf.variable_scope("bi-lstm"):
-            cell_fw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
-            cell_bw = tf.contrib.rnn.LSTMCell(LSTM_num_units)
+            cell_fw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
+            cell_bw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
             
             #Out [batch_size, max_time, cell_output_size] output, outputState
             (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
@@ -357,6 +361,7 @@ class LSTMIMGmodel(object):
         
         
     def destruct(self):
-        pass
+        with open(self.config.signalfile, 'w') as f:
+            f.write('Starting' + self._getDescription(self.config))
         
     

@@ -1,0 +1,1 @@
+Startingmodel: imageAfterLSTM, classes: 3147, batchSize: 32,             dropout: 0.5, optimizer: adam, lr: 0.0001, decay: 1,              clip: -1, shuffle: True, trainEmbeddings: True, LSTM_units: 512, fc: 3 layers
