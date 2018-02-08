@@ -18,6 +18,7 @@ class Config(object):
     batch_size = 32
     imgVecSize = 1024
     wordVecSize = 300
+    LSTM_num_units = 512
     
     nTrainEpochs = 30
     nEpochsWithoutImprov = 3
@@ -32,8 +33,8 @@ class Config(object):
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_mainAnsClass3101LSTMIMG_lr2.csv'
-    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_main3101AnsClassLSTMIMG_lr2.csv'
+    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_0802LSTMIMG_unit.csv'
+    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_0802LSTMIMG_unit.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     
     '''Pickle file Contains:

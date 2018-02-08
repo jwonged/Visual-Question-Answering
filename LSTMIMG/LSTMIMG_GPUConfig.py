@@ -18,12 +18,13 @@ class LSTMIMG_GPUConfig(object):
     batch_size = 32
     imgVecSize = 1024
     wordVecSize = 300
+    LSTM_num_units = 512
     
     nTrainEpochs = 30
     nEpochsWithoutImprov = 3
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.00005 #0.001 for adam, 0.01 for gradDesc
+    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
     lossRateDecay = 1 #noDecay = 1; usually ~0.9
     max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
@@ -32,9 +33,9 @@ class LSTMIMG_GPUConfig(object):
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = 'results/Pred_LSTMIMG_0702lrTuning.csv'
-    logFile = 'results/Res_LSTMIMG_0702lrTuning.csv'
-    saveModelFile = 'results/LSTMIMG_0702lrTuning'
+    csvResults = 'results/Pred_LSTMIMG_0802_Unit.csv'
+    logFile = 'results/Res_LSTMIMG_0802_Unit.csv'
+    saveModelFile = 'results/LSTMIMG_0802lrTuning'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
