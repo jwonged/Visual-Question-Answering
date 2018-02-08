@@ -44,7 +44,7 @@ class LSTMIMGmodel(object):
                 config.dropoutVal, config.modelOptimizer, config.lossRate,
                 config.lossRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units)
-        return info + 'fc: 3 layers'
+        return info + 'fc: 2 layers (1000)'
     
     def _addPlaceholders(self):
         #add network placeholders

@@ -22,7 +22,7 @@ class LSTMIMG_GPUConfig(object):
     elMult = True #False = concat; True = Mult
     
     nTrainEpochs = 30
-    nEpochsWithoutImprov = 3
+    nEpochsWithoutImprov = 5
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
     lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
@@ -34,8 +34,8 @@ class LSTMIMG_GPUConfig(object):
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = 'results/Pred_LSTMIMG_0802_2imgfc.csv'
-    logFile = 'results/Res_LSTMIMG_0802_2imgfc.csv'
+    csvResults = 'results/Pred_LSTMIMG_0802_3fc2.csv'
+    logFile = 'results/Res_LSTMIMG_0802_3fc2.csv'
     saveModelFile = 'results/LSTMIMG_0802lrTuning'
     
     '''Pickle file Contains:
