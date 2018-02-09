@@ -154,9 +154,10 @@ class LSTMIMGmodel(object):
                 
             else:
                 print('Using Uni-LSTM')
-                rnn_layers = [tf.nn.rnn_cell.LSTMCell(size) for size in self.config.LSTMCellSizes]
-                multi_rnn_cell = tf.nn.rnn_cell.MultiRNNCell(rnn_layers)
-                _, lstmOutState = tf.nn.dynamic_rnn(cell=multi_rnn_cell, 
+                #rnn_layers = [tf.nn.rnn_cell.LSTMCell(size) for size in self.config.LSTMCellSizes]
+                #multi_rnn_cell = tf.nn.rnn_cell.MultiRNNCell(rnn_layers)
+                lstm_cell = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
+                _, lstmOutState = tf.nn.dynamic_rnn(cell=lstm_cell, 
                                                   inputs=self.word_embeddings, 
                                                   sequence_length=self.sequence_lengths, 
                                                   initial_state=None, 
