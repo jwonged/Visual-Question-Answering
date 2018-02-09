@@ -10,10 +10,10 @@ class LSTMIMG_GPUConfig(Config):
     Config file for LSTMIMG
     '''
     def __init__(self, load):
-        super().__init__(load)
+        super(self).__init__(load)
     
-    csvResults = 'results/Pred_LSTMIMG_0902_LRsingleLSTM.csv'
-    logFile = 'results/Res_LSTMIMG_0902_LRsingleLSTM.csv'
+    csvResults = 'results/Pred_LSTMIMG_0902_singleLSTM.csv'
+    logFile = 'results/Res_LSTMIMG_0902_singleLSTM.csv'
     saveModelFile = 'results/LSTMIMG_0802lrTuning'
     
     '''Pickle file Contains:
