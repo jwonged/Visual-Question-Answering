@@ -20,8 +20,8 @@ class Config(object):
     wordVecSize = 300
     LSTM_num_units = 512
     elMult = True #False = concat; True = Mult
-    LSTMType = 'single' #bi or single
-    LSTMCellSizes = [512] #for single only
+    LSTMType = 'bi' #bi or single
+    #LSTMCellSizes = [128, 256] #for single only
     
     nTrainEpochs = 30
     nEpochsWithoutImprov = 5

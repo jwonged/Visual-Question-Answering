@@ -82,7 +82,8 @@ class LSTMIMGmodel(object):
         self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")
         
-        #self.word_embeddings =  tf.nn.dropout(word_embeddings, self.dropout)
+        if self.config.dropoutVal < 1.0:
+            self.self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
         
     def construct(self):
         self._addPlaceholders()
@@ -92,8 +93,6 @@ class LSTMIMGmodel(object):
         #Handle input according to model structure
         if self.config.modelStruct == 'imagePerWord':
             print('Constructing imagePerWord model')
-            #(dim of input to each LSTM cell)
-            #LSTM_num_units = self.config.wordVecSize + self.config.imgVecSize 
             self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
             
         elif self.config.modelStruct == 'imageAsFirstWord':
@@ -115,7 +114,6 @@ class LSTMIMGmodel(object):
             
             #add img embedding as first word to lstm input
             self.LSTMinput = tf.concat([imgMappingLayer2, self.word_embeddings], axis=1)
-            #LSTM_num_units = self.config.wordVecSize
             print('Shape of LSTM input: {}'.format(self.LSTMinput.get_shape()))
             
             #add 1 to all sequence lengths to account for extra img word
@@ -124,62 +122,72 @@ class LSTMIMGmodel(object):
         
         else:
             print('Constructing imageAfterLSTM model')
-            #LSTM_num_units = self.config.wordVecSize 
             self.LSTMinput = self.word_embeddings
-            if self.config.dropoutVal < 1.0:
-                self.LSTMinput = tf.nn.dropout(self.LSTMinput, self.dropout)
             
             
-        #add logits
-        LSTM_num_units = self.config.LSTM_num_units
+        #LSTM part
         with tf.variable_scope("bi-lstm"):
-            cell_fw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
-            cell_bw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
-            
-            #Out [batch_size, max_time, cell_output_size] output, outputState
-            (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
-                cell_fw, cell_bw, 
-                self.word_embeddings, 
-                sequence_length=self.sequence_lengths, dtype=tf.float32)
-            print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
-            
-            fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
-            bw_out = tf.concat([bw_state.c, bw_state.h], axis=-1)
-            
-            lstmOutput = tf.concat([fw_out, bw_out], axis=-1)
-            print('Shape of LSTM output after concat: {}'.format(lstmOutput.get_shape()))
-            
-            if self.config.dropoutVal < 1.0:
-                lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
-            
-        #Handle output according to model structure
-        if self.config.modelStruct == 'imagePerWord':
-            self.LSTMOutput = lstmOutput 
-            LSTMOutputSize = 2*LSTM_num_units #Need to change this
-        elif self.config.modelStruct == 'imageAsFirstWord':
-            self.LSTMOutput = lstmOutput
-            LSTMOutputSize = 2*LSTM_num_units
-            
-        else: #imageAfterLSTM
-            print('Using imageAfterLSTM model')
-            if self.config.elMult:
-                print('Using pointwise mult')
+            if self.config.LSTMType == 'bi':
+                print('Using bi-LSTM')
+                cell_fw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
+                cell_bw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
+                
+                #Out [batch_size, max_time, cell_output_size] output, outputState
+                (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
+                    cell_fw, cell_bw, 
+                    self.word_embeddings, 
+                    sequence_length=self.sequence_lengths, dtype=tf.float32)
+                print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
+                
+                fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
+                bw_out = tf.concat([bw_state.c, bw_state.h], axis=-1)
+                
+                lstmOutput = tf.concat([fw_out, bw_out], axis=-1)
+                print('Shape of LSTM output after concat: {}'.format(lstmOutput.get_shape()))
+                
+                #lstm output 2048 --> 1024
                 lstmOutput = tf.layers.dense(inputs=lstmOutput,
                                            units=self.config.imgVecSize,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
+                
+                
+            else:
+                print('Using Uni-LSTM')
+                rnn_layers = [tf.nn.rnn_cell.LSTMCell(size) for size in self.config.LSTMCellSizes]
+                multi_rnn_cell = tf.nn.rnn_cell.MultiRNNCell(rnn_layers)
+                _, lstmOutState = tf.nn.dynamic_rnn(cell=multi_rnn_cell, 
+                                                  inputs=self.word_embeddings, 
+                                                  sequence_length=self.sequence_lengths, 
+                                                  initial_state=None, 
+                                                  dtype=tf.float32)
+                lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1)
+                
+        #dropout after LSTM
+        if self.config.dropoutVal < 1.0:
+            lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+            
+        #Handle output according to model structure
+        if self.config.modelStruct == 'imagePerWord':
+            self.LSTMOutput = lstmOutput 
+        elif self.config.modelStruct == 'imageAsFirstWord':
+            self.LSTMOutput = lstmOutput
+        else: #imageAfterLSTM
+            if self.config.elMult:
+                print('Using pointwise mult')
+                #img vecs 1024 --> 1024
                 img_vecs = tf.layers.dense(inputs=self.img_vecs,
                                            units=self.config.imgVecSize,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
+                #dropout after img mapping layer
                 if self.config.dropoutVal < 1.0:
                     img_vecs = tf.nn.dropout(img_vecs, self.dropout)
-                self.LSTMOutput = tf.multiply(lstmOutput, img_vecs)
-                LSTMOutputSize = self.config.imgVecSize
+                    
+                self.LSTMOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
             else: #using concat
                 print('Using concat')
                 self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
-                LSTMOutputSize = 2*LSTM_num_units + self.config.imgVecSize #img=[?,1024]
         
         #fully connected layer
         with tf.variable_scope("proj"):
