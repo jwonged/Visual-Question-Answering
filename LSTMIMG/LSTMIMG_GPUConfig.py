@@ -34,8 +34,8 @@ class LSTMIMG_GPUConfig(object):
     shuffle = True
     trainEmbeddings = True
     
-    csvResults = 'results/Pred_LSTMIMG_0802_3fc2.csv'
-    logFile = 'results/Res_LSTMIMG_0802_3fc2.csv'
+    csvResults = 'results/Pred_LSTMIMG_0802_4dropout.csv'
+    logFile = 'results/Res_LSTMIMG_0802_4dropout.csv'
     saveModelFile = 'results/LSTMIMG_0802lrTuning'
     
     '''Pickle file Contains:

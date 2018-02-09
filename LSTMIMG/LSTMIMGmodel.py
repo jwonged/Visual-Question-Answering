@@ -126,6 +126,8 @@ class LSTMIMGmodel(object):
             print('Constructing imageAfterLSTM model')
             #LSTM_num_units = self.config.wordVecSize 
             self.LSTMinput = self.word_embeddings
+            if self.config.dropoutVal < 1.0:
+                self.LSTMinput = tf.nn.dropout(self.LSTMinput, self.dropout)
             
             
         #add logits
@@ -170,6 +172,8 @@ class LSTMIMGmodel(object):
                                            units=self.config.imgVecSize,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
+                if self.config.dropoutVal < 1.0:
+                    img_vecs = tf.nn.dropout(img_vecs, self.dropout)
                 self.LSTMOutput = tf.multiply(lstmOutput, img_vecs)
                 LSTMOutputSize = self.config.imgVecSize
             else: #using concat
