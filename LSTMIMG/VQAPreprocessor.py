@@ -7,7 +7,7 @@ import json
 from nltk import word_tokenize
 from collections import Counter
 import pickle
-from Config import Config
+from LSTMIMG import LSTMIMG_LapConfig
 import numpy as np
 
 class VQAPreprocessor(object):
@@ -168,7 +168,7 @@ class VQAPreprocessor(object):
         self.shortenEmbeddingsFile()
     
 if __name__ == '__main__':
-    config = Config()
+    config = LSTMIMG_LapConfig()
     processor = VQAPreprocessor(config)
     processor.getAnsClassMaps()
     processor.getVocabForEmbeddings()
