@@ -9,8 +9,8 @@ class LSTMIMG_LapConfig(Config):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self):
-        pass
+    def __init__(self, load):
+        super().__init__(load)
     
     csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_0802LSTMIMG_fcmult.csv'
     logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_0802LSTMIMG_fcmult.csv'

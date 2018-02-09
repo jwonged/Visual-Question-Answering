@@ -3,13 +3,27 @@ Created on 9 Feb 2018
 
 @author: jwong
 '''
+import pickle
 
 class Config(object):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self):
-        pass
+    def __init__(self, load):
+        if load:
+            print('Reading ' + self.preprocessedVQAMapsFile)
+            with open(self.preprocessedVQAMapsFile, 'rb') as f:
+                data = pickle.load(f)
+            
+            self.mapAnsToClass = data['ansToClassMap']
+            print('Using {} answer classes'.format(len(self.mapAnsToClass)))
+            
+            self.classToAnsMap = data['classToAnsMap']
+            self.classToAnsMap[-1] = -1
+            
+            self.mapWordToID = data['wordToIDmap']
+            self.singleCountWords = data['singleCountWords']
+            self.vocabSize = len(self.mapWordToID)
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
@@ -18,6 +32,7 @@ class Config(object):
     batch_size = 32
     imgVecSize = 1024
     wordVecSize = 300
+    
     LSTM_num_units = 512
     elMult = True #False = concat; True = Mult
     LSTMType = 'single' #bi or single
@@ -33,5 +48,6 @@ class Config(object):
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
+    usePretrainedEmbeddings = False
     shuffle = True
     trainEmbeddings = True

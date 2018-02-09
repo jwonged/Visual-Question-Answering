@@ -33,7 +33,7 @@ class InputProcessor(object):
         
         #print('Reading ' + ansClassFile)
         #self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
-        
+        '''
         print('Reading ' + config.preprocessedVQAMapsFile)
         with open(config.preprocessedVQAMapsFile, 'rb') as f:
             data = pickle.load(f)
@@ -45,7 +45,13 @@ class InputProcessor(object):
         self.classToAnsMap[-1] = -1
         
         self.mapWordToID = data['wordToIDmap']
-        self.singleCountWords = data['singleCountWords']
+        self.singleCountWords = data['singleCountWords']'''
+        self.mapAnsToClass = config.mapAnsToClass
+        self.classToAnsMap = config.classToAnsMap
+        self.classToAnsMap[-1] = -1
+        self.mapWordToID = config.mapWordToID
+        self.singleCountWords = config.singleCountWords
+        
         self.is_training = is_training
         self.config = config
         if config.shuffle and is_training:

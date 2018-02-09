@@ -39,11 +39,13 @@ class LSTMIMGmodel(object):
     def _getDescription(self, config):
         info = 'model: {}, classes: {}, batchSize: {}, \
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
-             clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, '.format(
+             clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
+             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}'.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.lossRate,
                 config.lossRateDecay, config.max_gradient_norm, config.shuffle,
-                config.trainEmbeddings, config.LSTM_num_units)
+                config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
+                config.LSTMType, config.elMult)
         return info + 'fc: 2 layers (1000)'
     
     def _addPlaceholders(self):
@@ -70,14 +72,21 @@ class LSTMIMGmodel(object):
     
     def _addEmbeddings(self):
         #add word embeddings
-        pretrainedEmbeddings = getPretrainedw2v(self.config.shortenedEmbeddingsWithUNKFile)
-        
         with tf.variable_scope("words"):
-            wordEmbedsVar = tf.Variable(pretrainedEmbeddings,
-                    name="wordEmbedsVar",
-                    dtype=tf.float32,
-                    trainable=self.config.trainEmbeddings)
-        
+            if self.config.usePretrainedEmbeddings:
+                print('Using pretrained w2v embeddings')
+                pretrainedEmbeddings = getPretrainedw2v(self.config.shortenedEmbeddingsWithUNKFile)
+                wordEmbedsVar = tf.Variable(pretrainedEmbeddings,
+                        name="wordEmbedsVar",
+                        dtype=tf.float32,
+                        trainable=self.config.trainEmbeddings)
+            else:
+                print('Using untrained embeddings')
+                wordEmbedsVar = tf.get_variable(
+                        name='_word_embeddings',
+                        shape=[self.config.vocabSize, self.config.wordVecSize], 
+                        dtype=tf.float32)
+                
         #embedding matrix, word_ids
         self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")

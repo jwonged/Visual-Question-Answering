@@ -12,7 +12,7 @@ import csv
 
 def runtrain():
     #config = LSTMIMG_LapConfig()
-    config = LSTMIMG_GPUConfig()
+    config = LSTMIMG_GPUConfig(load=True)
     
     trainReader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
