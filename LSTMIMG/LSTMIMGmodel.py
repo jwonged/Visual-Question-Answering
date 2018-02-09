@@ -83,7 +83,7 @@ class LSTMIMGmodel(object):
                 self.word_ids, name="word_embeddings")
         
         if self.config.dropoutVal < 1.0:
-            self.self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
+            self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
         
     def construct(self):
         self._addPlaceholders()
