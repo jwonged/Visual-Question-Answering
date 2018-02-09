@@ -4,7 +4,7 @@ Created on 15 Jan 2018
 @author: jwong
 '''
 from LSTMIMGmodel import LSTMIMGmodel
-from LSTMIMG import LSTMIMG_LapConfig
+from LSTMIMG_LapConfig import LSTMIMG_LapConfig
 from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
 from InputProcessor import InputProcessor
 import pickle
