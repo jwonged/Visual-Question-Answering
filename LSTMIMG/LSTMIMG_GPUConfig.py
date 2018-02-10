@@ -12,8 +12,8 @@ class LSTMIMG_GPUConfig(Config):
     def __init__(self, load):
         super(LSTMIMG_GPUConfig, self).__init__(load)
     
-    csvResults = 'results/Pred_LSTMIMG_0902_singleLSTM.csv'
-    logFile = 'results/Res_LSTMIMG_0902_singleLSTM.csv'
+    csvResults = 'results/Pred_LSTMIMG_0902_singleLSTM2lr.csv'
+    logFile = 'results/Res_LSTMIMG_0902_singleLSTM2lr.csv'
     saveModelFile = 'results/LSTMIMG_0802lrTuning'
     
     '''Pickle file Contains:
