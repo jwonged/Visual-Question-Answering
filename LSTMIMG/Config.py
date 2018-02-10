@@ -38,11 +38,11 @@ class Config(object):
     LSTMType = 'single' #bi or single
     LSTMCellSizes = [512] #for single only
     
-    nTrainEpochs = 30
+    nTrainEpochs = 50
     nEpochsWithoutImprov = 5
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    lossRate = 0.001 #0.001 for adam, 0.01 for gradDesc
     lossRateDecay = 1 #noDecay = 1; usually ~0.9
     max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
