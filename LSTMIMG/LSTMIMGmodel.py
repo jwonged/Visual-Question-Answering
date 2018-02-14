@@ -30,8 +30,8 @@ class LSTMIMGmodel(object):
         f2 =  open(config.csvResults , 'wb') 
         self.predFile = csv.writer(f2)
         self.predFile.writerow(
-            ['Epoch','Question', 'Prediction', 
-             'Label', 'Pred Class','label class', 'Correct?', 'img id'])
+            ['Epoch','Question', 'Prediction', 'Label', 'Pred Class',
+             'label class', 'Correct?', 'img id', 'qn_id'])
         
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
@@ -258,7 +258,7 @@ class LSTMIMGmodel(object):
     def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=2)
         
         self.logFile.writerow(['Model constructed.'])
         print('Complete Model Construction')
@@ -380,9 +380,11 @@ class LSTMIMGmodel(object):
         valAcc = np.mean(accuracies)
         return valAcc, correct_predictions, total_predictions
     
-    def _logToCSV(self, nEpoch, qn, prediction, label, predClass, labelClass, correct, img_id):
+    def _logToCSV(self, nEpoch, qn, prediction, label, 
+                  predClass, labelClass, correct, img_id):
         self.predFile.writerow(
-                    [nEpoch, qn, prediction, label, predClass, labelClass, correct, img_id])
+                    [nEpoch, qn, prediction, label, predClass, 
+                     labelClass, correct, img_id])
         
     def loadTrainedModel(self):
         self.sess = tf.Session()
@@ -404,7 +406,6 @@ class LSTMIMGmodel(object):
         '''For internal val/test set with labels'''
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        allQnIds, allPreds = [], []
         for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids \
             in valReader.getNextBatch(self.config.batch_size):
             feed = {
@@ -421,17 +422,16 @@ class LSTMIMGmodel(object):
                     correct_predictions += 1
                 total_predictions += 1
                 accuracies.append(lab==labPred)
-                allQnIds.append(qn_id)
-                allPreds.append(self.classToAnsMap[labPred])
-                #self._logToCSV(
-                #    nEpoch, qn, 
-                #    self.classToAnsMap[labPred],
-                #    self.classToAnsMap[lab], 
-                #    labPred, lab, lab==labPred, img_id)
+                self._logToCSV(
+                    '', qn, 
+                    self.classToAnsMap[labPred],
+                    self.classToAnsMap[lab], 
+                    labPred, lab, lab==labPred, img_id)
                 
         valAcc = np.mean(accuracies)
-        return valAcc, correct_predictions, total_predictions
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
+        return valAcc, correct_predictions, total_predictions
+        
     
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server

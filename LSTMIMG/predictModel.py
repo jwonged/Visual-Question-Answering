@@ -17,13 +17,26 @@ def loadAndTest():
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
                                imgFile=config.testOfficialImgFeatures, 
-                               config)
+                               config=config)
     
     model = LSTMIMGmodel(config)
     model.loadTrainedModel()
-    model.runPredict(testReader)
+    model.runTest(testReader)
     model.destruct()
 
+def runValTest():
+    print('Running Val Test')
+    config = LSTMIMG_LapConfig(load=True)
+    valTestReader = InputProcessor(config.testAnnotFile, 
+                                 config.rawQnValTestFile, 
+                                 config.testImgFile, 
+                                 config,
+                                 is_training=False)
+    
+    model = LSTMIMGmodel(config)
+    model.loadTrainedModel()
+    model.runPredict(valTestReader)
+    model.destruct()
 
 if __name__ == '__main__':
-    loadAndTest()
+    runValTest()

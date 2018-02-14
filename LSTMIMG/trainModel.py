@@ -11,7 +11,7 @@ import pickle
 import csv
 
 def runtrain():
-    #config = LSTMIMG_LapConfig()
+    #config = LSTMIMG_LapConfig(load=True)
     config = LSTMIMG_GPUConfig(load=True)
     
     trainReader = InputProcessor(config.trainAnnotFile, 
@@ -33,6 +33,7 @@ def runtrain():
     model.train(trainReader, valReader)
     #model.train(dumReader, dumReader)
     model.destruct()
+
 
 def makeSmallDummyData():
     config = LSTMIMG_LapConfig()

@@ -237,38 +237,37 @@ class TestProcessor(object):
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
             yield batchOfQnsAsWordIDs, qnLengths, img_vecs, rawQns, img_ids, qn_ids
             
-    
-        def _padQuestionIDs(self, questions, padding):
-            '''
-            Pads each list to be same as max length
-            args:
-                questions: list of list of word IDs (ie a batch of qns)
-                padding: symbol to pad with
-            '''
-            maxLength = max(map(lambda x : len(x), questions))
-            #Get length of longest qn
-            paddedQuestions, qnLengths = [], []
-            for qn in questions:
-                qn = list(qn) #ensure list format
-                if (len(qn) < maxLength):
-                    paddedQn = qn + [padding]*(maxLength - len(qn))
-                    paddedQuestions.append(paddedQn)
-                else:
-                    paddedQuestions.append(qn)
-                qnLengths.append(len(qn))
-                
-            return paddedQuestions, qnLengths
+    def _padQuestionIDs(self, questions, padding):
+        '''
+        Pads each list to be same as max length
+        args:
+            questions: list of list of word IDs (ie a batch of qns)
+            padding: symbol to pad with
+        '''
+        maxLength = max(map(lambda x : len(x), questions))
+        #Get length of longest qn
+        paddedQuestions, qnLengths = [], []
+        for qn in questions:
+            qn = list(qn) #ensure list format
+            if (len(qn) < maxLength):
+                paddedQn = qn + [padding]*(maxLength - len(qn))
+                paddedQuestions.append(paddedQn)
+            else:
+                paddedQuestions.append(qn)
+            qnLengths.append(len(qn))
+            
+        return paddedQuestions, qnLengths
         
-        def _mapQnToIDs(self, qn):
-            #Convert str question to a list of word_ids
-            idList = []
-            for word in word_tokenize(qn):
-                word = word.strip().lower()
-                if word in self.mapWordToID:
-                        idList.append(self.mapWordToID[word]) 
-                else:
-                    idList.append(self.mapWordToID[self.config.unkWord])
-            return idList
+    def _mapQnToIDs(self, qn):
+        #Convert str question to a list of word_ids
+        idList = []
+        for word in word_tokenize(qn):
+            word = word.strip().lower()
+            if word in self.mapWordToID:
+                    idList.append(self.mapWordToID[word]) 
+            else:
+                idList.append(self.mapWordToID[self.config.unkWord])
+        return idList
         
     
         
