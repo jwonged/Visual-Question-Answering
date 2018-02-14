@@ -136,7 +136,7 @@ class LSTMIMGmodel(object):
             
             
         #LSTM part
-        with tf.variable_scope("bi-lstm"):
+        with tf.variable_scope("lstm"):
             if self.config.LSTMType == 'bi':
                 print('Using bi-LSTM')
                 cell_fw = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
@@ -355,8 +355,8 @@ class LSTMIMGmodel(object):
         """
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_ in valReader.getNextBatch(
-            self.config.batch_size):
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_ in \
+            valReader.getNextBatch(self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
                 self.sequence_lengths : seqLens,
@@ -401,11 +401,12 @@ class LSTMIMGmodel(object):
         self.saver = tf.train.Saver()
         
     def runPredict(self, valReader):
+        '''For internal val/test set with labels'''
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
         allQnIds, allPreds = [], []
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids in valReader.getNextBatch(
-            self.config.batch_size):
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids \
+            in valReader.getNextBatch(self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
                 self.sequence_lengths : seqLens,
@@ -430,10 +431,30 @@ class LSTMIMGmodel(object):
                 
         valAcc = np.mean(accuracies)
         return valAcc, correct_predictions, total_predictions
-        valAcc, correct_predictions, total_predictions = self.runVal(valReader, 0)
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
+    
+    def runTest(self, testReader, jsonOutputFile):
+        '''For producing official test results for submission to server
+        '''
+        allQnIds, allPreds = [], []
+        for qnAsWordIDsBatch, seqLens, img_vecs, rawQns, img_ids, qn_ids \
+            in testReader.getNextBatch(self.config.batch_size):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+            }
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            
+            for labPred, qn_id in zip(labels_pred, qn_ids):
+                allQnIds.append(qn_id)
+                allPreds.append(labPred)
         
-    def generateResultOutput(self, qn_ids, preds, jsonFile):
+        print('Total predictions: {}'.format(len(allPreds)))
+        self._generateResultOutput(allQnIds, allPreds, jsonOutputFile)
+        
+    def _generateResultOutput(self, qn_ids, preds, jsonFile):
         results = []
         for qn_id, pred in zip(qn_ids, preds):
             singleResult = {}
@@ -443,8 +464,6 @@ class LSTMIMGmodel(object):
         with open(jsonFile, 'w') as jsonOut:
             print('Writing to {}'.format(jsonFile))
             json.dump(results, jsonOut)
-        
-        
         
     def destruct(self):
         pass

@@ -14,7 +14,7 @@ class LSTMIMG_GPUConfig(Config):
     
     csvResults = 'results/Pred_LSTMIMG_1002_singleLSTMlr.csv'
     logFile = 'results/Res_LSTMIMG_1002_singleLSTMlr.csv'
-    saveModelFile = 'results/LSTMIMG_0802lrTuning'
+    saveModelFile = 'results/LSTMIMG_46Config'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 

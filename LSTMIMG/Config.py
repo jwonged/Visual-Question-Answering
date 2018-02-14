@@ -35,7 +35,7 @@ class Config(object):
     
     LSTM_num_units = 512
     elMult = True #False = concat; True = Mult
-    LSTMType = 'single' #bi or single
+    LSTMType = 'bi' #bi or single
     LSTMCellSizes = [512] #for single only
     
     nTrainEpochs = 50
@@ -48,6 +48,6 @@ class Config(object):
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
-    usePretrainedEmbeddings = False
+    usePretrainedEmbeddings = True
     shuffle = True
     trainEmbeddings = True

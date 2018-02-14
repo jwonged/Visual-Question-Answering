@@ -6,7 +6,7 @@ Created on 13 Feb 2018
 from LSTMIMGmodel import LSTMIMGmodel
 from LSTMIMG_LapConfig import LSTMIMG_LapConfig
 from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
-from InputProcessor import InputProcessor
+from InputProcessor import InputProcessor, TestProcessor
 import pickle
 import csv
 
@@ -15,22 +15,13 @@ def loadAndTest():
     config = LSTMIMG_LapConfig(load=True)
     #config = LSTMIMG_GPUConfig(load=True)
     
-    trainReader = InputProcessor(config.trainAnnotFile, 
-                                 config.rawQnTrain, 
-                                 config.trainImgFile, 
-                                 config,
-                                 is_training=True)
-    
-    valReader = InputProcessor(config.valAnnotFile, 
-                                 config.rawQnValTestFile, 
-                                 config.valImgFile, 
-                                 config,
-                                 is_training=False)
-    
+    testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
+                               imgFile=config.testOfficialImgFeatures, 
+                               config)
     
     model = LSTMIMGmodel(config)
     model.loadTrainedModel()
-    model.runPredict(valReader)
+    model.runPredict(testReader)
     model.destruct()
 
 
