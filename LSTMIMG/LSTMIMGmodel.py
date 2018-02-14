@@ -33,6 +33,7 @@ class LSTMIMGmodel(object):
             ['Epoch','Question', 'Prediction', 
              'Label', 'Pred Class','label class', 'Correct?', 'img id'])
         
+        self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
         
@@ -263,7 +264,6 @@ class LSTMIMGmodel(object):
         print('Complete Model Construction')
         
     def train(self, trainReader, valReader):
-        self.classToAnsMap = trainReader.getAnsMap()
         print('Starting model training')
         self.logFile.writerow([
             'Epoch', 'Val score', 'Train score', 'Train correct', 
@@ -295,10 +295,9 @@ class LSTMIMGmodel(object):
                     break
     
     def _save_session(self):
-        pass
         #if not os.path.exists(self.config.dir_model):
         #    os.makedirs(self.config.dir_model)
-        #self.saver.save(self.sess, self.config.saveModelFile)
+        self.saver.save(self.sess, self.config.saveModelFile)
     
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
@@ -308,7 +307,7 @@ class LSTMIMGmodel(object):
         batch_size = self.config.batch_size
         correct_predictions, total_predictions = 0., 0.
         
-        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _) in enumerate(
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
             
             feed = {
@@ -356,7 +355,7 @@ class LSTMIMGmodel(object):
         """
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids in valReader.getNextBatch(
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_ in valReader.getNextBatch(
             self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
@@ -374,7 +373,7 @@ class LSTMIMGmodel(object):
                 accuracies.append(lab==labPred)
                 #self._logToCSV(
                 #    nEpoch, qn, 
-                #    self.classToAnsMap[labPred],
+                #    self.classToAnsMap[labPred], 
                 #    self.classToAnsMap[lab], 
                 #    labPred, lab, lab==labPred, img_id)
                 
@@ -387,8 +386,8 @@ class LSTMIMGmodel(object):
         
     def loadTrainedModel(self):
         self.sess = tf.Session()
-        self.saver = saver = tf.train.import_meta_graph('LSTMIMG-proto.meta')
-        saver.restore(self.sess, tf.train.latest_checkpoint('/media/jwong/Transcend/VQADataset/DummySets/'))
+        self.saver = saver = tf.train.import_meta_graph(self.config.saveModelFile + '.meta')
+        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.saveModelPath))
         
         graph = tf.get_default_graph()
         self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
@@ -397,8 +396,54 @@ class LSTMIMGmodel(object):
         self.img_vecs = graph.get_tensor_by_name('img_vecs:0')
         self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
+        self.dropout = graph.get_tensor_by_name('dropout:0')
         
         self.saver = tf.train.Saver()
+        
+    def runPredict(self, valReader):
+        accuracies = []
+        correct_predictions, total_predictions = 0., 0.
+        allQnIds, allPreds = [], []
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids in valReader.getNextBatch(
+            self.config.batch_size):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+            }
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            
+            for lab, labPred, qn, img_id, qn_id in zip(
+                labels, labels_pred, rawQns, img_ids, qn_ids):
+                if (lab==labPred):
+                    correct_predictions += 1
+                total_predictions += 1
+                accuracies.append(lab==labPred)
+                allQnIds.append(qn_id)
+                allPreds.append(self.classToAnsMap[labPred])
+                #self._logToCSV(
+                #    nEpoch, qn, 
+                #    self.classToAnsMap[labPred],
+                #    self.classToAnsMap[lab], 
+                #    labPred, lab, lab==labPred, img_id)
+                
+        valAcc = np.mean(accuracies)
+        return valAcc, correct_predictions, total_predictions
+        valAcc, correct_predictions, total_predictions = self.runVal(valReader, 0)
+        print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
+        
+    def generateResultOutput(self, qn_ids, preds, jsonFile):
+        results = []
+        for qn_id, pred in zip(qn_ids, preds):
+            singleResult = {}
+            singleResult[qn_id] = pred
+            results.append(singleResult)
+        
+        with open(jsonFile, 'w') as jsonOut:
+            print('Writing to {}'.format(jsonFile))
+            json.dump(results, jsonOut)
+        
         
         
     def destruct(self):

@@ -113,12 +113,12 @@ class InputProcessor(object):
         return idList
     
     def getNextBatch(self, batchSize):
-        batchOfQnsAsWordIDs, img_vecs, labels, rawQns, img_ids = [], [], [], [], []
+        batchOfQnsAsWordIDs, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], []
         for annot in self.annots:
             if (len(batchOfQnsAsWordIDs) == batchSize):
                 batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids
-                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids = [], [], [], [], [], []
+                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
+                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], [], []
             
             #Leave out answers not in AnsClass for training; map to special num for val
             if (not self.is_training) or (
@@ -128,6 +128,7 @@ class InputProcessor(object):
                 qnAsWordIDs = self._mapQnToIDs(rawQn)
                 batchOfQnsAsWordIDs.append(qnAsWordIDs)
                 rawQns.append(rawQn)
+                qn_ids.append(annot['question_id'])
                 
                 #process img
                 img_id = str(annot['image_id'])
@@ -148,7 +149,7 @@ class InputProcessor(object):
             random.shuffle(self.annots)
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids
+            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
     
     def getWholeBatch(self):
         batchOfQnsAsWordIDs, img_vecs, labels = [], [], []

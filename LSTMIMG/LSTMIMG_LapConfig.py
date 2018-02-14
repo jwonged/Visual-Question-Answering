@@ -10,11 +10,12 @@ class LSTMIMG_LapConfig(Config):
     Config file for LSTMIMG
     '''
     def __init__(self, load):
-        super(LSTMIMG_LapConfig, self).__init__(self,load)
+        super(LSTMIMG_LapConfig, self).__init__(load)
     
-    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_0802LSTMIMG_fcmult.csv'
-    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_0802LSTMIMG_fcmult.csv'
+    csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_LSTMIMG1302.csv'
+    logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_LSTMIMG1302.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
+    saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
