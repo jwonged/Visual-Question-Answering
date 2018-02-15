@@ -206,7 +206,8 @@ class TestProcessor(object):
         print('Reading' + qnFile)
         with open(qnFile) as jsonFile:
             self.qnData = json.load(jsonFile)['questions']
-            
+        
+        self.config  = config
         self.classToAnsMap = config.classToAnsMap
         self.classToAnsMap[-1] = -1
         self.mapWordToID = config.mapWordToID

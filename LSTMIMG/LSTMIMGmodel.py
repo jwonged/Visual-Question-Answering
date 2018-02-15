@@ -258,7 +258,7 @@ class LSTMIMGmodel(object):
     def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=2)
+        self.saver = tf.train.Saver(max_to_keep=4)
         
         self.logFile.writerow(['Model constructed.'])
         print('Complete Model Construction')
@@ -283,7 +283,12 @@ class LSTMIMGmodel(object):
             # early stopping and saving best parameters
             if score >= highestScore:
                 nEpochWithoutImprovement = 0
-                self._save_session()
+                if nEpoch == 0:
+                    self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
+                else:
+                    self.saver.save(self.sess, self.config.saveModelFile, 
+                                    global_step=nEpoch,  write_meta_graph=False)
+                #self._save_session()
                 highestScore = score
                 #self.logFile.writerow('New score\n')
             else:
@@ -387,9 +392,11 @@ class LSTMIMGmodel(object):
                      labelClass, correct, img_id])
         
     def loadTrainedModel(self):
+        restoreModel = self.config.restoreModel
+        print('Restoring model from: {}'.format(restoreModel))
         self.sess = tf.Session()
-        self.saver = saver = tf.train.import_meta_graph(self.config.saveModelFile + '.meta')
-        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.saveModelPath))
+        self.saver = saver = tf.train.import_meta_graph(restoreModel)
+        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.restoreModelPath))
         
         graph = tf.get_default_graph()
         self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
@@ -436,6 +443,7 @@ class LSTMIMGmodel(object):
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server
         '''
+        print('Starting test run...')
         allQnIds, allPreds = [], []
         for qnAsWordIDsBatch, seqLens, img_vecs, rawQns, img_ids, qn_ids \
             in testReader.getNextBatch(self.config.batch_size):
@@ -449,16 +457,22 @@ class LSTMIMGmodel(object):
             
             for labPred, qn_id in zip(labels_pred, qn_ids):
                 allQnIds.append(qn_id)
-                allPreds.append(labPred)
+                allPreds.append(self.classToAnsMap[labPred])
         
         print('Total predictions: {}'.format(len(allPreds)))
         self._generateResultOutput(allQnIds, allPreds, jsonOutputFile)
         
     def _generateResultOutput(self, qn_ids, preds, jsonFile):
+        '''
+        result{
+            "question_id": int,
+            "answer": str
+        }'''
         results = []
         for qn_id, pred in zip(qn_ids, preds):
             singleResult = {}
-            singleResult[qn_id] = pred
+            singleResult["question_id"] = int(qn_id)
+            singleResult["answer"] = str(pred)
             results.append(singleResult)
         
         with open(jsonFile, 'w') as jsonOut:

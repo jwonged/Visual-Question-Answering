@@ -16,6 +16,14 @@ class LSTMIMG_LapConfig(Config):
     logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_LSTMIMG1402.csv'
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
+    restoreModel = '/media/jwong/Transcend/VQAresults/14FebTest/LSTMIMG_46Config.meta'
+    restoreModelPath = '/media/jwong/Transcend/VQAresults/14FebTest/'
+    
+    #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
+    #restoreModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
+    
+    
+    testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/LSTMIMG1402Submission.json'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
@@ -28,6 +36,7 @@ class LSTMIMG_LapConfig(Config):
     
     preprocessedVQAMapsFile = '/media/jwong/Transcend/VQADataset/preprocessedVQAmaps.pkl'
     
+    valTestQns = '/media/jwong/Transcend/VQADataset/ValTestSet/Questions_Val_mscoco/OpenEnded_mscoco_val2014_questions.json'
     
     pretrainedw2v = '/media/jwong/Transcend/GoogleNews-vectors-negative300.txt'
     shortenedEmbeddingsWithUNKFile = '/media/jwong/Transcend/VQADataset/cutW2VEmbeddingsWithUNK.npz'

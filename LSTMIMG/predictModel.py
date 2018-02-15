@@ -11,9 +11,8 @@ import pickle
 import csv
 
 
-def loadAndTest():
+def loadOfficialTest():
     config = LSTMIMG_LapConfig(load=True)
-    #config = LSTMIMG_GPUConfig(load=True)
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
                                imgFile=config.testOfficialImgFeatures, 
@@ -21,7 +20,7 @@ def loadAndTest():
     
     model = LSTMIMGmodel(config)
     model.loadTrainedModel()
-    model.runTest(testReader)
+    model.runTest(testReader, config.testOfficialResultFile)
     model.destruct()
 
 def runValTest():
@@ -37,6 +36,7 @@ def runValTest():
     model.loadTrainedModel()
     model.runPredict(valTestReader)
     model.destruct()
+    
 
 if __name__ == '__main__':
-    runValTest()
+    loadOfficialTest()
