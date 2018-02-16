@@ -105,8 +105,8 @@ def checkCorrect():
         imgData =  json.load(jsonFile)
     
     print(len(imgData))
-    print(imgData[str(374010)][0])
-    print(len(imgData[str(374010)][0]))
+    print(imgData[str(359320)][0])
+    print(len(imgData[str(359320)][0]))
     
     
 if __name__ == '__main__':
