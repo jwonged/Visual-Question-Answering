@@ -42,8 +42,14 @@ def getImageID(image_path):
 def main():
     inputPath = '../../resources/'
     inputfile = inputPath + 'trainImgPaths.txt'
-    outputfile = '../resources/dummyOut'
-    jsonFile = '../resources/dummyOut.json'
+    outputfile = '../resources/vggTrainImgFeaturesOut'
+    jsonFile = '../resources/vggTrainImgFeatures.json'
+    
+    count = 0
+    with open(inputfile, 'r') as reader:
+        for path in reader:
+            count += 1
+    print('Preparing to read {} images'.format(count))
     
     caffe.set_mode_gpu()
     #caffe.set_mode_cpu()
@@ -67,8 +73,6 @@ def main():
     with open(inputfile, 'r') as reader:
         with open(outputfile, 'w') as writer:
             for image_path in reader:
-                if count == 3:
-                    break
                 image_path = image_path.strip()
                 input_image = caffe.io.load_image(inputPath + image_path)
                 prediction = net.predict([input_image], oversample=False)
@@ -83,7 +87,6 @@ def main():
                     featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
                     np.savetxt(writer, featureData, fmt='%.8g')
                     resultJSONData[img_id] = featureData
-                    print(featureData)
                     print 'Images processed: {}'.format(count)
     
                 except ValueError:
@@ -110,4 +113,4 @@ def checkCorrect():
     
     
 if __name__ == '__main__':
-    checkCorrect()
+    main()
