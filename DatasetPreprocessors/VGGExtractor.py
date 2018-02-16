@@ -8,7 +8,7 @@ import os, sys, getopt
 import json
 
 # Main path to caffe installation
-caffe_root = '/home/jwong/caffe/'
+caffe_root = '/home/joshua/caffe/'#'/home/jwong/caffe/'
  
 # Model prototxt file
 model_prototxt = caffe_root + 'models/211839e770f7b538e2d8/VGG_ILSVRC_19_layers_deploy.prototxt'
@@ -38,16 +38,14 @@ def getImageID(image_path):
     print 'Reading img ', img_id
     return img_id
     
-#http://msvocds.blob.core.windows.net/coco2014/train2014.zip
-#http://msvocds.blob.core.windows.net/coco2014/val2014.zip
-#http://msvocds.blob.core.windows.net/coco2015/test2015.zip
+
 def main():
-    inputfile = '/media/jwong/Transcend/VQADataset/ValTestSet/dummyPaths.txt'
-    outputfile = '/media/jwong/Transcend/VQADataset/ValTestSet/dummyOut'
-    jsonFile = '/media/jwong/Transcend/VQADataset/ValTestSet/dummyOut.json'
+    inputfile = '../../resources/trainImgPaths.txt'
+    outputfile = '../resources/dummyOut'
+    jsonFile = '../resources/dummyOut.json'
     
     caffe.set_mode_gpu()
-    caffe.set_mode_cpu()
+    #caffe.set_mode_cpu()
     # Loading the Caffe model, setting preprocessing parameters
     net = caffe.Classifier(model_prototxt, model_trained,
                            mean=np.load(mean_path).mean(1).mean(1),
@@ -68,6 +66,8 @@ def main():
     with open(inputfile, 'r') as reader:
         with open(outputfile, 'w') as writer:
             for image_path in reader:
+                if count == 3:
+                    break
                 image_path = image_path.strip()
                 input_image = caffe.io.load_image(image_path)
                 prediction = net.predict([input_image], oversample=False)
@@ -109,4 +109,4 @@ def checkCorrect():
     
     
 if __name__ == '__main__':
-    checkCorrect()
+    main()

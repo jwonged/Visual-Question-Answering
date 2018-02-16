@@ -54,3 +54,10 @@ class LSTMIMG_GPUConfig(Config):
     trainImgFile = '../resources/VQAImgFeatures_Train.json' #
     valImgFile = '../resources/VQAImgFeatures_Val.json' #
     testImgFile = '../resources/VQAImgFeatures_Test.json'
+    
+    #raw image files
+    
+    #http://msvocds.blob.core.windows.net/coco2014/train2014.zip
+    #http://msvocds.blob.core.windows.net/coco2014/val2014.zip
+    #http://msvocds.blob.core.windows.net/coco2015/test2015.zip
+    
