@@ -99,7 +99,7 @@ def main():
     print(errorMessages)
                     
 def checkCorrect():
-    fileName= '/media/jwong/Transcend/VQADataset/ValTestSet/dummyOut.json'
+    fileName = '../resources/dummyOut.json'
     print('Reading {}'.format(fileName))
     with open(fileName) as jsonFile:
         imgData =  json.load(jsonFile)
@@ -110,4 +110,4 @@ def checkCorrect():
     
     
 if __name__ == '__main__':
-    main()
+    checkCorrect()
