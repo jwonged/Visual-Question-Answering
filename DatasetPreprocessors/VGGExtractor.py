@@ -40,7 +40,8 @@ def getImageID(image_path):
     
 
 def main():
-    inputfile = '../../resources/trainImgPaths.txt'
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'trainImgPaths.txt'
     outputfile = '../resources/dummyOut'
     jsonFile = '../resources/dummyOut.json'
     
@@ -69,7 +70,7 @@ def main():
                 if count == 3:
                     break
                 image_path = image_path.strip()
-                input_image = caffe.io.load_image(image_path)
+                input_image = caffe.io.load_image(inputPath + image_path)
                 prediction = net.predict([input_image], oversample=False)
                 print (os.path.basename(image_path), ' : ' , \
                        labels[prediction[0].argmax()].strip() , \

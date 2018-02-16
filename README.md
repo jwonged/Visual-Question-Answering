@@ -21,11 +21,32 @@ gensim - https://radimrehurek.com/gensim/models/word2vec.html
 GloVe - https://nlp.stanford.edu/projects/glove/   
 Others - http://ahogrammer.com/2017/01/20/the-list-of-pretrained-word-embeddings/   
 
-### For using GoogleNet Model
-http://www.marekrei.com/blog/transforming-images-to-feature-vectors/
+### CNN Models
+GoogLeNet - http://www.marekrei.com/blog/transforming-images-to-feature-vectors/    
+VGGnet - https://gist.github.com/ksimonyan/3785162f95cd2d5fee77#file-readme-md   
+Other models - http://caffe.berkeleyvision.org/model_zoo.html   
+
 
 ### For installing caffe
 https://shreyasskandan.github.io/caffe_linux_blogpost.html
-https://gist.github.com/nikitametha/c54e1abecff7ab53896270509da80215
 https://chunml.github.io/ChunML.github.io/project/Installing-Caffe-CPU-Only/
-https://github.com/BVLC/caffe/wiki/Ubuntu-16.04-or-15.10-Installation-Guide
+https://github.com/BVLC/caffe/wiki/Ubuntu-16.04-or-15.10-Installation-Guide   
+   
+For GPU, follow Makefile Config in:   
+https://gist.github.com/nikitametha/c54e1abecff7ab53896270509da80215   
+
+Common errors:   
+/usr/bin/ld: cannot find -lopencv_imgcodecs   
+/usr/bin/ld: cannot find -lopencv_imgcodecs   
+collect2: error: ld returned 1 exit status   
+Makefile:573: recipe for target '.build_release/lib/libcaffe.so.1.0.0' failed   
+make: *** [.build_release/lib/libcaffe.so.1.0.0] Error 1   
+
+One of these might fix it: either add -lopencv_imgcodecs in Makefile (not Makefile.config)
+or uncomment USE\_OPENCV:=0 or correct OPENCV\_VERSION:=3 or uncomment USE\_PKG\_CONFIG:=1   
+
+Also comment out -gencode arch=compute\_20 (depending on CUDA version)   
+   
+PYTHON_INCLUDE := /usr/include/python2.7 \
+        /usr/local/lib/python2.7/dist-packages/numpy/core/include
+
