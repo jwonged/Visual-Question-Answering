@@ -39,12 +39,7 @@ def getImageID(image_path):
     return img_id
     
 
-def main():
-    inputPath = '../../resources/'
-    inputfile = inputPath + 'trainImgPaths.txt'
-    outputfile = '../resources/vggTrainImgFeaturesOut'
-    jsonFile = '../resources/vggTrainImgFeatures.json'
-    
+def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
     count = 0
     with open(inputfile, 'r') as reader:
         for path in reader:
@@ -110,6 +105,21 @@ def checkCorrect():
     print(len(imgData))
     print(imgData[str(359320)][0])
     print(len(imgData[str(359320)][0]))
+    
+def main():
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'valImgPaths.txt'
+    outputfile = '../resources/vggValImgFeaturesOut'
+    jsonFile = '../resources/vggValImgFeatures.json'
+    
+    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'testOfficialImgPaths.txt'
+    outputfile = '../resources/vggTestOfficialImgFeaturesOut'
+    jsonFile = '../resources/vggTestOfficialImgFeatures.json'
+    
+    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
     
     
 if __name__ == '__main__':
