@@ -149,6 +149,7 @@ class LSTMIMGmodel(object):
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
                 print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
                 
+                #lstmOutput shape = LSTM_num_units * 4
                 fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
                 bw_out = tf.concat([bw_state.c, bw_state.h], axis=-1)
                 
@@ -157,7 +158,7 @@ class LSTMIMGmodel(object):
                 
                 #lstm output 2048 --> 1024
                 lstmOutput = tf.layers.dense(inputs=lstmOutput,
-                                           units=self.config.imgVecSize,
+                                           units=self.config.fclayerAfterLSTM,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 
@@ -186,9 +187,9 @@ class LSTMIMGmodel(object):
         else: #imageAfterLSTM
             if self.config.elMult:
                 print('Using pointwise mult')
-                #img vecs 4096 --> 1024 (for vgg)
+                #img vecs 4096 --> 2048 (for vgg)
                 img_vecs = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.LSTM_num_units*2,
+                                           units=self.config.fclayerAfterLSTM,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #dropout after img mapping layer
