@@ -208,7 +208,7 @@ class LSTMIMGmodel(object):
             #                               activation=tf.tanh,
             #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
             hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
-                                           units=self.config.nOutClasses,
+                                           units=1000,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             y = tf.layers.dense(inputs=hidden_layer2,
@@ -259,7 +259,7 @@ class LSTMIMGmodel(object):
     def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=4)
+        self.saver = tf.train.Saver()#max_to_keep=4)
         
         self.logFile.writerow(['Model constructed.'])
         print('Complete Model Construction')

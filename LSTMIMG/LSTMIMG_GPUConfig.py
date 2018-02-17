@@ -23,8 +23,8 @@ class LSTMIMG_GPUConfig(Config):
             self.valImgFile = '../resources/vggValImgFeatures.json'
             self.testImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    csvResults = 'results/Pred_LSTMIMG_1702vgg.csv'
-    logFile = 'results/Res_LSTMIMG_1702vgg.csv'
+    csvResults = 'results/Pred_LSTMIMG_1702vggSaver.csv'
+    logFile = 'results/Res_LSTMIMG_1702vggSaver.csv'
     saveModelFile = 'results/LSTMIMGvgg1702'
     
     '''Pickle file Contains:
