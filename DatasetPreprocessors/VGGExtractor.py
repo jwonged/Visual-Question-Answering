@@ -114,12 +114,12 @@ def main():
     
     convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
     
-    inputPath = '../../resources/'
-    inputfile = inputPath + 'testOfficialImgPaths.txt'
-    outputfile = '../resources/vggTestOfficialImgFeaturesOut'
-    jsonFile = '../resources/vggTestOfficialImgFeatures.json'
+    #inputPath = '../../resources/'
+    #inputfile = inputPath + 'testOfficialImgPaths.txt'
+    #outputfile = '../resources/vggTestOfficialImgFeaturesOut'
+    #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    #convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
     
     
 if __name__ == '__main__':
