@@ -72,10 +72,12 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
                 image_path = image_path.strip()
                 input_image = caffe.io.load_image(inputPath + image_path)
                 prediction = net.predict([input_image], oversample=False)
-                msg = (os.path.basename(image_path) + ' : ' + \
-                       labels[prediction[0].argmax()].strip() + \
-                       ' (' + prediction[0][prediction[0].argmax()] + ')')
+                msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                               labels[prediction[0].argmax()].strip(), 
+                                               prediction[0][prediction[0].argmax()]))
+                
                 count = count + 1
+                
                 try:
                     img_id = getImageID(image_path)
                     
@@ -83,7 +85,7 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
                     featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
                     np.savetxt(writer, featureData, fmt='%.8g')
                     resultJSONData[img_id] = featureData
-                    msg += ('\nImages processed: {}\n'.format(count))
+                    msg2 = ('\nImages processed: {}\n'.format(count))
     
                 except ValueError:
                     print('Error reading image_path')
@@ -93,6 +95,7 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
                 
                 if count%200 == 0:
                     print(msg)
+                    print(msg2)
     
     with open(jsonFile, 'w') as jsonOut:
         print('writing to {}'.format(jsonFile))
