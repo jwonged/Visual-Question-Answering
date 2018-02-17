@@ -34,7 +34,7 @@ class Config(object):
     wordVecSize = 300
     
     LSTM_num_units = 512
-    fclayerAfterLSTM = 2048
+    fclayerAfterLSTM = 1024
     elMult = True #False = concat; True = Mult
     LSTMType = 'bi' #'bi' or 'single'
     LSTMCellSizes = [512] #for single only
