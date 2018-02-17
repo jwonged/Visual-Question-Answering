@@ -35,7 +35,6 @@ def getImageID(image_path):
     imgNameParts = splitPath[len(splitPath)-1].split('_') #COCO, train, XXX.jpg
     suffix =  imgNameParts[len(imgNameParts)-1] #XXX.jpg
     img_id = int(suffix.split('.')[0])
-    print 'Reading img ', img_id
     return img_id
     
 
@@ -114,6 +113,8 @@ def checkCorrect():
     print(len(imgData[str(359320)][0]))
     
 def main():
+    '''
+    #val set
     inputPath = '../../resources/'
     inputfile = inputPath + 'valImgPaths.txt'
     outputfile = '../resources/vggValImgFeaturesOut'
@@ -126,7 +127,7 @@ def main():
     outputfile = '../resources/vggTestOfficialImgFeaturesOut'
     jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)'''
+    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
     
     
 if __name__ == '__main__':
