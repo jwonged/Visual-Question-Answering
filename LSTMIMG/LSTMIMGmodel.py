@@ -41,12 +41,12 @@ class LSTMIMGmodel(object):
         info = 'model: {}, classes: {}, batchSize: {}, \
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
-             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}'.format(
+             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}'.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.lossRate,
                 config.lossRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
-                config.LSTMType, config.elMult)
+                config.LSTMType, config.elMult, config.imgModel)
         return info + 'fc: 2 layers (1000)'
     
     def _addPlaceholders(self):

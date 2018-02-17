@@ -23,9 +23,9 @@ class LSTMIMG_GPUConfig(Config):
             self.valImgFile = '../resources/vggValImgFeatures.json'
             self.testImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    csvResults = 'results/Pred_LSTMIMG_1502bi.csv'
-    logFile = 'results/Res_LSTMIMG_1502bi.csv'
-    saveModelFile = 'results/LSTMIMG_467Config'
+    csvResults = 'results/Pred_LSTMIMG_1702vgg.csv'
+    logFile = 'results/Res_LSTMIMG_1702vgg.csv'
+    saveModelFile = 'results/LSTMIMGvgg1702'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
