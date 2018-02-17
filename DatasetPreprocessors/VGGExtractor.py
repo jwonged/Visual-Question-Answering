@@ -67,13 +67,14 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
     count = 0
     with open(inputfile, 'r') as reader:
         with open(outputfile, 'w') as writer:
+            writer.truncate()
             for image_path in reader:
                 image_path = image_path.strip()
                 input_image = caffe.io.load_image(inputPath + image_path)
                 prediction = net.predict([input_image], oversample=False)
-                print (os.path.basename(image_path), ' : ' , \
-                       labels[prediction[0].argmax()].strip() , \
-                       ' (', prediction[0][prediction[0].argmax()] , ')')
+                msg = (os.path.basename(image_path) + ' : ' + \
+                       labels[prediction[0].argmax()].strip() + \
+                       ' (' + prediction[0][prediction[0].argmax()] + ')')
                 count = count + 1
                 try:
                     img_id = getImageID(image_path)
@@ -82,13 +83,16 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
                     featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
                     np.savetxt(writer, featureData, fmt='%.8g')
                     resultJSONData[img_id] = featureData
-                    print 'Images processed: {}'.format(count)
+                    msg += ('\nImages processed: {}\n'.format(count))
     
                 except ValueError:
                     print('Error reading image_path')
                     errorMessages.append(image_path)
                     #Invalid image names
                     errorMessages.append(image_path)
+                
+                if count%200 == 0:
+                    print(msg)
     
     with open(jsonFile, 'w') as jsonOut:
         print('writing to {}'.format(jsonFile))
@@ -113,13 +117,13 @@ def main():
     jsonFile = '../resources/vggValImgFeatures.json'
     
     convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    '''
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'testOfficialImgPaths.txt'
+    outputfile = '../resources/vggTestOfficialImgFeaturesOut'
+    jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    #inputPath = '../../resources/'
-    #inputfile = inputPath + 'testOfficialImgPaths.txt'
-    #outputfile = '../resources/vggTestOfficialImgFeaturesOut'
-    #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
-    
-    #convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)'''
     
     
 if __name__ == '__main__':

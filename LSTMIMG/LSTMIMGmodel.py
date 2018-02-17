@@ -186,9 +186,9 @@ class LSTMIMGmodel(object):
         else: #imageAfterLSTM
             if self.config.elMult:
                 print('Using pointwise mult')
-                #img vecs 1024 --> 1024
+                #img vecs 4096 --> 1024 (for vgg)
                 img_vecs = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.imgVecSize,
+                                           units=self.config.LSTM_num_units*2,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #dropout after img mapping layer
@@ -207,7 +207,7 @@ class LSTMIMGmodel(object):
             #                               activation=tf.tanh,
             #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
             hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
-                                           units=1000,
+                                           units=self.config.nOutClasses,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             y = tf.layers.dense(inputs=hidden_layer2,

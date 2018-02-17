@@ -11,6 +11,17 @@ class LSTMIMG_GPUConfig(Config):
     '''
     def __init__(self, load):
         super(LSTMIMG_GPUConfig, self).__init__(load)
+        
+        if self.imgModel == 'googlenet':
+            print('Using GoogLeNet config')
+            self.trainImgFile = '../resources/VQAImgFeatures_Train.json' #
+            self.valImgFile = '../resources/VQAImgFeatures_Val.json' #
+            self.testImgFile = '../resources/VQAImgFeatures_Test.json'
+        else:
+            print('Using VGGNet config')
+            self.trainImgFile = '../resources/vggTrainImgFeatures.json'
+            self.valImgFile = '../resources/vggValImgFeatures.json'
+            self.testImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
     csvResults = 'results/Pred_LSTMIMG_1502bi.csv'
     logFile = 'results/Res_LSTMIMG_1502bi.csv'
@@ -50,13 +61,7 @@ class LSTMIMG_GPUConfig(Config):
     valAnnotFile = '../resources/AllValAnnotResolvedList.json' #
     testAnnotFile = '../resources/AllTestAnnotResolvedList.json' #
     
-    #img_id --> img feature vec (1024)
-    trainImgFile = '../resources/VQAImgFeatures_Train.json' #
-    valImgFile = '../resources/VQAImgFeatures_Val.json' #
-    testImgFile = '../resources/VQAImgFeatures_Test.json'
-    
     #raw image files
-    
     #http://msvocds.blob.core.windows.net/coco2014/train2014.zip
     #http://msvocds.blob.core.windows.net/coco2014/val2014.zip
     #http://msvocds.blob.core.windows.net/coco2015/test2015.zip

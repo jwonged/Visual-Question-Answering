@@ -27,15 +27,15 @@ class Config(object):
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
+    imgModel = 'vgg' #'vgg' or 'googlenet' #for pre-trained img model
     
     nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
     batch_size = 32
-    imgVecSize = 1024
     wordVecSize = 300
     
     LSTM_num_units = 512
     elMult = True #False = concat; True = Mult
-    LSTMType = 'bi' #bi or single
+    LSTMType = 'bi' #'bi' or 'single'
     LSTMCellSizes = [512] #for single only
     
     nTrainEpochs = 50
@@ -51,3 +51,8 @@ class Config(object):
     usePretrainedEmbeddings = True
     shuffle = True
     trainEmbeddings = True
+    
+    if imgModel == 'googlenet':
+        imgVecSize = 1024
+    else:
+        imgVecSize = 4096

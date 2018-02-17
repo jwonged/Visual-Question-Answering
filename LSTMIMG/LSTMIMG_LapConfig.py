@@ -11,6 +11,19 @@ class LSTMIMG_LapConfig(Config):
     '''
     def __init__(self, load):
         super(LSTMIMG_LapConfig, self).__init__(load)
+        
+        if self.imgModel == 'googlenet':
+            print('Using GoogLeNet config')
+            #img_id --> img feature vec (1024)
+            self.trainImgFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
+            self.valImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Val.json'
+            self.testImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Test.json'
+        else:
+            print('Using VGGNet config')
+            #img_id --> img feature vec (4096)
+            self.trainImgFile = '../resources/vggTrainImgFeatures.json'
+            self.valImgFile = '../resources/vggValImgFeatures.json'
+            self.testImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
     csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_LSTMIMG1402.csv'
     logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_LSTMIMG1402.csv'
@@ -72,10 +85,7 @@ class LSTMIMG_LapConfig(Config):
     valAnnotFile = '/media/jwong/Transcend/VQADataset/ValTestSet/LSTMIMGData/AllValAnnotResolvedList.json'
     testAnnotFile = '/media/jwong/Transcend/VQADataset/ValTestSet/LSTMIMGData/AllTestAnnotResolvedList.json'
     
-    #img_id --> img feature vec (1024)
-    trainImgFile = '/media/jwong/Transcend/VQADataset/TrainSet/ExtractedImageFeatures/VQAImgFeatures_Train.json'
-    valImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Val.json'
-    testImgFile = '/media/jwong/Transcend/VQADataset/ValTestSet/VQAImgFeatures_Test.json'
+    
     
     ansClass1000File = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/1000MostFreqAnswers.csv'
     mostFreqAnswersFile = '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering/resources/allTrainAnswers.csv'
