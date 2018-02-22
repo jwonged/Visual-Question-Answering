@@ -31,12 +31,12 @@ class LSTMIMG_LapConfig(Config):
     saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     restoreModel = '/media/jwong/Transcend/VQAresults/14FebTest/LSTMIMG_46Config.meta'
     restoreModelPath = '/media/jwong/Transcend/VQAresults/14FebTest/'
+    testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/LSTMIMG1402Submission.json'
     
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #restoreModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     
     
-    testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/LSTMIMG1402Submission.json'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
