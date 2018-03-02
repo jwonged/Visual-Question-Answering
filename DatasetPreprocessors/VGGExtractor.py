@@ -8,8 +8,8 @@ import os, sys, getopt
 import json
 
 # Main path to caffe installation
-#caffe_root = '/home/joshua/caffe/'
-caffe_root = '/home/jwong/caffe/'
+caffe_root = '/home/joshua/caffe/'
+#caffe_root = '/home/jwong/caffe/'
  
 # Model prototxt file
 model_prototxt = caffe_root + 'models/211839e770f7b538e2d8/VGG_ILSVRC_19_layers_deploy.prototxt'
