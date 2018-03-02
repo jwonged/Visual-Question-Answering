@@ -24,7 +24,8 @@ imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
 mean_path = caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy'
  
 # Name of the layer we want to extract
-layer_name = 'pool5' #'fc7'
+layer_name = 'conv5_4'
+#layer_name = 'fc7'
  
 sys.path.insert(0, caffe_root + 'python')
 
@@ -38,8 +39,7 @@ def getImageID(image_path):
     img_id = int(suffix.split('.')[0])
     return img_id
     
-
-def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
+def convertToFeatureVecs(inputPath, inputfile, jsonFile):
     count = 0
     with open(inputfile, 'r') as reader:
         for path in reader:
@@ -47,13 +47,12 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
     print('Preparing to read {} images'.format(count))
     
     caffe.set_mode_gpu()
-    #caffe.set_mode_cpu()
     # Loading the Caffe model, setting preprocessing parameters
     net = caffe.Classifier(model_prototxt, model_trained,
                            mean=np.load(mean_path).mean(1).mean(1),
                            channel_swap=(2,1,0),
                            raw_scale=255,
-                           image_dims=(480, 480))
+                           image_dims=(448, 448))
     
     # Loading class labels
     with open(imagenet_labels) as f:
@@ -66,39 +65,37 @@ def convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile):
     errorMessages = []
     
     count = 0
+    print('Extracting from layer: {}'.format(layer_name))
     with open(inputfile, 'r') as reader:
-        with open(outputfile, 'w') as writer:
-            writer.truncate()
-            for image_path in reader:
-                image_path = image_path.strip()
-                input_image = caffe.io.load_image(inputPath + image_path)
-                prediction = net.predict([input_image], oversample=False)
-                msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
-                                               labels[prediction[0].argmax()].strip(), 
-                                               prediction[0][prediction[0].argmax()]))
+        for image_path in reader:
+            image_path = image_path.strip()
+            input_image = caffe.io.load_image(inputPath + image_path)
+            prediction = net.predict([input_image], oversample=False)
+            msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                           labels[prediction[0].argmax()].strip(), 
+                                           prediction[0][prediction[0].argmax()]))
+            
+            count = count + 1
+            
+            try:
+                img_id = getImageID(image_path)
                 
-                count = count + 1
-                
-                try:
-                    img_id = getImageID(image_path)
-                    
-                    # filename, array data to be saved, format, delimiter
-                    featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
-                    #np.savetxt(writer, featureData, fmt='%.8g')
-                    print(featureData)
-                    print(np.asarray(featureData).shape)
-                    resultJSONData[img_id] = featureData
-                    msg2 = ('\nImages processed: {}\n'.format(count))
-    
-                except ValueError:
-                    print('Error reading image_path')
-                    errorMessages.append(image_path)
-                    #Invalid image names
-                    errorMessages.append(image_path)
-                
-                if count%200 == 0:
-                    print(msg)
-                    print(msg2)
+                # filename, array data to be saved, format, delimiter
+                featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
+                #np.savetxt(writer, featureData, fmt='%.8g')
+                print(np.asarray(featureData).shape)
+                resultJSONData[img_id] = featureData
+                msg2 = ('\nImages processed: {}\n'.format(count))
+
+            except ValueError:
+                print('Error reading image_path')
+                errorMessages.append(image_path)
+                #Invalid image names
+                errorMessages.append(image_path)
+            
+            if count%200 == 0:
+                print(msg)
+                print(msg2)
     
     with open(jsonFile, 'w') as jsonOut:
         print('writing to {}'.format(jsonFile))
@@ -117,14 +114,33 @@ def checkCorrect():
     print(len(imgData[str(359320)][0]))
     
 def main():
-    '''
+    #train set
+    print('Starting processing for training set..')
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'trainImgPaths.txt'
+    jsonFile = '../resources/vggTrainConv5_4Features.json'
+    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    print('Training set completed.')
+    
     #val set
+    print('Starting processing for Val set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'valImgPaths.txt'
-    outputfile = '../resources/vggValImgFeaturesOut'
-    jsonFile = '../resources/vggValImgFeatures.json'
+    jsonFile = '../resources/vggValConv5_4Features.json'
+    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    print('Val set completed.')
     
-    convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    #test set
+    print('Starting processing for Val set..')
+    inputPath = '../../resources/'
+    inputfile = inputPath + 'testOfficialImgPaths.txt'
+    jsonFile = '../resources/vggTestOfficialconv5_4Features.json'
+    #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
+    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    print('Test set completed.')
+    
+    print('Processing completed!')
+    
     '''
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
@@ -132,6 +148,7 @@ def main():
     jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     
     convertToFeatureVecs(inputPath, inputfile, outputfile, jsonFile)
+    '''
 
 def checkRunOnCPU():
     inputPath = '/media/jwong/Transcend/VQADataset/TrainSet/'
@@ -142,7 +159,7 @@ def checkRunOnCPU():
                            mean=np.load(mean_path).mean(1).mean(1),
                            channel_swap=(2,1,0),
                            raw_scale=255,
-                           image_dims=(480, 480))
+                           image_dims=(448, 448))
     
     # Loading class labels
     with open(imagenet_labels) as f:
@@ -157,34 +174,43 @@ def checkRunOnCPU():
     count = 0
     with open(inputfile, 'r') as reader:
         for image_path in reader:
-            if count == 3:
+            if count == 1:
                 break
-            image_path = image_path.strip()
-            input_image = caffe.io.load_image(image_path)
-            prediction = net.predict([input_image], oversample=False)
-            msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
-                                           labels[prediction[0].argmax()].strip(), 
-                                           prediction[0][prediction[0].argmax()]))
-            
+            img_id, featureData, msg = convertImageToVec(image_path, labels, net)
+            if img_id == -1:
+                errorMessages.append(msg)
+                continue
+            resultJSONData[img_id] = featureData
+            #print(featureData)
+            print(np.asarray(featureData).shape)
+            msg2 = ('\nImages processed: {}\n'.format(count))
+            print(msg2)
+            print(layer_name)
             count = count + 1
             
-            try:
-                img_id = getImageID(image_path)
-                featureData = net.blobs[layer_name].data[0].reshape(1,-1).tolist()
-                print(featureData)
-                print(np.asarray(featureData).shape)
-                resultJSONData[img_id] = featureData
-                msg2 = ('\nImages processed: {}\n'.format(count))
-                print(msg2)
-
-            except ValueError:
-                print('Error reading image_path')
-                errorMessages.append(image_path)
-                #Invalid image names
-                errorMessages.append(image_path)
             
+def convertImageToVec(image_path, labels, net):
+    image_path = image_path.strip()
+    input_image = caffe.io.load_image(image_path)
+    print(input_image)
+    print(input_image.shape)
+    prediction = net.predict([input_image], oversample=False)
+    msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                   labels[prediction[0].argmax()].strip(), 
+                                   prediction[0][prediction[0].argmax()]))
     
+    try:
+        img_id = getImageID(image_path)
+        featureData = net.blobs[layer_name].data[0].tolist()#.reshape(1,-1).tolist()
+        return img_id, featureData, msg
 
-    
+    except ValueError:
+        print('Error reading image_path'.format(image_path))
+        return -1, None, image_path
+
 if __name__ == '__main__':
-    checkRun()
+    if (sys.argv[1] == '-GPU'):
+        main()
+    elif (sys.argv[1] == '-CPU'):
+        checkRunOnCPU()
+    
