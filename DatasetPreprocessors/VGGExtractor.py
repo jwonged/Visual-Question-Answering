@@ -107,14 +107,18 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
     print(errorMessages)
                     
 def checkCorrect():
-    fileName = '../resources/dummyOut.json'
+    #fileName = '../resources/dummyOut.json'
+    fileName = '../resources/vggTrainConv5_4Features.json'
     print('Reading {}'.format(fileName))
     with open(fileName) as jsonFile:
         imgData =  json.load(jsonFile)
     
     print(len(imgData))
-    print(imgData[str(359320)][0])
-    print(len(imgData[str(359320)][0]))
+    #print(imgData[str(359320)][0])
+    #print(len(imgData[str(359320)][0]))
+    print(imgData[str(270070)])
+    print(np.asarray(imgData[str(270070)]).shape)
+    print(len(imgData[str(270070)]))
     
 def main():
     #train set
@@ -216,4 +220,8 @@ if __name__ == '__main__':
         main()
     elif (sys.argv[1] == '-CPU'):
         checkRunOnCPU()
+    elif (sys.argv[1] == '-check'):
+        checkCorrect()
+    else:
+        print('Use option -GPU or -CPU')
     
