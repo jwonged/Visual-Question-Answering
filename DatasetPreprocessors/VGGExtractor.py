@@ -24,7 +24,7 @@ imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
 mean_path = caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy'
  
 # Name of the layer we want to extract
-layer_name = 'conv5_4'
+layer_name = 'conv5_3'
 #layer_name = 'fc7'
  
 sys.path.insert(0, caffe_root + 'python')
