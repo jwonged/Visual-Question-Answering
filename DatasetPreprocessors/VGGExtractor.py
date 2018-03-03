@@ -74,7 +74,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
             msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
                                            labels[prediction[0].argmax()].strip(), 
                                            prediction[0][prediction[0].argmax()]))
-            
+            print(msg)
             count = count + 1
             
             try:
@@ -85,7 +85,8 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
                 #np.savetxt(writer, featureData, fmt='%.8g')
                 resultJSONData[img_id] = featureData
                 msg2 = ('\nImages processed: {}\n'.format(count))
-            
+                print(np.asarray(featureData).shape)
+                print(msg2)
             except ValueError:
                 print('Error reading image_path')
                 errorMessages.append(image_path)
