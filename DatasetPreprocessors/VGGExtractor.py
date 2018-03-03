@@ -81,12 +81,15 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
                 img_id = getImageID(image_path)
                 
                 # filename, array data to be saved, format, delimiter
-                featureData = net.blobs[layer_name].data[0]#.reshape(1,-1).tolist()
+                featureData = net.blobs[layer_name].data[0].reshape(-1).tolist()
                 #np.savetxt(writer, featureData, fmt='%.8g')
                 print(np.asarray(featureData).shape)
                 resultJSONData[img_id] = featureData
                 msg2 = ('\nImages processed: {}\n'.format(count))
-
+            
+                if count == 1:
+                    break
+            
             except ValueError:
                 print('Error reading image_path')
                 errorMessages.append(image_path)
@@ -121,7 +124,7 @@ def main():
     jsonFile = '../resources/vggTrainConv5_4Features.json'
     convertToFeatureVecs(inputPath, inputfile, jsonFile)
     print('Training set completed.')
-    
+    '''
     #val set
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
@@ -141,7 +144,7 @@ def main():
     
     print('Processing completed!')
     
-    '''
+    '
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
     outputfile = '../resources/vggTestOfficialImgFeaturesOut'
