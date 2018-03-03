@@ -24,7 +24,7 @@ imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
 mean_path = caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy'
  
 # Name of the layer we want to extract
-layer_name = 'conv5_4'
+layer_name = 'conv5_3'
 #layer_name = 'fc7'
  
 sys.path.insert(0, caffe_root + 'python')
@@ -83,12 +83,8 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
                 # filename, array data to be saved, format, delimiter
                 featureData = net.blobs[layer_name].data[0].tolist()
                 #np.savetxt(writer, featureData, fmt='%.8g')
-                print(np.asarray(featureData).shape)
                 resultJSONData[img_id] = featureData
                 msg2 = ('\nImages processed: {}\n'.format(count))
-            
-                if count == 2:
-                    break
             
             except ValueError:
                 print('Error reading image_path')
@@ -125,15 +121,15 @@ def main():
     print('Starting processing for training set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'trainImgPaths.txt'
-    jsonFile = '../resources/vggTrainConv5_4Features.json'
+    jsonFile = '../resources/vggTrainConv5_3Features.json'
     convertToFeatureVecs(inputPath, inputfile, jsonFile)
     print('Training set completed.')
-    '''
+    
     #val set
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'valImgPaths.txt'
-    jsonFile = '../resources/vggValConv5_4Features.json'
+    jsonFile = '../resources/vggValConv5_3Features.json'
     convertToFeatureVecs(inputPath, inputfile, jsonFile)
     print('Val set completed.')
     
@@ -141,14 +137,14 @@ def main():
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
-    jsonFile = '../resources/vggTestOfficialconv5_4Features.json'
+    jsonFile = '../resources/vggTestOfficialconv5_3Features.json'
     #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     convertToFeatureVecs(inputPath, inputfile, jsonFile)
     print('Test set completed.')
     
     print('Processing completed!')
     
-    '
+    '''
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
     outputfile = '../resources/vggTestOfficialImgFeaturesOut'
