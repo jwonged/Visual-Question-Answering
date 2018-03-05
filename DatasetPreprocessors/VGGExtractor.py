@@ -46,6 +46,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
             count += 1
     print('Preparing to read {} images'.format(count))
     
+    caffe.set_device(0)
     caffe.set_mode_gpu()
     #caffe.set_mode_cpu()
     # Loading the Caffe model, setting preprocessing parameters
