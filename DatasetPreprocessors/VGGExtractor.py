@@ -120,7 +120,8 @@ def checkCorrect():
     #fileName = '../resources/dummyOut.json'
     filename = '../resources/vggTrainConv5_3Features.out'
     print('Reading {}'.format(filename))
-    fp = np.memmap(filename, dtype='float32', mode='r')
+    #fp = np.memmap(filename, dtype='float32', mode='r')
+    fp = np.loadtxt(filename)
     
     print(fp[0])
     print(fp.shape)
