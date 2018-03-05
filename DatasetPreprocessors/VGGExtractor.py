@@ -6,6 +6,8 @@ Created on 16 Feb 2018
 import numpy as np
 import os, sys, getopt
 import json
+import gc
+import pickle
 
 # Main path to caffe installation
 caffe_root = '/home/joshua/caffe/'
@@ -39,7 +41,7 @@ def getImageID(image_path):
     img_id = int(suffix.split('.')[0])
     return img_id
     
-def convertToFeatureVecs(inputPath, inputfile, jsonFile):
+def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
     count = 0
     with open(inputfile, 'r') as reader:
         for path in reader:
@@ -63,46 +65,59 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
     #print [(k, v.data.shape) for k, v in net.blobs.items()]
     #exit()
     
-    resultJSONData = {}
+    #resultJSONData = {}
     errorMessages = []
+    idlist = []
     
     count = 0
     print('Extracting from layer: {}'.format(layer_name))
     with open(inputfile, 'r') as reader:
-        for image_path in reader:
-            image_path = image_path.strip()
-            input_image = caffe.io.load_image(inputPath + image_path)
-            prediction = net.predict([input_image], oversample=False)
-            msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
-                                           labels[prediction[0].argmax()].strip(), 
-                                           prediction[0][prediction[0].argmax()]))
-            
-            count = count + 1
-            
-            try:
-                img_id = getImageID(image_path)
+        with open(outputFile, 'w') as writer:
+            writer.truncate()
+            for image_path in reader:
+                image_path = image_path.strip()
+                input_image = caffe.io.load_image(inputPath + image_path)
+                prediction = net.predict([input_image], oversample=False)
+                msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                               labels[prediction[0].argmax()].strip(), 
+                                               prediction[0][prediction[0].argmax()]))
                 
-                # filename, array data to be saved, format, delimiter
-                featureData = net.blobs[layer_name].data[0].tolist()
-                #np.savetxt(writer, featureData, fmt='%.8g')
-                resultJSONData[img_id] = featureData
-                msg2 = ('\nImages processed: {}\n'.format(count))
-            except ValueError:
-                print('Error reading image_path')
-                errorMessages.append(image_path)
-                #Invalid image names
-                errorMessages.append(image_path)
-            
-            if count%200 == 0:
-                print(msg)
-                print(msg2)
-    
-    with open(jsonFile, 'w') as jsonOut:
-        print('writing to {}'.format(jsonFile))
-        json.dump(resultJSONData, jsonOut)
-    print('Completed {} images'.format(len(resultJSONData)))
-    print(errorMessages)
+                count = count + 1
+                
+                try:
+                    img_id = getImageID(image_path)
+                    idlist.append(img_id)
                     
+                    # filename, array data to be saved, format, delimiter
+                    featureData = net.blobs[layer_name].data[0].tolist()
+                    np.savetxt(writer, featureData, fmt='%.8g')
+                    #resultJSONData[img_id] = featureData
+                    msg2 = ('\nImages processed: {}\n'.format(count))
+                except ValueError:
+                    print('Error reading image_path')
+                    errorMessages.append(image_path)
+                    #Invalid image names
+                    errorMessages.append(image_path)
+                
+                if count%200 == 0:
+                    print(msg)
+                    print(msg2)
+                if count%1000 == 0:
+                    gc.collect()
+                    
+    print('Completed processing {} images'.format(count))
+    saveToFile(idlist, idfile)
+    #with open(jsonFile, 'w') as jsonOut:
+    #    print('writing to {}'.format(jsonFile))
+    #    json.dump(resultJSONData, jsonOut)
+    #print('Completed {} images'.format(len(resultJSONData)))
+    print(errorMessages)
+
+def saveToFile(self, data, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print('Saved to {}'.format(filename))
+
 def checkCorrect():
     #fileName = '../resources/dummyOut.json'
     fileName = '../resources/vggTrainConv5_4Features.json'
@@ -123,24 +138,32 @@ def main():
     inputPath = '../../resources/'
     inputfile = inputPath + 'trainImgPaths.txt'
     jsonFile = '../resources/vggTrainConv5_3Features.json'
-    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    outputFile = '../resources/vggTrainConv5_3Features.out'
+    idFile = '../resources/vggIDsTrainConv5_3Features.pkl'
+    convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
     print('Training set completed.')
+    gc.collect()
     
     #val set
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'valImgPaths.txt'
     jsonFile = '../resources/vggValConv5_3Features.json'
-    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    outputFile = '../resources/vggValConv5_3Features.out'
+    idFile = '../resources/vggIDsValConv5_3Features.pkl'
+    convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
     print('Val set completed.')
+    gc.collect()
     
     #test set
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
     jsonFile = '../resources/vggTestOfficialconv5_3Features.json'
+    outputFile = '../resources/vggTestOfficialconv5_3Features.out'
+    idFile = '../resources/vggIDsTestOfficialconv5_3Features.pkl'
     #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
-    convertToFeatureVecs(inputPath, inputfile, jsonFile)
+    convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
     print('Test set completed.')
     
     print('Processing completed!')
