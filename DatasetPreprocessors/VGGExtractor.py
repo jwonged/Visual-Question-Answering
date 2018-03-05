@@ -85,7 +85,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
                 # filename, array data to be saved, format, delimiter
                 featureData = net.blobs[layer_name].data[0].tolist()
                 #np.savetxt(writer, featureData, fmt='%.8g')
-                #resultJSONData[img_id] = featureData
+                resultJSONData[img_id] = featureData
                 msg2 = ('\nImages processed: {}\n'.format(count))
             except ValueError:
                 print('Error reading image_path')
