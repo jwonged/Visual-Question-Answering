@@ -71,7 +71,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
     
     count = 0
     print('Extracting from layer: {}'.format(layer_name))
-    with open(inputfile, 'r') as reader, with open(outputFile, 'w') as writer:
+    with open(inputfile, 'r') as reader, open(outputFile, 'w') as writer:
         writer.truncate()
         for image_path in reader:
             image_path = image_path.strip()
