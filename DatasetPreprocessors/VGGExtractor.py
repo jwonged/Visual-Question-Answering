@@ -47,6 +47,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
     print('Preparing to read {} images'.format(count))
     
     caffe.set_mode_gpu()
+    #caffe.set_mode_cpu()
     # Loading the Caffe model, setting preprocessing parameters
     net = caffe.Classifier(model_prototxt, model_trained,
                            mean=np.load(mean_path).mean(1).mean(1),
@@ -74,7 +75,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
             msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
                                            labels[prediction[0].argmax()].strip(), 
                                            prediction[0][prediction[0].argmax()]))
-            print(msg)
+            
             count = count + 1
             
             try:
@@ -83,10 +84,8 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile):
                 # filename, array data to be saved, format, delimiter
                 featureData = net.blobs[layer_name].data[0].tolist()
                 #np.savetxt(writer, featureData, fmt='%.8g')
-                resultJSONData[img_id] = featureData
+                #resultJSONData[img_id] = featureData
                 msg2 = ('\nImages processed: {}\n'.format(count))
-                print(np.asarray(featureData).shape)
-                print(msg2)
             except ValueError:
                 print('Error reading image_path')
                 errorMessages.append(image_path)
