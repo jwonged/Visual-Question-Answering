@@ -89,7 +89,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
                     idlist.append(img_id)
                     
                     # filename, array data to be saved, format, delimiter
-                    featureData = net.blobs[layer_name].data[0].reshape(1,-1)
+                    featureData = net.blobs[layer_name].data[0].reshape(-1,100352)
                     np.savetxt(writer, featureData, fmt='%.8g')
                     #resultJSONData[img_id] = featureData
                     msg2 = ('\nImages processed: {}\n'.format(count))
@@ -100,6 +100,7 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
                     errorMessages.append(image_path)
                 
                 if count%200 == 0:
+                    print(featureData.shape)
                     print(msg)
                     print(msg2)
                 if count%1000 == 0:
