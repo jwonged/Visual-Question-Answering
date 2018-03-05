@@ -118,7 +118,7 @@ def saveToFile(data, filename):
 
 def checkCorrect():
     #fileName = '../resources/dummyOut.json'
-    filename = '../resources/vggValConv5_3Features.out'
+    filename = '../resources/vggTrainConv5_3Features.out'
     print('Reading {}'.format(filename))
     fp = np.memmap(filename, dtype='float32', mode='r', shape=(-1,512,14,14))
     
