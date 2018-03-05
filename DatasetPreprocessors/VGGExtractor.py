@@ -71,40 +71,37 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
     
     count = 0
     print('Extracting from layer: {}'.format(layer_name))
-    with open(inputfile, 'r') as reader:
-        with open(outputFile, 'w') as writer:
-            writer.truncate()
-            for image_path in reader:
-                image_path = image_path.strip()
-                input_image = caffe.io.load_image(inputPath + image_path)
-                prediction = net.predict([input_image], oversample=False)
-                msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
-                                               labels[prediction[0].argmax()].strip(), 
-                                               prediction[0][prediction[0].argmax()]))
+    with open(inputfile, 'r') as reader, with open(outputFile, 'w') as writer:
+        writer.truncate()
+        for image_path in reader:
+            image_path = image_path.strip()
+            input_image = caffe.io.load_image(inputPath + image_path)
+            prediction = net.predict([input_image], oversample=False)
+            msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                           labels[prediction[0].argmax()].strip(), 
+                                           prediction[0][prediction[0].argmax()]))
+            
+            count = count + 1
+            
+            try:
+                img_id = getImageID(image_path)
+                idlist.append(img_id)
                 
-                count = count + 1
-                
-                try:
-                    img_id = getImageID(image_path)
-                    idlist.append(img_id)
-                    
-                    # filename, array data to be saved, format, delimiter
-                    featureData = net.blobs[layer_name].data[0].reshape(-1,100352)
-                    np.savetxt(writer, featureData, fmt='%.8g')
-                    #resultJSONData[img_id] = featureData
-                    msg2 = ('\nImages processed: {}\n'.format(count))
-                except ValueError:
-                    print('Error reading image_path')
-                    errorMessages.append(image_path)
-                    #Invalid image names
-                    errorMessages.append(image_path)
-                
-                if count%200 == 0:
-                    print(featureData.shape)
-                    print(msg)
-                    print(msg2)
-                if count%1000 == 0:
-                    gc.collect()
+                # filename, array data to be saved, format, delimiter
+                featureData = net.blobs[layer_name].data[0].reshape(-1,100352)
+                np.savetxt(writer, featureData, fmt='%.8g')
+                #resultJSONData[img_id] = featureData
+                msg2 = ('\nImages processed: {}\n'.format(count))
+            except ValueError:
+                print('Error reading image_path')
+                errorMessages.append(image_path)
+                #Invalid image names
+                errorMessages.append(image_path)
+            
+            if count%200 == 0:
+                print(featureData.shape)
+                print(msg)
+                print(msg2)
                     
     print('Completed processing {} images'.format(count))
     saveToFile(idlist, idfile)
@@ -114,27 +111,33 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
     #print('Completed {} images'.format(len(resultJSONData)))
     print(errorMessages)
 
-def saveToFile(self, data, filename):
+def saveToFile(data, filename):
     with open(filename, 'wb') as f:
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
     print('Saved to {}'.format(filename))
 
 def checkCorrect():
     #fileName = '../resources/dummyOut.json'
-    fileName = '../resources/vggTrainConv5_4Features.json'
-    print('Reading {}'.format(fileName))
-    with open(fileName) as jsonFile:
+    filename = '../resources/vggValConv5_3Features.out'
+    print('Reading {}'.format(filename))
+    fp = np.memmap(filename, dtype='float32', mode='r', shape=(-1,512,14,14))
+    
+    print(fp[0])
+    print(fp.shape)
+    
+    '''with open(fileName) as jsonFile:
         imgData =  json.load(jsonFile)
     
     print(len(imgData))
     #print(imgData[str(359320)][0])
     #print(len(imgData[str(359320)][0]))
-    print(imgData[str(270070)])
-    print(np.asarray(imgData[str(270070)]).shape)
-    print(len(imgData[str(270070)]))
+    #print(imgData[str(270070)])
+    #print(np.asarray(imgData[str(270070)]).shape)
+    #print(len(imgData[str(270070)]))'''
     
 def main():
     #train set
+    '''
     print('Starting processing for training set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'trainImgPaths.txt'
@@ -143,7 +146,7 @@ def main():
     idFile = '../resources/vggIDsTrainConv5_3Features.pkl'
     convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
     print('Training set completed.')
-    gc.collect()
+    gc.collect()'''
     
     #val set
     print('Starting processing for Val set..')
