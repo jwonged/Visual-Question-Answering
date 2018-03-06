@@ -110,6 +110,62 @@ def convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idfile):
     #    json.dump(resultJSONData, jsonOut)
     #print('Completed {} images'.format(len(resultJSONData)))
     print(errorMessages)
+    
+def convertToFeatureVecsUseSave(inputPath, inputfile, jsonFile, outputFile, idfile):
+    num_images = 0
+    with open(inputfile, 'r') as reader:
+        for path in reader:
+            num_images += 1
+    print('Preparing to read {} images'.format(num_images))
+    
+    caffe.set_device(0)
+    caffe.set_mode_gpu()
+    net = caffe.Classifier(model_prototxt, model_trained,
+                           mean=np.load(mean_path).mean(1).mean(1),
+                           channel_swap=(2,1,0),
+                           raw_scale=255,
+                           image_dims=(448, 448))
+    
+    with open(imagenet_labels) as f:
+        labels = f.readlines()
+    
+    print('Setting up numpy empty array')
+    errorMessages = []
+    idToIndexMap = {}
+    featureData = np.zeros(shape=[num_images, 512, 14, 14])
+    print(featureData.shape)
+    
+    count = 0
+    print('Extracting from layer: {}'.format(layer_name))
+    with open(inputfile, 'r') as reader, open(outputFile, 'w') as writer:
+        writer.truncate()
+        for index, (image_path) in enumerate(reader):
+            image_path = image_path.strip()
+            input_image = caffe.io.load_image(inputPath + image_path)
+            prediction = net.predict([input_image], oversample=False)
+            msg = ('{} : {} ( {} )'.format(os.path.basename(image_path), 
+                                           labels[prediction[0].argmax()].strip(), 
+                                           prediction[0][prediction[0].argmax()]))
+            
+            count = count + 1
+            
+            try:
+                img_id = getImageID(image_path)
+                idToIndexMap[img_id] = index
+                
+                featureData = net.blobs[layer_name].data[0]
+                msg2 = ('\nImages processed: {}\n'.format(count))
+            except ValueError:
+                print('Error reading image_path')
+                errorMessages.append(image_path)
+            
+            if count%200 == 0:
+                print(msg)
+                print(msg2)
+                    
+    print('Completed processing {} images'.format(count))
+    saveToFile(idToIndexMap, idfile)
+    print(errorMessages)
 
 def saveToFile(data, filename):
     with open(filename, 'wb') as f:
@@ -138,17 +194,17 @@ def checkCorrect():
     
 def main():
     #train set
-    '''
     print('Starting processing for training set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'trainImgPaths.txt'
     jsonFile = '../resources/vggTrainConv5_3Features.json'
-    outputFile = '../resources/vggTrainConv5_3Features.out'
-    idFile = '../resources/vggIDsTrainConv5_3Features.pkl'
-    convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
+    outputFile = '../resources/vggTrainConv5_3Features_save.npy'
+    idFile = '../resources/vggIDsTrainConv5_3Features_save.pkl'
+    convertToFeatureVecsUseSave(inputPath, inputfile, jsonFile, outputFile, idFile)
+    #convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
     print('Training set completed.')
-    gc.collect()'''
-    
+    gc.collect()
+    '''
     #val set
     print('Starting processing for Val set..')
     inputPath = '../../resources/'
@@ -169,7 +225,7 @@ def main():
     idFile = '../resources/vggIDsTestOfficialconv5_3Features.pkl'
     #jsonFile = '../resources/vggTestOfficialImgFeatures.json'
     convertToFeatureVecs(inputPath, inputfile, jsonFile, outputFile, idFile)
-    print('Test set completed.')
+    print('Test set completed.')'''
     
     print('Processing completed!')
     
