@@ -70,7 +70,7 @@ def convertToFeatureVecs(inputPath, inputfile, outputFile):
     errorMessages = []
     
     count = 0
-    dataMap = shelve.open(outputFile, protocol=pickle.HIGHEST_PROTOCOL)
+    dataMap = shelve.open(outputFile, flag='n', protocol=pickle.HIGHEST_PROTOCOL)
     print('Extracting from layer: {}'.format(layer_name))
     with open(inputfile, 'r') as reader:
         for image_path in reader:
@@ -103,6 +103,8 @@ def convertToFeatureVecs(inputPath, inputfile, outputFile):
                 print(featureData.shape)
                 print(msg)
                 print(msg2)
+            if count%1000 == 0:
+                dataMap.sync()
     dataMap.close()
                     
     print('Completed processing {} images'.format(count))
