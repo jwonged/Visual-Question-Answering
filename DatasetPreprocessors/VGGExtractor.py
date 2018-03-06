@@ -104,7 +104,9 @@ def convertToFeatureVecs(inputPath, inputfile, outputFile):
                 print(msg)
                 print(msg2)
             if count%1000 == 0:
+                print('Doing a data sync...')
                 dataMap.sync()
+                print('Data sync done.')
     dataMap.close()
                     
     print('Completed processing {} images'.format(count))
