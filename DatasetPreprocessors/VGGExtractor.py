@@ -143,6 +143,7 @@ def checkCorrect():
     #print(len(imgData[str(270070)]))'''
     
 def main():
+    '''
     #train set
     print('Starting processing for training set..')
     inputPath = '../../resources/'
@@ -163,7 +164,7 @@ def main():
     #idFile = '../resources/vggIDsValConv5_3Features.pkl'
     convertToFeatureVecs(inputPath, inputfile, outputFile)
     print('Val set completed.')
-    gc.collect()
+    gc.collect()'''
     
     #test set
     print('Starting processing for Val set..')
