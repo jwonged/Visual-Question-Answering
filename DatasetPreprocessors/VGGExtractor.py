@@ -65,6 +65,7 @@ def convertToFeatureVecs(inputPath, inputfile, outputFile):
     
     #print [(k, v.data.shape) for k, v in net.blobs.items()]
     #exit()
+    print('Result will be written to {}'.format(outputFile))
     
     #resultJSONData = {}
     errorMessages = []
@@ -167,7 +168,7 @@ def main():
     gc.collect()'''
     
     #test set
-    print('Starting processing for Val set..')
+    print('Starting processing for TEST OFFICIAL set..')
     inputPath = '../../resources/'
     inputfile = inputPath + 'testOfficialImgPaths.txt'
     #jsonFile = '../resources/vggTestOfficialconv5_3Features.json'
