@@ -353,7 +353,7 @@ class LSTMIMGmodel(object):
         epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, \
                 total train predictions={3}\n'.format(
                     nEpoch, epochScore, trainScore, total_predictions)
-        epMsg2 = 'vqaEvalMetrics: train score = {0:>6.2%}, val score = {1:>6.2%}\n'.format(
+        epMsg2 = 'vqaEvalMetrics: train score = {0}\%, val score = {1}\%\n'.format(
                 vqaEvalTrainScore, vqaEvalValScore)
         print(epMsg + epMsg2)
         self.logFile.writerow([
