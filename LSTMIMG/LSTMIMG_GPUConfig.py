@@ -21,7 +21,7 @@ class LSTMIMG_GPUConfig(Config):
             print('Using VGGNet config')
             self.trainImgFile = '../resources/vggTrainImgFeatures.json'
             self.valImgFile = '../resources/vggValImgFeatures.json'
-            self.testImgFile = '../resources/vggTestOfficialImgFeatures.json'
+            self.testOfficialImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
     csvResults = 'results/Pred_LSTMIMG_1702vggfc.csv'
     logFile = 'results/Res_LSTMIMG_1702vggfc.csv'
@@ -49,7 +49,11 @@ class LSTMIMG_GPUConfig(Config):
             "image_id" : int,
             "question_type" : str,
             "answer_type" : str,
-            "answers" : answer(str),
+            "answers" : [answer{
+                        "answer_id" : int,
+                        "answer" : str,
+                        "answer_confidence": str,
+                        }]
             "multiple_choice_answer" : str
         }, ...
     ]
@@ -57,9 +61,10 @@ class LSTMIMG_GPUConfig(Config):
     60,753 val
     60,756 test
     '''
-    trainAnnotFile = '../resources/AllTrainAnnotResolvedList.json' #
-    valAnnotFile = '../resources/AllValAnnotResolvedList.json' #
-    testAnnotFile = '../resources/AllTestAnnotResolvedList.json' #
+    trainAnnotFile = '../resources/TrainAnnotList.json'
+    valAnnotFile = '../resources/ValAnnotList.json'
+    testAnnotFile = '../resources/TestAnnotList.json'
+    
     
     #raw image files
     #http://msvocds.blob.core.windows.net/coco2014/train2014.zip

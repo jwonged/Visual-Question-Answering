@@ -9,6 +9,7 @@ from nltk import word_tokenize
 import pickle
 import numpy as np
 import random
+from model_utils import resolveAnswer
 
 class InputProcessor(object):
     '''
@@ -109,16 +110,21 @@ class InputProcessor(object):
         return idList
     
     def getNextBatch(self, batchSize):
-        batchOfQnsAsWordIDs, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], []
+        batchOfQnsAsWordIDs, img_vecs, labels, ansLists  = [], [], [], []
+        rawQns, img_ids, qn_ids =  [], [], []
+        
         for annot in self.annots:
             if (len(batchOfQnsAsWordIDs) == batchSize):
                 batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
-                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], [], []
+                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids, ansLists
+                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = [], [], [], []
+                rawQns, img_ids, qn_ids = [], [], []
             
+            resolvedAns = resolveAnswer(annot['answers'])
             #Leave out answers not in AnsClass for training; map to special num for val
             if (not self.is_training) or (
-                self.is_training and annot['answers'] in self.mapAnsToClass):
+                self.is_training and resolvedAns in self.mapAnsToClass):
+                
                 #process question
                 rawQn = self.rawQns[str(annot['question_id'])]
                 qnAsWordIDs = self._mapQnToIDs(rawQn)
@@ -133,19 +139,20 @@ class InputProcessor(object):
                 img_ids.append(img_id)
                 
                 #process label
-                if annot['answers'] not in self.mapAnsToClass:
+                ansLists.append(annot['answers'])
+                if resolvedAns not in self.mapAnsToClass:
                     if self.is_training:
                         raise ValueError('Inconsistent State in processing label')
                     labelClass = -1
                 else:
-                    labelClass = self.mapAnsToClass[annot['answers']]
+                    labelClass = self.mapAnsToClass[resolvedAns]
                 labels.append(labelClass)
         
         if self.config.shuffle and self.is_training:
             random.shuffle(self.annots)
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
+            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids, ansLists
     
     def getWholeBatch(self):
         batchOfQnsAsWordIDs, img_vecs, labels = [], [], []

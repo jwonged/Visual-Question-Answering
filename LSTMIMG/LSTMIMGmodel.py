@@ -12,7 +12,7 @@ import pickle
 import os
 import csv
 
-from HelperFunctions import getPretrainedw2v
+from LSTMIMG.model_utils import getPretrainedw2v, AnswerProcessor
 
 class LSTMIMGmodel(object):
     '''
@@ -33,6 +33,7 @@ class LSTMIMGmodel(object):
             ['Epoch','Question', 'Prediction', 'Label', 'Pred Class',
              'label class', 'Correct?', 'img id', 'qn_id'])
         
+        self.ansProcessor = AnswerProcessor()
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
@@ -73,7 +74,7 @@ class LSTMIMGmodel(object):
     
     def _addEmbeddings(self):
         #add word embeddings
-        with tf.variable_scope("words"):
+        with tf.variable_scope("Word_embeddings"):
             if self.config.usePretrainedEmbeddings:
                 print('Using pretrained w2v embeddings')
                 pretrainedEmbeddings = getPretrainedw2v(self.config.shortenedEmbeddingsWithUNKFile)
@@ -92,8 +93,7 @@ class LSTMIMGmodel(object):
         self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")
         
-        if self.config.dropoutVal < 1.0:
-            self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
+        self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
         
     def construct(self):
         self._addPlaceholders()
@@ -106,36 +106,36 @@ class LSTMIMGmodel(object):
             self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
             
         elif self.config.modelStruct == 'imageAsFirstWord':
-            print('Constructing imagePerWord model')
-            #map image 1024 --> 512 --> 300
-            imgMappingLayer1 = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.imgVecSize/2, 
-                                           activation=tf.nn.relu,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            imgMappingLayer2 = tf.layers.dense(inputs=imgMappingLayer1,
-                                           units=self.config.wordVecSize,
-                                           activation=tf.nn.relu,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            
-            #reshape to allow concat with word embeddings
-            imgMappingLayer2 = tf.reshape(
-                imgMappingLayer2, [self.config.batch_size, 1, self.config.wordVecSize])
-            print('Shape of img map layer 2: {}'.format(imgMappingLayer2.get_shape()))
-            
-            #add img embedding as first word to lstm input
-            self.LSTMinput = tf.concat([imgMappingLayer2, self.word_embeddings], axis=1)
-            print('Shape of LSTM input: {}'.format(self.LSTMinput.get_shape()))
-            
-            #add 1 to all sequence lengths to account for extra img word
-            self.sequence_lengths = tf.add(
-                self.sequence_lengths, tf.ones(tf.shape(self.sequence_lengths), dtype=tf.int32))
+            with tf.variable_scope('Image_mapping'):
+                print('Constructing imagePerWord model')
+                #map image 1024 --> 512 --> 300
+                imgMappingLayer1 = tf.layers.dense(inputs=self.img_vecs,
+                                               units=self.config.imgVecSize/2, 
+                                               activation=tf.nn.relu,
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                imgMappingLayer2 = tf.layers.dense(inputs=imgMappingLayer1,
+                                               units=self.config.wordVecSize,
+                                               activation=tf.nn.relu,
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                
+                #reshape to allow concat with word embeddings
+                imgMappingLayer2 = tf.reshape(
+                    imgMappingLayer2, [self.config.batch_size, 1, self.config.wordVecSize])
+                print('Shape of img map layer 2: {}'.format(imgMappingLayer2.get_shape()))
+                
+                #add img embedding as first word to lstm input
+                self.LSTMinput = tf.concat([imgMappingLayer2, self.word_embeddings], axis=1)
+                print('Shape of LSTM input: {}'.format(self.LSTMinput.get_shape()))
+                
+                #add 1 to all sequence lengths to account for extra img word
+                self.sequence_lengths = tf.add(
+                    self.sequence_lengths, tf.ones(tf.shape(self.sequence_lengths), dtype=tf.int32))
         
         else:
             print('Constructing imageAfterLSTM model')
             self.LSTMinput = self.word_embeddings
             
             
-        #LSTM part
         with tf.variable_scope("lstm"):
             if self.config.LSTMType == 'bi':
                 print('Using bi-LSTM')
@@ -176,30 +176,29 @@ class LSTMIMGmodel(object):
                 lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1)
                 
         #dropout after LSTM
-        if self.config.dropoutVal < 1.0:
-            lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+        lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
             
         #Handle output according to model structure
-        if self.config.modelStruct == 'imagePerWord':
-            self.LSTMOutput = lstmOutput 
-        elif self.config.modelStruct == 'imageAsFirstWord':
-            self.LSTMOutput = lstmOutput
-        else: #imageAfterLSTM
-            if self.config.elMult:
-                print('Using pointwise mult')
-                #img vecs 4096 --> 2048 (for vgg)
-                img_vecs = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.fclayerAfterLSTM,
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-                #dropout after img mapping layer
-                if self.config.dropoutVal < 1.0:
+        with tf.variable_scope('Combine_modes'):
+            if self.config.modelStruct == 'imagePerWord':
+                self.LSTMOutput = lstmOutput 
+            elif self.config.modelStruct == 'imageAsFirstWord':
+                self.LSTMOutput = lstmOutput
+            else: #imageAfterLSTM
+                if self.config.elMult:
+                    print('Using pointwise mult')
+                    #img vecs 4096 --> 2048 (for vgg)
+                    img_vecs = tf.layers.dense(inputs=self.img_vecs,
+                                               units=self.config.fclayerAfterLSTM,
+                                               activation=tf.tanh,
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                    #dropout after img mapping layer
                     img_vecs = tf.nn.dropout(img_vecs, self.dropout)
-                    
-                self.LSTMOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
-            else: #using concat
-                print('Using concat')
-                self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+                        
+                    self.LSTMOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
+                else: #using concat
+                    print('Using concat')
+                    self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
         
         #fully connected layer
         with tf.variable_scope("proj"):
@@ -216,6 +215,7 @@ class LSTMIMGmodel(object):
                                            activation=None,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             print('Shape of y: {}'.format(y.get_shape()))
+            
         #predict & get accuracy
         self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
         
@@ -223,12 +223,13 @@ class LSTMIMGmodel(object):
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
         #define losses
-        crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                    logits=y, labels=self.labels)
-        self.loss = tf.reduce_mean(crossEntropyLoss)
+        with tf.variable_scope('loss'):
+            crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                        logits=y, labels=self.labels)
+            self.loss = tf.reduce_mean(crossEntropyLoss)
 
-        # for tensorboard
-        #tf.summary.scalar("loss", self.loss)
+        #Add loss to tensorboard
+        tf.summary.scalar("loss", self.loss)
         
         self._addOptimizer()
         
@@ -259,7 +260,9 @@ class LSTMIMGmodel(object):
     def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver()#max_to_keep=4)
+        self.saver = tf.train.Saver()
+        self.merged = tf.summary.merge_all()
+        self.tb_writer = tf.summary.FileWriter('./tensorboard', self.sess.graph)
         
         self.logFile.writerow(['Model constructed.'])
         print('Complete Model Construction')
@@ -284,12 +287,7 @@ class LSTMIMGmodel(object):
             # early stopping and saving best parameters
             if score >= highestScore:
                 nEpochWithoutImprovement = 0
-                if nEpoch == 0:
-                    self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
-                else:
-                    self.saver.save(self.sess, self.config.saveModelFile, 
-                                    global_step=nEpoch,  write_meta_graph=False)
-                #self._save_session()
+                self.saver.save(self.sess, self.config.saveModelFile)
                 highestScore = score
                 #self.logFile.writerow('New score\n')
             else:
@@ -300,10 +298,6 @@ class LSTMIMGmodel(object):
                             nEpoch+1, nEpochWithoutImprovement)])
                     break
     
-    def _save_session(self):
-        #if not os.path.exists(self.config.dir_model):
-        #    os.makedirs(self.config.dir_model)
-        self.saver.save(self.sess, self.config.saveModelFile)
     
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
@@ -312,8 +306,9 @@ class LSTMIMGmodel(object):
         # Potentially add progbar here
         batch_size = self.config.batch_size
         correct_predictions, total_predictions = 0., 0.
+        qnAccs = []
         
-        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _, ansList) in enumerate(
             trainReader.getNextBatch(batch_size)):
             
             feed = {
@@ -327,15 +322,24 @@ class LSTMIMGmodel(object):
             _, _, labels_pred = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred], feed_dict=feed)
             
-            for lab, labPred in zip(labels, labels_pred):
-                if lab==labPred:
+            for label, label_pred, ansList in zip(labels, labels_pred, ansList):
+                #VQA evaluation metric
+                pred_ans = self.config.classToAnsMap[label_pred]
+                pred_ans = self.ansProcessor.processAnswer(pred_ans)
+                matchedAns = 0
+                for ans in ansList:
+                    ans = self.ansProcessor.processAnswer(ans)
+                    if ans == pred_ans:
+                        matchedAns += 1
+                qnAcc = min(1, float(matchedAns)/3)
+                qnAccs.append(qnAcc)
+                
+                #single strict accuracy eval
+                if label == label_pred:
                     correct_predictions += 1
                 total_predictions += 1
                 
-                #log to csv
-                #self.predFile.writerow([qn, self.classToAnsMap[labPred], self.classToAnsMap[lab], labPred, lab, lab==labPred])
-                #self.predFile.write('Qn:{}, lab:{}, pred:{}\n'.format(qn, self.classToAnsMap[lab], self.classToAnsMap[labPred]))
-                '''
+            '''
             if (i%4000==0):
                 valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
                 resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
@@ -343,25 +347,31 @@ class LSTMIMGmodel(object):
                 self.logFile.write(resMsg)
                 print(resMsg)'''
             
-        epochScore, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
+        epochScore, valCorrect, valTotalPreds, vqaEvalValScore = self.runVal(valReader, nEpoch)
+        vqaEvalTrainScore = round(100*float(sum(qnAccs)/len(qnAccs)), 2)
         trainScore = correct_predictions/total_predictions if correct_predictions > 0 else 0
-        epMsg = 'Epoch {0}: val Score={1:>6.1%}, train Score={2:>6.1%}, total train predictions={3}\n'.format(
+        epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, \
+                total train predictions={3}\n'.format(
                     nEpoch, epochScore, trainScore, total_predictions)
-        print(epMsg)
+        epMsg2 = 'vqaEvalMetrics: train score = {0:>6.2%}, val score = {1:>6.2%}\n'.format(
+                vqaEvalTrainScore, vqaEvalValScore)
+        print(epMsg + epMsg2)
         self.logFile.writerow([
-            nEpoch, epochScore, trainScore, correct_predictions, total_predictions, valCorrect, valTotalPreds])
+            nEpoch, epochScore, trainScore, correct_predictions, total_predictions, 
+            valCorrect, valTotalPreds, vqaEvalValScore])
         return epochScore
     
-    def runVal(self, valReader, nEpoch):
-        """Evaluates performance on test set
+    def runVal(self, valReader, nEpoch, is_training=True):
+        """Evaluates performance on val set
         Args:
-            test: dataset that yields tuple of (sentences, tags)
+            valReader:
         Returns:
-            metrics: (dict) metrics["acc"] = 98.4, ...
+            result:
         """
         accuracies = []
+        qnAccs = []
         correct_predictions, total_predictions = 0., 0.
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_ in \
+        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_, ansLists in \
             valReader.getNextBatch(self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
@@ -372,19 +382,35 @@ class LSTMIMGmodel(object):
             }
             labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
-            for lab, labPred, qn ,img_id in zip(labels, labels_pred, rawQns, img_ids):
-                if (lab==labPred):
+            for label, label_pred, ansList, qn, img_id in zip(
+                labels, labels_pred, ansLists, rawQns, img_ids):
+                
+                #VQA evaluation metric
+                pred_ans = self.config.classToAnsMap[label_pred]
+                pred_ans = self.ansProcessor.processAnswer(pred_ans)
+                matchedAns = 0
+                for ans in ansList:
+                    ans = self.ansProcessor.processAnswer(ans)
+                    if ans == pred_ans:
+                        matchedAns += 1
+                qnAcc = min(1, float(matchedAns)/3)
+                qnAccs.append(qnAcc)
+                
+                #single strict accuracy eval
+                if label == label_pred:
                     correct_predictions += 1
                 total_predictions += 1
-                accuracies.append(lab==labPred)
-                #self._logToCSV(
-                #    nEpoch, qn, 
-                #    self.classToAnsMap[labPred], 
-                #    self.classToAnsMap[lab], 
-                #    labPred, lab, lab==labPred, img_id)
+                accuracies.append(label==label_pred)
                 
+                #log predictions for non-training val
+                if not is_training:
+                    self._logToCSV(nEpoch, qn, self.classToAnsMap[label_pred], 
+                                self.classToAnsMap[label], 
+                                label_pred, label, label==label_pred, img_id)
+                
+        vqaEvalValScore = round(100*float(sum(qnAccs)/len(qnAccs)), 2)
         valAcc = np.mean(accuracies)
-        return valAcc, correct_predictions, total_predictions
+        return valAcc, correct_predictions, total_predictions, vqaEvalValScore
     
     def _logToCSV(self, nEpoch, qn, prediction, label, 
                   predClass, labelClass, correct, img_id):
