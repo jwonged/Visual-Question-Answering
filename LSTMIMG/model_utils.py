@@ -18,10 +18,10 @@ def getPretrainedw2v(filename):
         return data["vectors"]
 
 def resolveAnswer(possibleAnswersList):
-    answers = []
-    for answerDetails in possibleAnswersList:
-        answers.append(answerDetails['answer'])
-    mostCommon = Counter(answers).most_common(1)
+    #answers = []
+    #for answerDetails in possibleAnswersList:
+    #    answers.append(answerDetails['answer'])
+    mostCommon = Counter(possibleAnswersList).most_common(1)
     return mostCommon[0][0]
 
 class AnswerProcessor:
