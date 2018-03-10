@@ -12,7 +12,7 @@ import pickle
 import os
 import csv
 
-from LSTMIMG.model_utils import getPretrainedw2v, AnswerProcessor
+from model_utils import getPretrainedw2v, AnswerProcessor
 
 class LSTMIMGmodel(object):
     '''
