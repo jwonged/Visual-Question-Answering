@@ -120,7 +120,8 @@ class InputProcessor(object):
                 batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = [], [], [], []
                 rawQns, img_ids, qn_ids = [], [], []
             
-            resolvedAns = resolveAnswer(annot['answers'])
+            ansList = [item['answer'] for item in annot['answers']]
+            resolvedAns = resolveAnswer(ansList)
             #Leave out answers not in AnsClass for training; map to special num for val
             if (not self.is_training) or (
                 self.is_training and resolvedAns in self.mapAnsToClass):
@@ -139,7 +140,7 @@ class InputProcessor(object):
                 img_ids.append(img_id)
                 
                 #process label
-                ansLists.append(annot['answers'])
+                ansLists.append(ansList)
                 if resolvedAns not in self.mapAnsToClass:
                     if self.is_training:
                         raise ValueError('Inconsistent State in processing label')

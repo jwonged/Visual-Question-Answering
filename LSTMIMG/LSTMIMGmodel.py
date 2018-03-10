@@ -437,6 +437,8 @@ class LSTMIMGmodel(object):
         self.saver = tf.train.Saver()
         
     def runPredict(self, valReader):
+        
+        ###########Needs fixing to update vqa eval metric
         '''For internal val/test set with labels'''
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
