@@ -17,7 +17,7 @@ def getPretrainedw2v(filename):
     with np.load(filename) as data:
         return data["vectors"]
 
-def resolveAnswer(self, possibleAnswersList):
+def resolveAnswer(possibleAnswersList):
     answers = []
     for answerDetails in possibleAnswersList:
         answers.append(answerDetails['answer'])
