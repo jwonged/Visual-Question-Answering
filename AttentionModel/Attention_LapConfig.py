@@ -14,9 +14,10 @@ class Attention_LapConfig(Config):
     
     csvResults = '/media/jwong/Transcend/VQAresults/LSTMIMG/Pred_LSTMIMG1402.csv'
     logFile = '/media/jwong/Transcend/VQAresults/LSTMIMG/Res_LSTMIMG1402.csv'
+    
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
-    restoreModel = '/media/jwong/Transcend/VQAresults/14FebTest/LSTMIMG_46Config.meta'
+    restoreModel = '/media/jwong/Transcend/VQAresults/10MarLSTMIMG47/.meta'
     restoreModelPath = '/media/jwong/Transcend/VQAresults/14FebTest/'
     testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/LSTMIMG1402Submission.json'
     

@@ -4,7 +4,7 @@ Created on 13 Feb 2018
 @author: jwong
 '''
 from AttentionModel import AttentionModel
-from AttentionModel import Attention_LapConfig
+from Attention_LapConfig import Attention_LapConfig
 from Attention_GPUConfig import Attention_GPUConfig
 from InputProcessor import InputProcessor, TestProcessor
 import pickle
@@ -24,6 +24,7 @@ def loadOfficialTest():
     model.destruct()
 
 def runValTest():
+    #Val set's split -- test
     print('Running Val Test')
     config = Attention_LapConfig(load=True)
     valTestReader = InputProcessor(config.testAnnotFile, 

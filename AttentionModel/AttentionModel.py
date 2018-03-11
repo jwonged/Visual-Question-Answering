@@ -12,7 +12,7 @@ import pickle
 import os
 import csv
 
-from model_utils import getPretrainedw2v
+from model_utils import getPretrainedw2v, generateForSubmission
 
 class AttentionModel(object):
     '''
@@ -36,6 +36,7 @@ class AttentionModel(object):
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
+        tf.set_random_seed(1004)
         
     def _getDescription(self, config):
         info = 'model: {}, classes: {}, batchSize: {}, \
@@ -58,7 +59,7 @@ class AttentionModel(object):
         
         # shape = (batch size, length of image feature vector)
         self.img_vecs = tf.placeholder(tf.float32, 
-                                       shape=[None, self.config.imgVecSize], 
+                                       shape=[None], 
                                        name="img_vecs")
 
         # shape = (batch size)
@@ -284,11 +285,12 @@ class AttentionModel(object):
             # early stopping and saving best parameters
             if score >= highestScore:
                 nEpochWithoutImprovement = 0
-                if nEpoch == 0:
-                    self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
-                else:
-                    self.saver.save(self.sess, self.config.saveModelFile, 
-                                    global_step=nEpoch,  write_meta_graph=False)
+                self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
+                #if nEpoch == 0:
+                #    self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
+                #else:
+                #    self.saver.save(self.sess, self.config.saveModelFile, 
+                #                    global_step=nEpoch,  write_meta_graph=False)
                 #self._save_session()
                 highestScore = score
                 #self.logFile.writerow('New score\n')
@@ -446,7 +448,7 @@ class AttentionModel(object):
         '''
         print('Starting test run...')
         allQnIds, allPreds = [], []
-        for qnAsWordIDsBatch, seqLens, img_vecs, rawQns, img_ids, qn_ids \
+        for qnAsWordIDsBatch, seqLens, img_vecs, _, _, qn_ids \
             in testReader.getNextBatch(self.config.batch_size):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
@@ -461,24 +463,9 @@ class AttentionModel(object):
                 allPreds.append(self.classToAnsMap[labPred])
         
         print('Total predictions: {}'.format(len(allPreds)))
-        self._generateResultOutput(allQnIds, allPreds, jsonOutputFile)
+        generateForSubmission(allQnIds, allPreds, jsonOutputFile)
         
-    def _generateResultOutput(self, qn_ids, preds, jsonFile):
-        '''
-        result{
-            "question_id": int,
-            "answer": str
-        }'''
-        results = []
-        for qn_id, pred in zip(qn_ids, preds):
-            singleResult = {}
-            singleResult["question_id"] = int(qn_id)
-            singleResult["answer"] = str(pred)
-            results.append(singleResult)
-        
-        with open(jsonFile, 'w') as jsonOut:
-            print('Writing to {}'.format(jsonFile))
-            json.dump(results, jsonOut)
+    
         
     def destruct(self):
         pass

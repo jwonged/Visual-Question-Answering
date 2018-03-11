@@ -11,17 +11,11 @@ class Attention_GPUConfig(Config):
     '''
     def __init__(self, load):
         super(Attention_GPUConfig, self).__init__(load)
-        
-        if self.imgModel == 'googlenet':
-            print('Using GoogLeNet config')
-            self.trainImgFile = '../resources/VQAImgFeatures_Train.json' #
-            self.valImgFile = '../resources/VQAImgFeatures_Val.json' #
-            self.testImgFile = '../resources/VQAImgFeatures_Test.json'
-        else:
-            print('Using VGGNet config')
-            self.trainImgFile = '../resources/vggTrainImgFeatures.json'
-            self.valImgFile = '../resources/vggValImgFeatures.json'
-            self.testOfficialImgFile = '../resources/vggTestOfficialImgFeatures.json'
+            
+        print('Using GoogLeNet config')
+        self.trainImgFile = '../resources/VQAImgFeatures_Train.json' 
+        self.valImgFile = '../resources/VQAImgFeatures_Val.json' 
+        self.testImgFile = '../resources/VQAImgFeatures_Test.json'
     
     #trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
     #valImgFile = '../resources/vggValConv5_3Features_shelf'

@@ -9,6 +9,7 @@ from nltk import word_tokenize
 import pickle
 import numpy as np
 import random
+import shelve
 
 class InputProcessor(object):
     '''
@@ -20,27 +21,12 @@ class InputProcessor(object):
         ansClassFile
         vocabFile
     '''
-
+    
     def __init__(self, annotFile, qnFile, imgFile, config, is_training):
-        self.imgData = self._readJsonFile(imgFile)
+        self.imgData = shelve.open(imgFile, flag='r', protocol=pickle.HIGHEST_PROTOCOL)
         self.annots = self._readJsonFile(annotFile)
         self.rawQns = self._readJsonFile(qnFile)
         
-        #print('Reading ' + ansClassFile)
-        #self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
-        '''
-        print('Reading ' + config.preprocessedVQAMapsFile)
-        with open(config.preprocessedVQAMapsFile, 'rb') as f:
-            data = pickle.load(f)
-        
-        self.mapAnsToClass = data['ansToClassMap']
-        print('Using {} answer classes'.format(len(self.mapAnsToClass)))
-        
-        self.classToAnsMap = data['classToAnsMap']
-        self.classToAnsMap[-1] = -1
-        
-        self.mapWordToID = data['wordToIDmap']
-        self.singleCountWords = data['singleCountWords']'''
         self.mapAnsToClass = config.mapAnsToClass
         self.classToAnsMap = config.classToAnsMap
         self.classToAnsMap[-1] = -1
@@ -56,39 +42,6 @@ class InputProcessor(object):
         print('Reading {}'.format(fileName))
         with open(fileName) as jsonFile:
             return json.load(jsonFile)
-    
-    def _loadAnsMap(self, ansClassFile):
-        #only used when loading answers from csv
-        #loads mapping: ans --> ans class index
-        with open(ansClassFile, 'rb') as ansFile:
-            reader = csv.reader(ansFile, delimiter=',')
-            ansVec = next(reader)
-        classToAnsMap = {}
-        ansClassMap = {}
-        for classIndex, word in enumerate(ansVec):
-            word = word.strip()
-            ansClassMap[word] = classIndex
-            classToAnsMap[classIndex] = word
-        print('Read in answer mapping with {} answers'.format(len(ansClassMap)))
-        classToAnsMap[-1] = -1
-        classToAnsMap[7761875725] = '7761875725'
-        return ansClassMap, classToAnsMap
-    
-    def getAnsMap(self):
-        return self.classToAnsMap
-    
-    def _loadVocabFromFile(self, vocabFile):
-        '''
-        Loads vocab file -- contains 1 word per line
-        Output: dict map  word : word_id
-        '''
-        mapWordID = {}
-        with open(vocabFile) as f:
-            for word_id, word in enumerate(f):
-                word = word.strip()
-                mapWordID[word] = word_id
-        print('Read in vocab with {} words'.format(len(mapWordID)))
-        return mapWordID
     
     def _mapQnToIDs(self, qn):
         #Convert str question to a list of word_ids
@@ -128,7 +81,7 @@ class InputProcessor(object):
                 
                 #process img
                 img_id = str(annot['image_id'])
-                img_vec = self.imgData[img_id][0]
+                img_vec = self.imgData[img_id]
                 img_vecs.append(img_vec)
                 img_ids.append(img_id)
                 
@@ -146,28 +99,6 @@ class InputProcessor(object):
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
             yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
-    
-    def getWholeBatch(self):
-        batchOfQnsAsWordIDs, img_vecs, labels = [], [], []
-        for annot in self.annots:
-            if annot['answers'] in self.mapAnsToClass:
-                
-                #process question
-                rawQn = self.rawQns[str(annot['question_id'])]
-                qnAsWordIDs = self._mapQnToIDs(rawQn)
-                batchOfQnsAsWordIDs.append(qnAsWordIDs)
-                
-                #process img
-                img_vec = self.imgData[str(annot['image_id'])][0]
-                img_vecs.append(img_vec)
-                
-                #process label
-                labelClass = self.mapAnsToClass[annot['answers']]
-                labels.append(labelClass)
-        
-        if len(batchOfQnsAsWordIDs) != 0:
-            batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-            return batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
     
     def _padQuestionIDs(self, questions, padding):
         '''
@@ -269,6 +200,8 @@ class TestProcessor(object):
             else:
                 idList.append(self.mapWordToID[self.config.unkWord])
         return idList
-        
+    
+    def destruct(self):
+        self.imgData.close()
     
         
