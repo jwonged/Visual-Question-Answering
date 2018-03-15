@@ -4,19 +4,20 @@ Created on 15 Jan 2018
 @author: jwong
 '''
 
-import json
-import numpy as np
-import tensorflow as tf 
-import numpy as np
-import pickle
-import os
 import csv
+import json
+import os
+import pickle
+import time
 
 from model_utils import getPretrainedw2v, generateForSubmission
+import numpy as np
+import tensorflow as tf 
+
 
 class AttentionModel(object):
     '''
-    VQA Model implementing attention
+    VQA Model implementing attention over images
     '''
 
     def __init__(self, config):
@@ -24,19 +25,22 @@ class AttentionModel(object):
         
         f1 = open(config.logFile, 'wb')
         self.logFile = csv.writer(f1)
-        self.logFile.writerow(['Initializing LSTMIMG\n'])
-        self.logFile.writerow([self._getDescription(config)])
+        self.logFile.writerow(['Attention model, ', self._getDescription(config)])
         
         f2 =  open(config.csvResults , 'wb') 
         self.predFile = csv.writer(f2)
-        self.predFile.writerow(
-            ['Epoch','Question', 'Prediction', 'Label', 'Pred Class',
-             'label class', 'Correct?', 'img id', 'qn_id'])
+        self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
+             'label class', 'Correct?', 'img id', 'qn_id')
         
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
-        tf.set_random_seed(1004)
+        tf.set_random_seed(self.config.randomSeed)
+    
+    def _logToCSV(self, nEpoch='', qn='', pred='', lab='', predClass='', labClass='', 
+                  correct='', img_id='', qn_id=''):
+        self.predFile.writerow([nEpoch, qn, pred, lab, predClass, labClass,
+                                 correct, img_id, qn_id])
         
     def _getDescription(self, config):
         info = 'model: {}, classes: {}, batchSize: {}, \
@@ -44,22 +48,22 @@ class AttentionModel(object):
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
              usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}'.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
-                config.dropoutVal, config.modelOptimizer, config.lossRate,
-                config.lossRateDecay, config.max_gradient_norm, config.shuffle,
+                config.dropoutVal, config.modelOptimizer, config.learningRate,
+                config.learningRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
                 config.LSTMType, config.elMult, config.imgModel)
         return info + 'fc: 2 layers (1000)'
     
     def _addPlaceholders(self):
-        #add network placeholders
+        # add network placeholders
         self.logFile.writerow(['Constructing model...\n'])
         
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
         
-        # shape = (batch size, length of image feature vector)
+        # shape = (batch size, img tensor dimensions)
         self.img_vecs = tf.placeholder(tf.float32, 
-                                       shape=[None], 
+                                       shape=[None]+self.config.imgVecSize, 
                                        name="img_vecs")
 
         # shape = (batch size)
@@ -93,49 +97,27 @@ class AttentionModel(object):
         self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")
         
-        if self.config.dropoutVal < 1.0:
-            self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
-        
+        self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
+    
+    
+    def _addLSTMInput(self):
+        #Handle LSTM Input
+        print('Constructing imageAfterLSTM model')
+        self.LSTMinput = self.word_embeddings
+    
     def construct(self):
         self._addPlaceholders()
         
         self._addEmbeddings()
         
-        #Handle input according to model structure
-        if self.config.modelStruct == 'imagePerWord':
-            print('Constructing imagePerWord model')
-            self.LSTMinput = tf.concat([self.word_embeddings, self.img_vecs])
-            
-        elif self.config.modelStruct == 'imageAsFirstWord':
-            print('Constructing imagePerWord model')
-            #map image 1024 --> 512 --> 300
-            imgMappingLayer1 = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.imgVecSize/2, 
-                                           activation=tf.nn.relu,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            imgMappingLayer2 = tf.layers.dense(inputs=imgMappingLayer1,
-                                           units=self.config.wordVecSize,
-                                           activation=tf.nn.relu,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            
-            #reshape to allow concat with word embeddings
-            imgMappingLayer2 = tf.reshape(
-                imgMappingLayer2, [self.config.batch_size, 1, self.config.wordVecSize])
-            print('Shape of img map layer 2: {}'.format(imgMappingLayer2.get_shape()))
-            
-            #add img embedding as first word to lstm input
-            self.LSTMinput = tf.concat([imgMappingLayer2, self.word_embeddings], axis=1)
-            print('Shape of LSTM input: {}'.format(self.LSTMinput.get_shape()))
-            
-            #add 1 to all sequence lengths to account for extra img word
-            self.sequence_lengths = tf.add(
-                self.sequence_lengths, tf.ones(tf.shape(self.sequence_lengths), dtype=tf.int32))
+        self._addLSTMInput()
         
-        else:
-            print('Constructing imageAfterLSTM model')
-            self.LSTMinput = self.word_embeddings
-            
-            
+        self.batch_size = self.img_vecs.get_shape()[0]
+        
+        #reshape image features [bx512x14x14] --> [bx196x512]
+        transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
+        self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
+         
         #LSTM part
         with tf.variable_scope("lstm"):
             if self.config.LSTMType == 'bi':
@@ -146,7 +128,7 @@ class AttentionModel(object):
                 #Out [batch_size, max_time, cell_output_size] output, outputState
                 (_, _), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
                     cell_fw, cell_bw, 
-                    self.word_embeddings, 
+                    self.LSTMinput, 
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
                 print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
                 
@@ -174,41 +156,73 @@ class AttentionModel(object):
                                                   sequence_length=self.sequence_lengths, 
                                                   initial_state=None, 
                                                   dtype=tf.float32)
-                lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1)
-                
-        #dropout after LSTM
-        if self.config.dropoutVal < 1.0:
-            lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+                lstmOutput = lstmOutState.c #output state 512
+                #lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1) #1024
+        
+        self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+        
+        #########Attention layer##########
+        with tf.variable_scope("attention"):
+            
+            #duplicate qn vec to combine with each region to get [v_i, q]
+            qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
+            qnAtt_in = tf.tile(qnAtt_in, [1,self.flattenedImgVecs.get_shape()[1],1]) 
+            att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1)
+            print('Shape of attention input : {}'.format(att_in.get_shape()))
+            
+            #compute attention weights
+            ''''w = tf.get_variable('w', 
+                                shape=[att_in.get_shape()[-1], att_in.get_shape()[-1]], 
+                                initializer=tf.contrib.layers.xavier_initializer())
+            b = tf.get_variable('b', 
+                                shape=[att_in.get_shape()[-1]], 
+                                initializer=tf.contrib.layers.xavier_initializer())
+            print('Shape of attention weight matrix: {}'.format(w.get_shape()))
+            print('Shape of attention bias : {}'.format(b.get_shape()))'''
+            
+            #beta * tanh(wx + b) -- get a scalar val for each region
+            att_f = tf.layers.dense(att_in, units=1024,
+                                activation=tf.tanh, 
+                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
+            beta_w = tf.get_variable("beta", shape=[1024, 1], dtype=tf.float32)
+            att_flat = tf.reshape(att_f, shape=[-1, 1024])
+            att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region
+            att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196]) 
+            print('Region weights = {}'.format(att_regionWeights.get_shape()))
+            
+            #compute context: c = sum alpha * img
+            alpha = tf.nn.softmax(att_regionWeights) # [bx196]
+            alpha = tf.expand_dims(alpha, axis=-1)
+            
+            #broadcast; output shape=[bx1024]
+            self.imgContext = tf.reduce_sum(tf.multiply(alpha, self.flattenedImgVecs), axis=1) 
+            
+            
             
         #Handle output according to model structure
         if self.config.modelStruct == 'imagePerWord':
-            self.LSTMOutput = lstmOutput 
+            self.multimodalOutput = lstmOutput 
         elif self.config.modelStruct == 'imageAsFirstWord':
-            self.LSTMOutput = lstmOutput
+            self.multimodalOutput = lstmOutput
         else: #imageAfterLSTM
             if self.config.elMult:
                 print('Using pointwise mult')
-                #img vecs 4096 --> 2048 (for vgg)
-                img_vecs = tf.layers.dense(inputs=self.img_vecs,
-                                           units=self.config.fclayerAfterLSTM,
+                #1024 --> 512
+                img_vecs = tf.layers.dense(inputs=self.imgContext,
+                                           units=512,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #dropout after img mapping layer
-                if self.config.dropoutVal < 1.0:
-                    img_vecs = tf.nn.dropout(img_vecs, self.dropout)
+                img_vecs = tf.nn.dropout(img_vecs, self.dropout)
                     
-                self.LSTMOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
+                self.multimodalOutput = tf.multiply(lstmOutput, img_vecs) #size=512
             else: #using concat
                 print('Using concat')
-                self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+                self.multimodalOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            #hidden_layer1 = tf.layers.dense(inputs=self.LSTMOutput,
-            #                               units=LSTMOutputSize/2,
-            #                               activation=tf.tanh,
-            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
-            hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
+            hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
                                            units=1000,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -228,8 +242,8 @@ class AttentionModel(object):
                     logits=y, labels=self.labels)
         self.loss = tf.reduce_mean(crossEntropyLoss)
 
-        # for tensorboard
-        #tf.summary.scalar("loss", self.loss)
+        # Add loss to tensorboard
+        tf.summary.scalar("loss", self.loss)
         
         self._addOptimizer()
         
@@ -238,7 +252,7 @@ class AttentionModel(object):
         
     
     def _addOptimizer(self):
-        #train optimizer
+        #training optimizer
         with tf.variable_scope("train_step"):
             if self.config.modelOptimizer == 'adam': 
                 print('Using adam optimizer')
@@ -260,10 +274,12 @@ class AttentionModel(object):
     def _initSession(self):
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver()#max_to_keep=4)
+        self.saver = tf.train.Saver()
+        self.merged = tf.summary.merge_all()
+        self.tb_writer = tf.summary.FileWriter('./tensorboard', self.sess.graph)
         
         self.logFile.writerow(['Model constructed.'])
-        print('Complete Model Construction')
+        print('Completed Model Construction')
         
     def train(self, trainReader, valReader):
         print('Starting model training')
@@ -277,23 +293,16 @@ class AttentionModel(object):
         for nEpoch in range(self.config.nTrainEpochs):
             msg = 'Epoch {} \n'.format(nEpoch)
             print(msg)
-            #self.logFile.write(msg)
 
             score = self._run_epoch(trainReader, valReader, nEpoch)
-            self.config.lossRate *= self.config.lossRateDecay
+            if nEpoch > self.config.decayAfterEpoch:
+                self.config.learningRate *= self.config.learningRateDecay
 
             # early stopping and saving best parameters
             if score >= highestScore:
                 nEpochWithoutImprovement = 0
                 self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
-                #if nEpoch == 0:
-                #    self.saver.save(self.sess, self.config.saveModelFile, global_step=nEpoch)
-                #else:
-                #    self.saver.save(self.sess, self.config.saveModelFile, 
-                #                    global_step=nEpoch,  write_meta_graph=False)
-                #self._save_session()
                 highestScore = score
-                #self.logFile.writerow('New score\n')
             else:
                 nEpochWithoutImprovement += 1
                 if nEpochWithoutImprovement >= self.config.nEpochsWithoutImprov:
@@ -302,11 +311,6 @@ class AttentionModel(object):
                             nEpoch+1, nEpochWithoutImprovement)])
                     break
     
-    def _save_session(self):
-        #if not os.path.exists(self.config.dir_model):
-        #    os.makedirs(self.config.dir_model)
-        self.saver.save(self.sess, self.config.saveModelFile)
-    
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
         Runs 1 epoch and returns val score
@@ -314,6 +318,7 @@ class AttentionModel(object):
         # Potentially add progbar here
         batch_size = self.config.batch_size
         correct_predictions, total_predictions = 0., 0.
+        startTime = time.time()
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
@@ -323,7 +328,7 @@ class AttentionModel(object):
                 self.sequence_lengths : seqLens,
                 self.img_vecs : img_vecs,
                 self.labels : labels,
-                self.lr : self.config.lossRate,
+                self.lr : self.config.learningRate,
                 self.dropout : self.config.dropoutVal
             }
             _, _, labels_pred = self.sess.run(
@@ -347,14 +352,16 @@ class AttentionModel(object):
             
         epochScore, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
         trainScore = correct_predictions/total_predictions if correct_predictions > 0 else 0
-        epMsg = 'Epoch {0}: val Score={1:>6.1%}, train Score={2:>6.1%}, total train predictions={3}\n'.format(
+        
+        #logging
+        epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, total train predictions={3}\n'.format(
                     nEpoch, epochScore, trainScore, total_predictions)
         print(epMsg)
         self.logFile.writerow([
             nEpoch, epochScore, trainScore, correct_predictions, total_predictions, valCorrect, valTotalPreds])
         return epochScore
     
-    def runVal(self, valReader, nEpoch):
+    def runVal(self, valReader, nEpoch, is_training=True):
         """Evaluates performance on test set
         Args:
             test: dataset that yields tuple of (sentences, tags)
@@ -388,11 +395,7 @@ class AttentionModel(object):
         valAcc = np.mean(accuracies)
         return valAcc, correct_predictions, total_predictions
     
-    def _logToCSV(self, nEpoch, qn, prediction, label, 
-                  predClass, labelClass, correct, img_id):
-        self.predFile.writerow(
-                    [nEpoch, qn, prediction, label, predClass, 
-                     labelClass, correct, img_id])
+    
         
     def loadTrainedModel(self):
         restoreModel = self.config.restoreModel

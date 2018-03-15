@@ -12,18 +12,18 @@ class Attention_GPUConfig(Config):
     def __init__(self, load):
         super(Attention_GPUConfig, self).__init__(load)
             
-        print('Using GoogLeNet config')
-        self.trainImgFile = '../resources/VQAImgFeatures_Train.json' 
-        self.valImgFile = '../resources/VQAImgFeatures_Val.json' 
-        self.testImgFile = '../resources/VQAImgFeatures_Test.json'
+        #print('Using GoogLeNet config')
+        #self.trainImgFile = '../resources/VQAImgFeatures_Train.json' 
+        #self.valImgFile = '../resources/VQAImgFeatures_Val.json' 
+        #self.testImgFile = '../resources/VQAImgFeatures_Test.json'
     
-    #trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
-    #valImgFile = '../resources/vggValConv5_3Features_shelf'
+    trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
+    valImgFile = '../resources/vggValConv5_3Features_shelf'
     #testOfficialImgFile = '../resources/vggTestOfficialImgFeatures.json'
     
-    csvResults = 'results/Pred_att_10Mar.csv'
-    logFile = 'results/Res_att_10Mar.csv'
-    saveModelFile = 'results/att10Mar'
+    csvResults = 'results/Pred_att_15Mar.csv'
+    logFile = 'results/Res_att_15Mar.csv'
+    saveModelFile = 'results/att15Mar'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 

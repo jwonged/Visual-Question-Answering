@@ -17,9 +17,9 @@ class Attention_LapConfig(Config):
     
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
-    restoreModel = '/media/jwong/Transcend/VQAresults/10MarLSTMIMG47/.meta'
-    restoreModelPath = '/media/jwong/Transcend/VQAresults/14FebTest/'
-    testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/LSTMIMG1402Submission.json'
+    restoreModel = '/media/jwong/Transcend/VQAresults/11MarLSTMIMG47/att10Mar-46.meta'
+    restoreModelPath = '/media/jwong/Transcend/VQAresults/11MarLSTMIMG47/'
+    testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/47LSTMIMG11MarSubmission.json'
     
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #restoreModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
@@ -33,7 +33,7 @@ class Attention_LapConfig(Config):
     
     testOfficialQns = '/media/jwong/Transcend/VQADataset/OfficialTestSet/Questions_Test_mscoco/OpenEnded_mscoco_test2015_questions.json'
     testOfficialDevQns = '/media/jwong/Transcend/VQADataset/OfficialTestSet/Questions_Test_mscoco/OpenEnded_mscoco_test-dev2015_questions.json'
-    testOfficialImgFeatures = ''
+    testOfficialImgFeatures = '/media/jwong/Transcend/VQADataset/OfficialTestSet/test2015/officialTestImgFeatures.json'
     
     preprocessedVQAMapsFile = '/media/jwong/Transcend/VQADataset/preprocessedVQAmaps.pkl'
     

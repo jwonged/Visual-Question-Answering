@@ -7,7 +7,7 @@ import pickle
 
 class Config(object):
     '''
-    Config file for LSTMIMG
+    Config file for the Attention Model
     '''
     def __init__(self, load):
         if load:
@@ -27,25 +27,27 @@ class Config(object):
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
-    imgModel = 'googlenet' #'vgg' or 'googlenet' #for pre-trained img model
+    imgModel = 'vgg' #'vgg' or 'googlenet' #for pre-trained img model
+    randomSeed = 1104
     
     nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
     batch_size = 32
     wordVecSize = 300
-    imgVecSize = 1024#[512, 14, 14]
+    imgVecSize = [512, 14, 14]
     
     LSTM_num_units = 512
     fclayerAfterLSTM = 1024
     elMult = True #False = concat; True = Mult
-    LSTMType = 'bi' #'bi' or 'single'
+    LSTMType = 'uni' #'bi' or 'single'
     LSTMCellSizes = [512] #for single only
     
     nTrainEpochs = 50
     nEpochsWithoutImprov = 5
+    decayAfterEpoch = 8
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
-    lossRateDecay = 1 #noDecay = 1; usually ~0.9
+    learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    learningRateDecay = 1 #noDecay = 1; usually ~0.9
     max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'

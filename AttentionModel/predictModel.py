@@ -22,6 +22,7 @@ def loadOfficialTest():
     model.loadTrainedModel()
     model.runTest(testReader, config.testOfficialResultFile)
     model.destruct()
+    testReader.destruct()
 
 def runValTest():
     #Val set's split -- test
@@ -37,6 +38,7 @@ def runValTest():
     model.loadTrainedModel()
     model.runPredict(valTestReader)
     model.destruct()
+    valTestReader.destruct()
     
 
 if __name__ == '__main__':

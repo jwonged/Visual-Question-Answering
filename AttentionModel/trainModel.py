@@ -28,6 +28,8 @@ def runtrain():
     model.construct()
     model.train(trainReader, valReader)
     model.destruct()
+    trainReader.destruct()
+    valReader.destruct()
         
 if __name__ == '__main__':
     runtrain()

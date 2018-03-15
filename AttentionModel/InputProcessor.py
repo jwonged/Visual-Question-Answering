@@ -120,7 +120,9 @@ class InputProcessor(object):
             qnLengths.append(len(qn))
             
         return paddedQuestions, qnLengths
-
+    
+    def destruct(self):
+        self.imgData.close()
 
 class TestProcessor(object):
     '''
