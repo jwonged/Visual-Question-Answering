@@ -133,9 +133,8 @@ class TestProcessor(object):
     '''
 
     def __init__(self, qnFile, imgFile, config):
-        print('Reading ' + imgFile)
-        with open(imgFile) as jsonFile:
-            self.imgData = json.load(jsonFile)
+        print('Reading {}'.format(imgFile))
+        self.imgData = shelve.open(imgFile, flag='r', protocol=pickle.HIGHEST_PROTOCOL)
         
         print('Reading' + qnFile)
         with open(qnFile) as jsonFile:

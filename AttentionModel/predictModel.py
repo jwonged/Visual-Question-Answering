@@ -12,7 +12,8 @@ import csv
 
 
 def loadOfficialTest():
-    config = Attention_LapConfig(load=True)
+    #config = Attention_LapConfig(load=True)
+    config = Attention_GPUConfig(load=True)
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
                                imgFile=config.testOfficialImgFeatures, 

@@ -169,7 +169,7 @@ class AttentionModel(object):
             
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
-            qnAtt_in = tf.tile(qnAtt_in, [1,self.flattenedImgVecs.get_shape()[1],1]) 
+            qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1)
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
@@ -325,7 +325,6 @@ class AttentionModel(object):
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
-            img_vecs = np.asarray(img_vecs)
             
             feed = {
                 self.word_ids : qnAsWordIDsBatch,

@@ -11,15 +11,14 @@ class Attention_GPUConfig(Config):
     '''
     def __init__(self, load):
         super(Attention_GPUConfig, self).__init__(load)
-            
-        #print('Using GoogLeNet config')
-        #self.trainImgFile = '../resources/VQAImgFeatures_Train.json' 
-        #self.valImgFile = '../resources/VQAImgFeatures_Val.json' 
-        #self.testImgFile = '../resources/VQAImgFeatures_Test.json'
     
     trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
-    valImgFile = '../resources/vggValConv5_3Features_shelf'
-    #testOfficialImgFile = '../resources/vggTestOfficialImgFeatures.json'
+    valImgFile = '../resources/vggValConv5_3Features_shelf' #also test
+    testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
+    
+    testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
+    testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
+    testOfficialResultFile = 'results/att1503Submission.json'
     
     csvResults = 'results/Pred_att_15Mar.csv'
     logFile = 'results/Res_att_15Mar.csv'
