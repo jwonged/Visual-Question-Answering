@@ -163,7 +163,7 @@ class TestProcessor(object):
             
             #process img
             img_id = str(qn['image_id'])
-            img_vec = self.imgData[img_id][0]
+            img_vec = self.imgData[img_id]
             img_vecs.append(img_vec)
             img_ids.append(img_id)
             

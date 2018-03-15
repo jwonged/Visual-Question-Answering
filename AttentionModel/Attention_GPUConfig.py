@@ -14,7 +14,6 @@ class Attention_GPUConfig(Config):
     
     trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
     valImgFile = '../resources/vggValConv5_3Features_shelf' #also test
-    testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
     
     testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
     testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
