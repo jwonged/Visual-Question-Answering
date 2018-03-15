@@ -23,6 +23,7 @@ class InputProcessor(object):
     '''
     
     def __init__(self, annotFile, qnFile, imgFile, config, is_training):
+        print('Reading {}'.format(imgFile))
         self.imgData = shelve.open(imgFile, flag='r', protocol=pickle.HIGHEST_PROTOCOL)
         self.annots = self._readJsonFile(annotFile)
         self.rawQns = self._readJsonFile(qnFile)

@@ -63,7 +63,7 @@ class AttentionModel(object):
         
         # shape = (batch size, img tensor dimensions)
         self.img_vecs = tf.placeholder(tf.float32, 
-                                       shape=[None]+self.config.imgVecSize, 
+                                       shape=[None, 14, 14], 
                                        name="img_vecs")
 
         # shape = (batch size)
