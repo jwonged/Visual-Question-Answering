@@ -68,6 +68,9 @@ def convertToFeatureVecs(inputPath, inputfile, outputFile):
     countDone = 0
     count
     dataMap = shelve.open(outputFile, flag='w', protocol=pickle.HIGHEST_PROTOCOL)
+    print(len(dataMap))
+    dataMap.close()
+    exit()
     print('Extracting from layer: {}'.format(layer_name))
     with open(inputfile, 'r') as reader:
         for image_path in reader:
