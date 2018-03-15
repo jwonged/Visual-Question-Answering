@@ -19,10 +19,15 @@ class Attention_GPUConfig(Config):
     testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
     testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
     testOfficialResultFile = 'results/att1503Submission.json'
+    restoreModel = 'results/att15Mar-21.meta'
+    restoreModelPath = 'results/'
     
     csvResults = 'results/Pred_att_15Mar.csv'
     logFile = 'results/Res_att_15Mar.csv'
     saveModelFile = 'results/att15Mar'
+    
+    
+    
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
