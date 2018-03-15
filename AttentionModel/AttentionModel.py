@@ -112,10 +112,13 @@ class AttentionModel(object):
         
         self._addLSTMInput()
         
-        self.batch_size = self.img_vecs.get_shape()[0]
+        self.batch_size = tf.shape(self.img_vecs)[0]
+        print('Batch size = {}'.format(self.batch_size))
+        print('Batch size = {}'.format(self.batch_size))
         
         #reshape image features [bx512x14x14] --> [bx196x512]
         transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
+        print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
          
         #LSTM part
