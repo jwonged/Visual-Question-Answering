@@ -63,7 +63,7 @@ class AttentionModel(object):
         
         # shape = (batch size, img tensor dimensions)
         self.img_vecs = tf.placeholder(tf.float32, 
-                                       shape=[None, 14, 14], 
+                                       shape=[None, 512, 14, 14], 
                                        name="img_vecs")
 
         # shape = (batch size)
@@ -322,6 +322,7 @@ class AttentionModel(object):
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
+            img_vecs = np.asarray(img_vecs)
             
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
