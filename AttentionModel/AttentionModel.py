@@ -185,8 +185,8 @@ class AttentionModel(object):
             
             #beta * tanh(wx + b) -- get a scalar val for each region
             att_f = tf.layers.dense(att_in, units=1536,
-                                activation=tf.tanh, 
-                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
+                                activation=tf.tanh) 
+                                #kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             beta_w = tf.get_variable("beta", shape=[tf.shape(att_f)[-1], 1], dtype=tf.float32)
             att_flat = tf.reshape(att_f, shape=[-1, tf.shape(att_f)[-1]])
             att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region
