@@ -219,7 +219,7 @@ class AttentionModel(object):
                 print('Using pointwise mult')
                 #1024 --> 512 or 1536 --> 1024
                 attended_img_vecs = tf.layers.dense(inputs=self.imgContext,
-                                           units=tf.shape(self.lstmOutput)[-1],
+                                           units=self.lstmOutput.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #dropout after img mapping layer
