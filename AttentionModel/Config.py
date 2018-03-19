@@ -38,17 +38,16 @@ class Config(object):
     LSTM_num_units = 512
     fclayerAfterLSTM = 1024
     elMult = True #False = concat; True = Mult
-    LSTMType = 'uni' #'bi' or 'single'
-    LSTMCellSizes = [512] #for single only
+    LSTMType = 'bi' #'bi' or 'single'
     
     nTrainEpochs = 50
     nEpochsWithoutImprov = 5
-    decayAfterEpoch = 8
+    decayAfterEpoch = 10
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
     learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
     learningRateDecay = 1 #noDecay = 1; usually ~0.9
-    max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
+    max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1

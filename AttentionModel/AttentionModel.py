@@ -114,7 +114,6 @@ class AttentionModel(object):
         
         self.batch_size = tf.shape(self.img_vecs)[0]
         print('Batch size = {}'.format(self.batch_size))
-        print('Batch size = {}'.format(self.batch_size))
         
         #reshape image features [bx512x14x14] --> [bx196x512]
         transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
@@ -133,7 +132,7 @@ class AttentionModel(object):
                     cell_fw, cell_bw, 
                     self.LSTMinput, 
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
-                print('Shape of state.c: {}'.format(fw_state.c.get_shape())) #[?, 300]
+                print('Shape of state.c: {}'.format(fw_state.c.get_shape()))
                 
                 #lstmOutput shape = LSTM_num_units * 4
                 fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
@@ -148,6 +147,7 @@ class AttentionModel(object):
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 
+                #potentially add dropout here
                 
             else:
                 print('Using Uni-LSTM')
@@ -170,7 +170,7 @@ class AttentionModel(object):
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
-            att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1)
+            att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
             #compute attention weights
@@ -184,23 +184,22 @@ class AttentionModel(object):
             print('Shape of attention bias : {}'.format(b.get_shape()))'''
             
             #beta * tanh(wx + b) -- get a scalar val for each region
-            att_f = tf.layers.dense(att_in, units=1024,
+            att_f = tf.layers.dense(att_in, units=tf.shape(att_in)[-1],
                                 activation=tf.tanh, 
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
-            beta_w = tf.get_variable("beta", shape=[1024, 1], dtype=tf.float32)
-            att_flat = tf.reshape(att_f, shape=[-1, 1024])
+            beta_w = tf.get_variable("beta", shape=[tf.shape(att_f)[-1], 1], dtype=tf.float32)
+            att_flat = tf.reshape(att_f, shape=[-1, tf.shape(att_f)[-1]])
             att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region
+            print('att_flatWeights = {}'.format(att_flatWeights.get_shape()))
             att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196]) 
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
             
             #compute context: c = sum alpha * img
-            alpha = tf.nn.softmax(att_regionWeights) # [bx196]
-            alpha = tf.expand_dims(alpha, axis=-1)
+            self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [bx196]
+            alpha = tf.expand_dims(self.alpha, axis=-1)
             
-            #broadcast; output shape=[bx1024]
+            #broadcast; output shape=[bx1024 or bx1536]
             self.imgContext = tf.reduce_sum(tf.multiply(alpha, self.flattenedImgVecs), axis=1) 
-            
-            
             
         #Handle output according to model structure
         if self.config.modelStruct == 'imagePerWord':
@@ -210,18 +209,18 @@ class AttentionModel(object):
         else: #imageAfterLSTM
             if self.config.elMult:
                 print('Using pointwise mult')
-                #1024 --> 512
-                img_vecs = tf.layers.dense(inputs=self.imgContext,
-                                           units=512,
+                #1024 --> 512 or 1536 --> 1024
+                attended_img_vecs = tf.layers.dense(inputs=self.imgContext,
+                                           units=tf.shape(self.lstmOutput)[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #dropout after img mapping layer
-                img_vecs = tf.nn.dropout(img_vecs, self.dropout)
+                attended_img_vecs = tf.nn.dropout(attended_img_vecs, self.dropout)
                     
-                self.multimodalOutput = tf.multiply(lstmOutput, img_vecs) #size=512
+                self.multimodalOutput = tf.multiply(self.lstmOutput, attended_img_vecs) #size=512
             else: #using concat
                 print('Using concat')
-                self.multimodalOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+                self.multimodalOutput = tf.concat([self.lstmOutput, attended_img_vecs], axis=-1)
         
         #fully connected layer
         with tf.variable_scope("proj"):
@@ -360,8 +359,8 @@ class AttentionModel(object):
         epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, total train predictions={3}\n'.format(
                     nEpoch, epochScore, trainScore, total_predictions)
         print(epMsg)
-        self.logFile.writerow([
-            nEpoch, epochScore, trainScore, correct_predictions, total_predictions, valCorrect, valTotalPreds])
+        self.logFile.writerow([nEpoch, epochScore, trainScore, correct_predictions, 
+                               total_predictions, valCorrect, valTotalPreds])
         return epochScore
     
     def runVal(self, valReader, nEpoch, is_training=True):
@@ -415,6 +414,7 @@ class AttentionModel(object):
         self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
+        self.alpha = graph.get_tensor_by_name('attention/alpha:0')
         
         self.saver = tf.train.Saver()
         
@@ -471,7 +471,6 @@ class AttentionModel(object):
         print('Total predictions: {}'.format(len(allPreds)))
         generateForSubmission(allQnIds, allPreds, jsonOutputFile)
         
-    
         
     def destruct(self):
         pass

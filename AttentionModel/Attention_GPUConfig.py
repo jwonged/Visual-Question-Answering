@@ -13,19 +13,18 @@ class Attention_GPUConfig(Config):
         super(Attention_GPUConfig, self).__init__(load)
     
     trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
-    valImgFile = '../resources/vggValConv5_3Features_shelf' #also test
+    valImgFile = '../resources/vggValConv5_3Features_shelf' #also internal test
     
     testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
     testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
     testOfficialResultFile = 'results/att1503Submission.json'
-    restoreModel = 'results/att15Mar-21.meta'
+    restoreModel = 'results/att19Mar-21.meta'
     restoreModelPath = 'results/'
     
-    csvResults = 'results/Pred_att_15Mar.csv'
-    logFile = 'results/Res_att_15Mar.csv'
-    saveModelFile = 'results/att15Mar'
-    
-    
+    #change on each run
+    csvResults = 'results/Pred_att_19Mar.csv'
+    logFile = 'results/Res_att_19Mar.csv'
+    saveModelFile = 'results/att19Mar'
     
     
     '''Pickle file Contains:

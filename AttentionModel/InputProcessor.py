@@ -13,6 +13,7 @@ import shelve
 
 class InputProcessor(object):
     '''
+    For attention model
     Generator which processes and batches input
     args:
         annotFile
