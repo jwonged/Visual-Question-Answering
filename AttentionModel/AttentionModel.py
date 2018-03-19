@@ -170,7 +170,7 @@ class AttentionModel(object):
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
-            print('Shape of attention input : {}'.format(qnAtt_in.get_shape()))
+            print('Shape of attention input : {}'.format(tf.shape(qnAtt_in)))
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
@@ -192,12 +192,14 @@ class AttentionModel(object):
             
             att_f = tf.layers.dense(att_in, units=att_in.get_shape()[-1],
                                 activation=tf.tanh,
-                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
-            beta_w = tf.get_variable("beta", shape=[tf.shape(att_f)[-1], 1], dtype=tf.float32)
-            att_flat = tf.reshape(att_f, shape=[-1, tf.shape(att_f)[-1]])
-            att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region
+                                kernel_initializer=tf.contrib.layers.xavier_initializer()) #1536
+            print('att_f = {}'.format(att_f.get_shape()))
+            print('att_f = {}'.format(tf.shape(att_f)))
+            beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
+            att_flat = tf.reshape(att_f, shape=[-1, att_f.get_shape()[-1]]) #[b*196, 1536]
+            att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
             print('att_flatWeights = {}'.format(att_flatWeights.get_shape()))
-            att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196]) 
+            att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196])  #[b, 196]
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
             
             #compute context: c = sum alpha * img
