@@ -170,6 +170,7 @@ class AttentionModel(object):
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
+            print('Shape of attention input : {}'.format(qnAtt_in.get_shape()))
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
@@ -184,8 +185,11 @@ class AttentionModel(object):
             print('Shape of attention bias : {}'.format(b.get_shape()))'''
             
             #beta * tanh(wx + b) -- get a scalar val for each region
-            print(tf.shape(att_in))
+            print(tf.shape(att_in)[0])
+            print(tf.shape(att_in)[1])
+            print(tf.shape(att_in)[2])
             print('att_in shape: {}'.format(att_in.get_shape()))
+            
             att_f = tf.layers.dense(att_in, units=1536,
                                 activation=tf.tanh,
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
