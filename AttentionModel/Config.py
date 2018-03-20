@@ -42,10 +42,10 @@ class Config(object):
     
     nTrainEpochs = 50
     nEpochsWithoutImprov = 5
-    decayAfterEpoch = 10
+    decayAfterEpoch = 20
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    learningRate = 0.0005 #0.001 for adam, 0.01 for gradDesc
+    learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
     learningRateDecay = 0.95 #noDecay = 1; usually ~0.9
     max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     

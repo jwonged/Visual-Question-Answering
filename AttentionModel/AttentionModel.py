@@ -46,12 +46,14 @@ class AttentionModel(object):
         info = 'model: {}, classes: {}, batchSize: {}, \
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
-             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}'.format(
+             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}, \
+             epochsWOimprov: {}, decayAfterEpoch: {}, seed: {}'.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.learningRate,
                 config.learningRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
-                config.LSTMType, config.elMult, config.imgModel)
+                config.LSTMType, config.elMult, config.imgModel, config.nEpochsWithoutImprov,
+                config.decayAfterEpoch, config.randomSeed)
         return info + 'fc: 2 layers (1000)'
     
     def _addPlaceholders(self):
