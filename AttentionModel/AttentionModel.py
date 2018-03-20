@@ -24,11 +24,11 @@ class AttentionModel(object):
         self.config = config
         
         self.f1 = open(config.logFile, 'wb')
-        self.logFile = csv.writer(f1)
+        self.logFile = csv.writer(self.f1)
         self.logFile.writerow(['Attention model, ', self._getDescription(config)])
         
         self.f2 =  open(config.csvResults , 'wb') 
-        self.predFile = csv.writer(f2)
+        self.predFile = csv.writer(self.f2)
         self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
              'label class', 'Correct?', 'img id', 'qn_id')
         
