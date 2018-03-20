@@ -23,11 +23,11 @@ class AttentionModel(object):
     def __init__(self, config):
         self.config = config
         
-        f1 = open(config.logFile, 'wb')
+        self.f1 = open(config.logFile, 'wb')
         self.logFile = csv.writer(f1)
         self.logFile.writerow(['Attention model, ', self._getDescription(config)])
         
-        f2 =  open(config.csvResults , 'wb') 
+        self.f2 =  open(config.csvResults , 'wb') 
         self.predFile = csv.writer(f2)
         self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
              'label class', 'Correct?', 'img id', 'qn_id')
@@ -185,9 +185,6 @@ class AttentionModel(object):
             print('Shape of attention bias : {}'.format(b.get_shape()))'''
             
             #beta * tanh(wx + b) -- get a scalar val for each region
-            print(tf.shape(att_in)[0])
-            print(tf.shape(att_in)[1])
-            print(tf.shape(att_in)[2])
             print('att_in shape: {}'.format(att_in.get_shape()))
             
             att_f = tf.layers.dense(att_in, units=att_in.get_shape()[-1],
@@ -481,6 +478,7 @@ class AttentionModel(object):
         
         
     def destruct(self):
-        pass
+        self.f1.close()
+        self.f2.close()
         
     

@@ -23,9 +23,8 @@ class Attention_GPUConfig(Config):
     
     #change on each run
     csvResults = 'results/Pred_att_19Mar.csv'
-    logFile = 'results/Res_att_19Mar.csv'
-    saveModelFile = 'results/att19Mar'
-    
+    logFile = 'results/Res_att_20Mar.csv'
+    saveModelFile = 'results/att20Mar'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
@@ -67,7 +66,7 @@ class Attention_GPUConfig(Config):
     
     trainAnnotFile = '../resources/AllTrainAnnotResolvedList.json'
     valAnnotFile = '../resources/AllValAnnotResolvedList.json'
-    testAnnotFile = '/AllTestAnnotResolvedList.json'
+    testAnnotFile = '../resources/AllTestAnnotResolvedList.json'
     
     #trainAnnotFile = '../resources/TrainAnnotList.json'
     #valAnnotFile = '../resources/ValAnnotList.json'

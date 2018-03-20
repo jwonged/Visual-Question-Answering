@@ -31,7 +31,7 @@ def runValTest():
     config = Attention_LapConfig(load=True)
     valTestReader = InputProcessor(config.testAnnotFile, 
                                  config.rawQnValTestFile, 
-                                 config.testImgFile, 
+                                 config.valImgFile, 
                                  config,
                                  is_training=False)
     
