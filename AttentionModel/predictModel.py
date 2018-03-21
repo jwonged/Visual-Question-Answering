@@ -114,7 +114,7 @@ def parseArgs():
                         action='store_true')
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
-    parser.add_argument('--model', choices=['qn', 'im'], default='qn')
+    parser.add_argument('--att', choices=['qn', 'im'], default='qn')
     parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     args = parser.parse_args()
