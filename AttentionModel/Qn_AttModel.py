@@ -3,7 +3,7 @@ Created on 20 Mar 2018
 
 @author: jwong
 '''
-import csv
+
 import json
 import os
 import pickle
@@ -25,8 +25,6 @@ class QnAttentionModel(BaseModel):
     
     def _addPlaceholders(self):
         # add network placeholders
-        self.logFile.writerow(['Constructing model...\n'])
-        
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
         

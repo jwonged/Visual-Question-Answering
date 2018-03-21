@@ -80,7 +80,6 @@ class BaseModel(object):
         self.merged = tf.summary.merge_all()
         self.tb_writer = tf.summary.FileWriter(self.config.saveModelPath + 'tensorboard', self.sess.graph)
         
-        self.logFile.writerow(['Model constructed.'])
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
