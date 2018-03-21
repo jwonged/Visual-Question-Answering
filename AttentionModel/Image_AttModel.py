@@ -22,8 +22,7 @@ class ImageAttentionModel(BaseModel):
         super(ImageAttentionModel, self).__init__(config)
     
     def _addPlaceholders(self):
-        # add network placeholders
-        self.logFile.writerow(['Constructing model...\n'])
+        # add network placeholder
         
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
