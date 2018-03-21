@@ -3,7 +3,7 @@ Created on 15 Jan 2018
 
 @author: jwong
 '''
-from AttentionModel import Image_AttModel
+from Image_AttModel import ImageAttentionModel
 from Attention_LapConfig import Attention_LapConfig
 from Attention_GPUConfig import Attention_GPUConfig
 from InputProcessor import InputProcessor
@@ -26,7 +26,7 @@ def runtrain(args):
                                  config,
                                  is_training=False)
     
-    model = Image_AttModel(config)
+    model = ImageAttentionModel(config)
     model.construct()
     model.train(trainReader, valReader)
     model.destruct()
