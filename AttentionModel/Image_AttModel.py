@@ -218,6 +218,7 @@ class ImageAttentionModel(BaseModel):
         
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
+        tf.summary.scalar('accuracy', self.accuracy)
         
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -232,5 +233,7 @@ class ImageAttentionModel(BaseModel):
         #init vars and session
         self._initSession()
         
-        
+    def loadTrainedModel(self, restoreModel, restoreModelPath):
+        graph = super(ImageAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
+        self.alpha = graph.get_tensor_by_name('attention/alpha:0')
     

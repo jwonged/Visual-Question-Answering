@@ -24,8 +24,10 @@ class Attention_LapConfig(Config):
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     
-    valImgFile = ''
     trainImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggTrainConv5_3Features_shelf'
+    valImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggValConv5_3Features_shelf'
+    trainImgPaths = '/media/jwong/Transcend/VQADataset/TrainSet/trainImgPaths.txt'
+    valImgPaths = '/media/jwong/Transcend/VQADataset/ValTestSet/valImgPaths.txt'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 

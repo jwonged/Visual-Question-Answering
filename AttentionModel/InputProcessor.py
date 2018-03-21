@@ -39,6 +39,7 @@ class InputProcessor(object):
         self.config = config
         if config.shuffle and is_training:
             random.shuffle(self.annots)
+        self.datasetSize = len(self.annots)
         
     def _readJsonFile(self, fileName):
         print('Reading {}'.format(fileName))

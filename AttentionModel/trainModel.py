@@ -4,6 +4,7 @@ Created on 15 Jan 2018
 @author: jwong
 '''
 from Image_AttModel import ImageAttentionModel
+from Qn_AttModel import QnAttentionModel
 from Attention_LapConfig import Attention_LapConfig
 from Attention_GPUConfig import Attention_GPUConfig
 from InputProcessor import InputProcessor
@@ -26,9 +27,13 @@ def runtrain(args):
                                  config,
                                  is_training=False)
     
-    model = ImageAttentionModel(config)
+    if args.att == 'qn':
+        model = QnAttentionModel(config)
+    elif args.att == 'im':
+        model = ImageAttentionModel(config)
+
     model.construct()
-    model.train(trainReader, valReader)
+    model.train(trainReader, valReader, config.logFile)
     model.destruct()
     trainReader.destruct()
     valReader.destruct()
@@ -36,11 +41,8 @@ def runtrain(args):
 def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
-    parser.add_argument('-v', '--verbose', help='Display all print statement', 
-                        action='store_true')
-    parser.add_argument('-r', '--restorefile', help='Name of file to restore')
-    parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
-    parser.add_argument('--model', choices=['qn', 'im'], default='qn')
+    parser.add_argument('-v', '--verbose', help='Display all print statement', action='store_true')
+    parser.add_argument('--att', choices=['qn', 'im'], default='qn')
     args = parser.parse_args()
     return args
     

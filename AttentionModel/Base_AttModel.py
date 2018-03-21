@@ -27,14 +27,6 @@ class BaseModel(object):
         if not os.path.exists(self.config.saveModelPath):
             os.makedirs(self.config.saveModelPath)
         
-        self.f1 = open(config.logFile, 'wb')
-        self.logFile = csv.writer(self.f1)
-        self.logFile.writerow(['Attention model, ', self._getDescription(config)])
-        
-        self.f2 =  open(config.csvResults , 'wb') 
-        self.predFile = csv.writer(self.f2)
-        self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
-             'label class', 'Correct?', 'img id', 'qn_id')
         
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
@@ -91,8 +83,11 @@ class BaseModel(object):
         self.logFile.writerow(['Model constructed.'])
         print('Completed Model Construction')
     
-    def train(self, trainReader, valReader):
+    def train(self, trainReader, valReader, logFile):
         print('Starting model training')
+        self.f1 = open(logFile, 'wb')
+        self.logFile = csv.writer(self.f1)
+        self.logFile.writerow(['Attention model, ', self._getDescription(self.config)])
         self.logFile.writerow([
             'Epoch', 'Val score', 'Train score', 'Train correct', 
             'Train predictions', 'Val correct', 'Val predictions'])
@@ -127,6 +122,7 @@ class BaseModel(object):
         '''
         # Potentially add progbar here
         batch_size = self.config.batch_size
+        nBatches = trainReader.datasetSize / batch_size
         correct_predictions, total_predictions = 0., 0.
         startTime = time.time()
         
@@ -141,8 +137,8 @@ class BaseModel(object):
                 self.lr : self.config.learningRate,
                 self.dropout : self.config.dropoutVal
             }
-            _, _, labels_pred = self.sess.run(
-                [self.train_op, self.loss, self.labels_pred], feed_dict=feed)
+            _, _, labels_pred, summary = self.sess.run(
+                [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
             for lab, labPred in zip(labels, labels_pred):
                 if lab==labPred:
@@ -152,14 +148,16 @@ class BaseModel(object):
                 #log to csv
                 #self.predFile.writerow([qn, self.classToAnsMap[labPred], self.classToAnsMap[lab], labPred, lab, lab==labPred])
                 #self.predFile.write('Qn:{}, lab:{}, pred:{}\n'.format(qn, self.classToAnsMap[lab], self.classToAnsMap[labPred]))
-                '''
-            if (i%4000==0):
-                valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
-                resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
-                    nEpoch, i, valAcc, correct_predictions/total_predictions if correct_predictions > 0 else 0 )
-                self.logFile.write(resMsg)
-                print(resMsg)'''
-            
+                
+            if (i%10==0):
+                self.tb_writer.add_summary(summary, global_step=nBatches*nEpoch + i)
+                                           
+            '''valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
+            resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
+            nEpoch, i, valAcc, correct_predictions/total_predictions if correct_predictions > 0 else 0 )
+            self.logFile.write(resMsg)
+            print(resMsg)'''
+                
         epochScore, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
         trainScore = correct_predictions/total_predictions if correct_predictions > 0 else 0
         
@@ -172,11 +170,11 @@ class BaseModel(object):
         return epochScore
     
     def runVal(self, valReader, nEpoch, is_training=True):
-        """Evaluates performance on test set
+        """Evaluates performance on val set
         Args:
-            test: dataset that yields tuple of (sentences, tags)
+            valReader: 
         Returns:
-            metrics: (dict) metrics["acc"] = 98.4, ...
+            metrics:
         """
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
@@ -196,11 +194,6 @@ class BaseModel(object):
                     correct_predictions += 1
                 total_predictions += 1
                 accuracies.append(lab==labPred)
-                #self._logToCSV(
-                #    nEpoch, qn, 
-                #    self.classToAnsMap[labPred], 
-                #    self.classToAnsMap[lab], 
-                #    labPred, lab, lab==labPred, img_id)
                 
         valAcc = np.mean(accuracies)
         return valAcc, correct_predictions, total_predictions
@@ -222,36 +215,46 @@ class BaseModel(object):
         self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
-        self.alpha = graph.get_tensor_by_name('attention/alpha:0')
-        
         self.saver = tf.train.Saver()
         
-    def runPredict(self, valReader):
-        '''For internal val/test set with labels'''
-        self.config.batch_size = 5
+        return graph 
+        
+    def runPredict(self, valReader, predfile, batch_size=None, mini=False):
+        """Evaluates performance on internal valtest set
+        Args:
+            valReader: 
+        Returns:
+            metrics:
+        """
+        if batch_size is None:
+            batch_size = self.config.batch_size
+        
+        print('Predictions will be logged in {}'.format(predfile))
+        self.f2 =  open(predfile, 'wb') 
+        self.predFile = csv.writer(self.f2)
+        self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
+             'label class', 'Correct?', 'img id', 'qn_id')
+        
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        img_ids_toreturn = []
-        qns_to_return = []
-        ans_to_return = []
+        img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
-            in enumerate(valReader.getNextBatch(self.config.batch_size)):
+            in enumerate(valReader.getNextBatch(batch_size)):
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
                 self.sequence_lengths : seqLens,
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            alphas, labels_pred = self.sess.run([self.alpha, self.labels_pred], feed_dict=feed)
+            alphas, labels_pred = self.sess.run(
+                [self.alpha, self.labels_pred], feed_dict=feed)
             
-            answers = []
             for lab, labPred, qn, img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
                 if (lab==labPred):
                     correct_predictions += 1
                 total_predictions += 1
                 accuracies.append(lab==labPred)
-                answers.append(self.classToAnsMap[labPred])
                 
                 self._logToCSV(nEpoch='', qn=qn, 
                                pred=self.classToAnsMap[labPred], 
@@ -259,12 +262,10 @@ class BaseModel(object):
                                predClass=labPred, labClass=lab, 
                                correct=lab==labPred, img_id=img_id, qn_id=qn_id)
             
-            ans_to_return = answers
-                
-            if nBatch > 1:
+            if mini and nBatch > 1:
+                ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
                 img_ids_toreturn = img_ids
                 qns_to_return = rawQns
-                ans_to_return
                 break
         
         valAcc = np.mean(accuracies)
@@ -283,8 +284,6 @@ class BaseModel(object):
         }
         alphas, labels_pred = self.sess.run([self.alpha, self.labels_pred], feed_dict=feed)
         return alphas[0], self.classToAnsMap[labels_pred[0]]
-        
-        
         
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server

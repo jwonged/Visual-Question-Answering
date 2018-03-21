@@ -31,34 +31,53 @@ def runValTest(args):
     print('Running Val Test')
     config = Attention_LapConfig(load=True, args=args)
     valTestReader = InputProcessor(config.testAnnotFile, 
-                                 config.rawQnTrain, 
-                                 config.trainImgFile, 
+                                 config.rawQnValTestFile, 
+                                 config.valImgFile, 
                                  config,
                                  is_training=False)
     
     model = ImageAttentionModel(config)
     model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
-    model.runPredict(valTestReader)
+    model.runPredict(valTestReader, config.csvResults)
     model.destruct()
     valTestReader.destruct()
 
-def runVisualise():
+def runVisualiseVal():
     print('Running Visuals')
     config = Attention_LapConfig(load=True, args=args)
     reader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
+                                 config.valImgFile, 
+                                 config,
+                                 is_training=False)
+    
+    model = ImageAttentionModel(config)
+    model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
+    alphas, img_ids, qns, preds = model.runPredict(
+        reader, config.csvResults, 5, mini=True)
+    model.destruct()
+    reader.destruct()
+    
+    out = OutputGenerator(config.valImgPaths)
+    out.displayOutput(alphas, img_ids, qns, preds)
+
+def runVisualise():
+    print('Running Visuals')
+    config = Attention_LapConfig(load=True, args=args)
+    reader = InputProcessor(config.testAnnotFile, 
+                                 config.rawQnValTestFile, 
                                  config.trainImgFile, 
                                  config,
                                  is_training=False)
     
     model = ImageAttentionModel(config)
     model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
-    alphas, img_ids, qns, preds = model.runPredict(reader)
+    alphas, img_ids, qns, preds = model.runPredict(
+        reader, config.csvResults, 5, mini=True)
     model.destruct()
     reader.destruct()
     
-    imgpaths = '/media/jwong/Transcend/VQADataset/TrainSet/trainImgPaths.txt'
-    out = OutputGenerator(imgpaths)
+    out = OutputGenerator(config.trainImgPaths)
     out.displayOutput(alphas, img_ids, qns, preds)
 
 from PIL import Image                  
@@ -78,7 +97,8 @@ def solve():
     alpha, pred = model.solve(qn, img_id)
     out.displaySingleOutput(alpha, img_id, qn, pred)
     
-    '''
+    ''' -a otest -r ./results/Att21Mar1334/att21Mar1334.meta -p ./results/Att21Mar1334/
+    
     262415
     148639
     47639
@@ -92,7 +112,7 @@ def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', help='Display all print statement', 
                         action='store_true')
-    parser.add_argument('-r', '--restorefile', help='Name of file to restore')
+    parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('--model', choices=['qn', 'im'], default='qn')
     parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve'], default='vis')

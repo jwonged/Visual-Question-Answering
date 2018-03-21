@@ -133,8 +133,26 @@ class QnAttentionModel(object):
         self._addLSTMInput() #[batch_size, max_time, 1024]
         
         #########Question Attention##########
-        
-        
+        with tf.variable_scope("qn_attention"):
+            #qnAtt_f output: [b x seqLen x 512]
+            qnAtt_f =  tf.layers.dense(self.lstmOutput, units=self.lstmOutput.get_shape()[-1],
+                                activation=tf.tanh,
+                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
+            print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
+            print('qnAtt_f shape: {}'.format(tf.shape(qnAtt_f)))
+            qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 512]
+            qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
+            
+            qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
+            qnAtt_regionWeights = tf.reshape(
+                qnAtt_flatWeights, shape=[-1, self.lstmOutput.get_shape()[1]])
+            #[b, seqLen(==nRegions)]
+            
+            self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
+            qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
+            self.qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, self.lstmOutput), axis=1)
+            #[b, 1024]
+            
         self.batch_size = tf.shape(self.img_vecs)[0]
         print('Batch size = {}'.format(self.batch_size))
         
@@ -146,10 +164,15 @@ class QnAttentionModel(object):
         self._addLSTM()
         
         #########Image Attention layer##########
-        with tf.variable_scope("attention"):
+        with tf.variable_scope("image_attention"):
+            qnContext_in = tf.layers.dense(inputs=self.qnContext,
+                                           units=self.qnContext.get_shape()[-1],
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            #[bx1024]
             
             #duplicate qn vec to combine with each region to get [v_i, q]
-            qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
+            qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
             print('Shape of attention input : {}'.format(tf.shape(qnAtt_in)))
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
@@ -179,27 +202,22 @@ class QnAttentionModel(object):
             #broadcast; output shape=[bx1024 or bx1536]
             self.imgContext = tf.reduce_sum(tf.multiply(alpha, self.flattenedImgVecs), axis=1) 
             
-        #Handle output according to model structure
-        if self.config.modelStruct == 'imagePerWord':
-            self.multimodalOutput = self.lstmOutput 
-        elif self.config.modelStruct == 'imageAsFirstWord':
-            self.multimodalOutput = self.lstmOutput
-        else: #imageAfterLSTM
-            if self.config.elMult:
-                print('Using pointwise mult')
-                #1024 --> 512 or 1536 --> 1024
-                attended_img_vecs = tf.layers.dense(inputs=self.imgContext,
-                                           units=self.lstmOutput.get_shape()[-1],
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-                #dropout after img mapping layer
-                attended_img_vecs = tf.nn.dropout(attended_img_vecs, self.dropout)
-                    
-                self.multimodalOutput = tf.multiply(self.lstmOutput, attended_img_vecs) #size=512
-            else: #using concat
-                print('Using concat')
-                self.multimodalOutput = tf.concat([self.lstmOutput, attended_img_vecs], axis=-1)
-        
+        #Combine modes
+        if self.config.elMult:
+            print('Using pointwise mult')
+            #1024 --> 512 or 1536 --> 1024
+            attended_img_vecs = tf.layers.dense(inputs=self.imgContext,
+                                       units=self.qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+            #dropout after img mapping layer
+            attended_img_vecs = tf.nn.dropout(attended_img_vecs, self.dropout)
+                
+            self.multimodalOutput = tf.multiply(self.qnContext, attended_img_vecs) #size=512
+        else: #using concat
+            print('Using concat')
+            self.multimodalOutput = tf.concat([self.qnContext, attended_img_vecs], axis=-1)
+    
         #fully connected layer
         with tf.variable_scope("proj"):
             hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
@@ -229,3 +247,10 @@ class QnAttentionModel(object):
         
         #init vars and session
         self._initSession()
+        
+    
+    def loadTrainedModel(self, restoreModel, restoreModelPath):
+        graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
+        self.img_alpha = graph.get_tensor_by_name('image_attention/alpha:0')
+        self.qn_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+        
