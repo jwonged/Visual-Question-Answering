@@ -86,7 +86,7 @@ class BaseModel(object):
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
         self.merged = tf.summary.merge_all()
-        self.tb_writer = tf.summary.FileWriter(self.saveModelPath + 'tensorboard', self.sess.graph)
+        self.tb_writer = tf.summary.FileWriter(self.config.saveModelPath + 'tensorboard', self.sess.graph)
         
         self.logFile.writerow(['Model constructed.'])
         print('Completed Model Construction')
