@@ -206,5 +206,145 @@ class TestProcessor(object):
     
     def destruct(self):
         self.imgData.close()
+        
+class OnlineProcessor(object):
     
+    def __init__(self, imgFile, config):
+        print('Reading {}'.format(imgFile))
+        self.imgData = shelve.open(imgFile, flag='r', protocol=pickle.HIGHEST_PROTOCOL)
+        
+        self.config  = config
+        self.classToAnsMap = config.classToAnsMap
+        self.classToAnsMap[-1] = -1
+        self.mapWordToID = config.mapWordToID
+    
+    def processInput(self, qn, img_id):
+        qnAsWordIDs = self._mapQnToIDs(qn)
+        img_vec = self.imgData[img_id]
+        batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs([qnAsWordIDs], 0)
+        return batchOfQnsAsWordIDs, qnLengths, [img_vec]
+        
+    def getNextBatch(self, batchSize):
+        batchOfQnsAsWordIDs, img_vecs, rawQns, img_ids, qn_ids = [], [], [], [], []
+        for qn in self.qnData:
+            if (len(batchOfQnsAsWordIDs) == batchSize):
+                batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
+                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, rawQns, img_ids, qn_ids
+                batchOfQnsAsWordIDs, qnLengths, img_vecs, rawQns, img_ids, qn_ids = [], [], [], [], [], []
+            
+            #process question
+            qn_id = str(qn['question_id'])
+            qnStr = qn['question']
+            qnAsWordIDs = self._mapQnToIDs(qnStr)
+            batchOfQnsAsWordIDs.append(qnAsWordIDs)
+            rawQns.append(qnStr)
+            qn_ids.append(qn_id)
+            
+            #process img
+            img_id = str(qn['image_id'])
+            img_vec = self.imgData[img_id]
+            img_vecs.append(img_vec)
+            img_ids.append(img_id)
+            
+        if len(batchOfQnsAsWordIDs) != 0:
+            batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
+            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, rawQns, img_ids, qn_ids
+            
+    def _padQuestionIDs(self, questions, padding):
+        '''
+        Pads each list to be same as max length
+        args:
+            questions: list of list of word IDs (ie a batch of qns)
+            padding: symbol to pad with
+        '''
+        maxLength = max(map(lambda x : len(x), questions))
+        #Get length of longest qn
+        paddedQuestions, qnLengths = [], []
+        for qn in questions:
+            qn = list(qn) #ensure list format
+            if (len(qn) < maxLength):
+                paddedQn = qn + [padding]*(maxLength - len(qn))
+                paddedQuestions.append(paddedQn)
+            else:
+                paddedQuestions.append(qn)
+            qnLengths.append(len(qn))
+            
+        return paddedQuestions, qnLengths
+        
+    def _mapQnToIDs(self, qn):
+        #Convert str question to a list of word_ids
+        idList = []
+        for word in word_tokenize(qn):
+            word = word.strip().lower()
+            if word in self.mapWordToID:
+                    idList.append(self.mapWordToID[word]) 
+            else:
+                idList.append(self.mapWordToID[self.config.unkWord])
+        return idList
+    
+    def destruct(self):
+        self.imgData.close()
+
+import caffe
+import sys, os
+class ImageProcessor(object):
+    '''
+    Processing images for E2E architecture
+    '''
+
+    def __init__(self):
+        caffe_root = '/home/joshua/caffe/'
+        #caffe_root = '/home/jwong/caffe/'
+         
+        # Model prototxt file
+        self.model_prototxt = caffe_root + 'models/211839e770f7b538e2d8/VGG_ILSVRC_19_layers_deploy.prototxt'
+         
+        # Model caffemodel file
+        self.model_trained = caffe_root + 'models/211839e770f7b538e2d8/VGG_ILSVRC_19_layers.caffemodel'
+         
+        # File containing the class labels
+        self.imagenet_labels = caffe_root + 'data/ilsvrc12/synset_words.txt'
+         
+        # Path to the mean image (used for input processing)
+        self.mean_path = caffe_root + 'python/caffe/imagenet/ilsvrc_2012_mean.npy'
+         
+        # Name of the layer we want to extract
+        self.layer_name = 'conv5_3'
+        #layer_name = 'fc7'
+         
+        sys.path.insert(0, caffe_root + 'python')
+        
+        caffe.set_device(0)
+        #caffe.set_mode_gpu()
+        caffe.set_mode_cpu()
+        
+        self.net = caffe.Classifier(self.model_prototxt, self.model_trained,
+                           mean=np.load(self.mean_path).mean(1).mean(1),
+                           channel_swap=(2,1,0),
+                           raw_scale=255,
+                           image_dims=(448, 448))
+        with open(self.imagenet_labels) as f:
+            self.labels = f.readlines()
+    
+    def _getImageID(self, image_path):
+        #Get image ID
+        splitPath = image_path.split('/')
+        imgNameParts = splitPath[len(splitPath)-1].split('_') #COCO, train, XXX.jpg
+        suffix =  imgNameParts[len(imgNameParts)-1] #XXX.jpg
+        img_id = int(suffix.split('.')[0])
+        return img_id
+    
+    def processSingleImage(self, imageFile):
+        
+        print('Extracting from layer: {}'.format(self.layer_name))
+        input_image = caffe.io.load_image(imageFile.strip())
+        prediction = self.net.predict([input_image], oversample=False)
+        msg = ('{} : {} ( {} )'.format(imageFile.split('/')[-1], 
+                                       self.labels[prediction[0].argmax()].strip(), 
+                                       prediction[0][prediction[0].argmax()]))
+        img_id = self._getImageID(imageFile)
+        featureData = self.net.blobs[self.layer_name].data[0]
+        
+        return img_id, featureData
+        
         

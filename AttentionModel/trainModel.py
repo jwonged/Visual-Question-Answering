@@ -3,14 +3,16 @@ Created on 15 Jan 2018
 
 @author: jwong
 '''
-from AttentionModel import AttentionModel
+from AttentionModel import Image_AttModel
 from Attention_LapConfig import Attention_LapConfig
 from Attention_GPUConfig import Attention_GPUConfig
 from InputProcessor import InputProcessor
+import argparse
 
-def runtrain():
-    #config = Attention_LapConfig(load=True)
-    config = Attention_GPUConfig(load=True)
+def runtrain(args):
+    #config = Attention_LapConfig(load=True, args)
+    config = Attention_GPUConfig(load=True, args=args)
+    #self.attentionType = 'img'
     
     trainReader = InputProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
@@ -24,12 +26,24 @@ def runtrain():
                                  config,
                                  is_training=False)
     
-    model = AttentionModel(config)
+    model = Image_AttModel(config)
     model.construct()
     model.train(trainReader, valReader)
     model.destruct()
     trainReader.destruct()
     valReader.destruct()
-        
+
+def parseArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--seed', help='tf seed value', type=int)
+    parser.add_argument('-v', '--verbose', help='Display all print statement', 
+                        action='store_true')
+    parser.add_argument('-r', '--restorefile', help='Name of file to restore')
+    parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
+    parser.add_argument('--model', choices=['qn', 'im'], default='qn')
+    args = parser.parse_args()
+    return args
+    
 if __name__ == '__main__':
-    runtrain()
+    args = parseArgs()
+    runtrain(args)

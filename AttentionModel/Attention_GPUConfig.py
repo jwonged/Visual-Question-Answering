@@ -5,26 +5,29 @@ Created on 7 Feb 2018
 '''
 from Config import Config
 
+
 class Attention_GPUConfig(Config):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self, load):
-        super(Attention_GPUConfig, self).__init__(load)
-    
+    def __init__(self, load, args):
+        super(Attention_GPUConfig, self).__init__(load, args)
+        
+        self.saveModelPath = './results/Att{}/'.format(self.dateAppend) 
+        self.saveModelFile = self.saveModelPath + 'att' + self.dateAppend
+        
+        self.csvResults = self.saveModelPath + 'Pred_att_{}.csv'.format(self.dateAppend)
+        self.logFile = self.saveModelPath + 'Res_att_{}.csv'.format(self.dateAppend)
+        self.testOfficialResultFile = 'results/att{}Submission.json'.format(self.dateAppend)
+        
+        self.restoreModel = args.restorefile if args.restorefile else '.meta'
+        self.restoreModelPath = args.restorepath if args.restorepath else './'
+        
     trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
     valImgFile = '../resources/vggValConv5_3Features_shelf' #also internal test
     
     testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
     testOfficialImgFeatures = '../resources/vggTestOfficialconv5_3Features_shelf'
-    testOfficialResultFile = 'results/att1503Submission.json'
-    restoreModel = 'results/att19Mar-21.meta'
-    restoreModelPath = 'results/'
-    
-    #change on each run
-    csvResults = 'results/Pred_att_19Mar.csv'
-    logFile = 'results/Res_att_20Mar.csv'
-    saveModelFile = 'results/att20Mar'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
