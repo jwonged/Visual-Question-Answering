@@ -15,7 +15,7 @@ import numpy as np
 import tensorflow as tf 
 from Base_AttModel import BaseModel
 
-class QnAttentionModel(object):
+class QnAttentionModel(BaseModel):
     '''
     VQA Model implementing attention over question and images
     '''
