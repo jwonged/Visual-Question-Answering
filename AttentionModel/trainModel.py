@@ -26,7 +26,7 @@ def runtrain(args):
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
-    
+     
     if args.att == 'qn':
         print('Attention over question and image model')
         model = QnAttentionModel(config)
