@@ -145,7 +145,7 @@ class QnAttentionModel(BaseModel):
             
             qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
             qnAtt_regionWeights = tf.reshape(
-                qnAtt_flatWeights, shape=[-1, self.lstmOutput.get_shape()[1]])
+                qnAtt_flatWeights, shape=[-1, tf.shape(self.lstmOutput)[1]])
             #[b, seqLen(==nRegions)]
             
             self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
