@@ -128,7 +128,9 @@ class QnAttentionModel(BaseModel):
         
         self._addEmbeddings()
         
-        self._addLSTMInput() #[batch_size, max_time, 1024]
+        self._addLSTMInput() 
+        
+        self._addLSTM() #[batch_size, max_time, 1024]
         
         #########Question Attention##########
         with tf.variable_scope("qn_attention"):
@@ -159,7 +161,7 @@ class QnAttentionModel(BaseModel):
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
          
-        self._addLSTM()
+        
         
         #########Image Attention layer##########
         with tf.variable_scope("image_attention"):
