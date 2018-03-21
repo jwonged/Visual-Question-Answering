@@ -28,7 +28,7 @@ class Config(object):
             self.vocabSize = len(self.mapWordToID)
         
         now = datetime.datetime.now()
-        self.dateAppend = '{}{}{}{}'.format(now.day, calendar.month_name[now.month][:3],
+        self.dateAppend = '{}{}{}_{}'.format(now.day, calendar.month_name[now.month][:3],
                                             now.hour, now.minute)
         
         #quick hyperparameters
