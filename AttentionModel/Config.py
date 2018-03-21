@@ -41,7 +41,7 @@ class Config(object):
         self.learningRate = 0.0001 
         self.learningRateDecay = 0.95 #noDecay = 1; usually ~0.9
         self.max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
-        self.attentionType = 'img' #['img', 'qn', 'both']
+        self.attentionType = args.att if args.att else 'qn'
         
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'

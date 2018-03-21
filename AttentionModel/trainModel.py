@@ -28,8 +28,10 @@ def runtrain(args):
                                  is_training=False)
     
     if args.att == 'qn':
+        print('Attention over question and image model')
         model = QnAttentionModel(config)
     elif args.att == 'im':
+        print('Attention over image model')
         model = ImageAttentionModel(config)
 
     model.construct()
