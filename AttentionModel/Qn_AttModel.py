@@ -134,13 +134,13 @@ class QnAttentionModel(BaseModel):
         
         #########Question Attention##########
         with tf.variable_scope("qn_attention"):
-            #qnAtt_f output: [b x seqLen x 512]
+            #qnAtt_f output: [b x seqLen x 1024]
             qnAtt_f =  tf.layers.dense(self.lstmOutput, units=self.lstmOutput.get_shape()[-1],
                                 activation=tf.tanh,
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
             print('qnAtt_f shape: {}'.format(tf.shape(qnAtt_f)))
-            qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 512]
+            qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 1024]
             qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
             
             qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
@@ -174,7 +174,7 @@ class QnAttentionModel(BaseModel):
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
-            print('Shape of attention input : {}'.format(tf.shape(qnAtt_in)))
+            print('Shape of qnAatt_in : {}'.format(qnAtt_in.get_shape()))
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             

@@ -31,6 +31,8 @@ class BaseModel(object):
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
+        self.f1 = None
+        self.f2 = None
         tf.set_random_seed(self.config.randomSeed)
         print(self._getDescription(config))
     
@@ -307,6 +309,8 @@ class BaseModel(object):
         generateForSubmission(allQnIds, allPreds, jsonOutputFile)
     
     def destruct(self):
-        self.f1.close()
-        self.f2.close()
+        if self.f1 is not None:
+            self.f1.close()
+        if self.f2 is not None:
+            self.f2.close()
     

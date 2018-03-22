@@ -47,6 +47,7 @@ import skimage.transform
 import cv2
 from scipy import ndimage
 import numpy as np
+from textwrap import wrap
 class OutputGenerator(object):
     def __init__(self, imgPathsFile):
         self.idToImgpathMap = {}
@@ -93,6 +94,7 @@ class OutputGenerator(object):
         
         
         print('Num of images: {}'.format(img_ids))
+        fig = plt.figure()
         for n, (alp, img_id, qn, pred) in enumerate(zip(alphas, img_ids, qns, preds)):
             if n>2:
                 break
@@ -103,9 +105,10 @@ class OutputGenerator(object):
                 alp.reshape(14,14), upscale=32, sigma=20)
             alp_img = np.transpose(alp_img, (1,0))
             
-            print(n)
+            
             plt.subplot(2,4,(n+1))
-            plt.title('Qn: {}, pred: {}'.format(qn, pred))
+            plt.title("\n".join(wrap(
+                "Qn: {} Pred: {}".format(qn, pred), 20)))
             plt.imshow(imgvec)
             plt.imshow(alp_img, alpha=0.80)
             plt.axis('off')
@@ -114,7 +117,7 @@ class OutputGenerator(object):
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
             plt.axis('off')
-            
+        #plt.tight_layout()
         plt.show()
 
 class AnswerProcessor:

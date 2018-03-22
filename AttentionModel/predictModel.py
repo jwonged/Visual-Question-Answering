@@ -45,8 +45,8 @@ def runValTest(args):
 def runVisualiseVal():
     print('Running Visuals')
     config = Attention_LapConfig(load=True, args=args)
-    reader = InputProcessor(config.trainAnnotFile, 
-                                 config.rawQnTrain, 
+    reader = InputProcessor(config.testAnnotFile,
+                                 config.rawQnValTestFile,
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
@@ -64,8 +64,8 @@ def runVisualiseVal():
 def runVisualise():
     print('Running Visuals')
     config = Attention_LapConfig(load=True, args=args)
-    reader = InputProcessor(config.testAnnotFile, 
-                                 config.rawQnValTestFile, 
+    reader = InputProcessor(config.trainAnnotFile, 
+                                 config.rawQnTrain, 
                                  config.trainImgFile, 
                                  config,
                                  is_training=False)
