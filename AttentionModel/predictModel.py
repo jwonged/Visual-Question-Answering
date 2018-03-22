@@ -4,6 +4,7 @@ Created on 13 Feb 2018
 @author: jwong
 '''
 from Image_AttModel import ImageAttentionModel
+from Qn_AttModel import QnAttentionModel
 from Attention_LapConfig import Attention_LapConfig
 from Attention_GPUConfig import Attention_GPUConfig
 from InputProcessor import InputProcessor, TestProcessor
@@ -20,7 +21,13 @@ def loadOfficialTest(args):
                                imgFile=config.testOfficialImgFeatures, 
                                config=config)
     
-    model = ImageAttentionModel(config)
+    if args.att == 'qn':
+        print('Attention over question and image model')
+        model = QnAttentionModel(config)
+    elif args.att == 'im':
+        print('Attention over image model')
+        model = ImageAttentionModel(config)
+        
     model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
     model.runTest(testReader, config.testOfficialResultFile)
     model.destruct()
@@ -98,7 +105,7 @@ def solve():
     out.displaySingleOutput(alpha, img_id, qn, pred)
     
     ''' -a otest -r ./results/Att21Mar1334/att21Mar1334.meta -p ./results/Att21Mar1334/
-    
+    -a otest -r ./results/Att22Mar0-12/att22Mar0-12.meta -p ./results/Att22Mar0-12/
     262415
     148639
     47639
