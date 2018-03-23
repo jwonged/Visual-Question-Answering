@@ -23,6 +23,7 @@ class CNNGPUConfig(Config):
         self.restoreModel = args.restorefile if args.restorefile else ''#'.meta'
         self.restoreModelPath = args.restorepath if args.restorepath else ''#'./'
     
+    imgPrePath = '../../resources/'
     trainImgPaths = '../../resources/trainImgPaths.txt'
     valImgPaths = '../../resources/valImgPaths.txt' 
     
