@@ -107,7 +107,7 @@ class LSTMCNNModel(BaseModel):
             
             pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
             
-            conv2 = tf.layers.conv2d(inputs=conv1, 
+            conv2 = tf.layers.conv2d(inputs=pool1, 
                                      filters=128,
                                      kernel_size=[3, 3],
                                      padding="same",
@@ -121,7 +121,9 @@ class LSTMCNNModel(BaseModel):
                                      padding="same",
                                      activation=tf.nn.relu)
             
-            conv4 = tf.layers.conv2d(inputs=conv3, 
+            pool3 = tf.layers.max_pooling2d(inputs=conv3, pool_size=[2, 2], strides=2)
+            
+            conv4 = tf.layers.conv2d(inputs=pool3, 
                                      filters=256,
                                      kernel_size=[3, 3],
                                      padding="same",
@@ -129,29 +131,14 @@ class LSTMCNNModel(BaseModel):
             
             pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[2, 2], strides=2)
             
-            conv5 = tf.layers.conv2d(inputs=pool4, 
-                                     filters=512,
-                                     kernel_size=[3, 3],
-                                     padding="same",
-                                     activation=tf.nn.relu)
+            print('pool6 shape: {}'.format(tf.shape(pool4)))
+            print('pool6 shape: {}'.format(pool4.get_shape()))
             
-            pool5 = tf.layers.max_pooling2d(inputs=conv5, pool_size=[2, 2], strides=2)
-            
-            conv6 = tf.layers.conv2d(inputs=pool5, 
-                                     filters=512,
-                                     kernel_size=[3, 3],
-                                     padding="same",
-                                     activation=tf.nn.relu)
-            
-            pool6 = tf.layers.max_pooling2d(inputs=conv6, pool_size=[2, 2], strides=2)
-            print('pool6 shape: {}'.format(tf.shape(pool6)))
-            print('pool6 shape: {}'.format(pool6.get_shape()))
-            
-            #[bx28x28x512]
-            flattenedImgVec = tf.reshape(pool6, [-1, pool6.get_shape()[1:4].num_elements()])
+            #[bx28x28x512]; [bx7x7x256]
+            flattenedImgVec = tf.reshape(pool4, [-1, pool4.get_shape()[1:4].num_elements()])
             print('flattened shape: {}'.format(tf.shape(flattenedImgVec)))
             print('flattened shape: {}'.format(flattenedImgVec.get_shape()))
-            #401,408 --> 4096
+            #401,408 --> 4096; 12544 --> 4096
             reduced_imgVecs = tf.layers.dense(inputs=flattenedImgVec,
                                        units=4096,
                                        activation=tf.tanh,
