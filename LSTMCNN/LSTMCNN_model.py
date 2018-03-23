@@ -95,11 +95,11 @@ class LSTMCNNModel(BaseModel):
         lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
         return lstmOutput
     
-    def _addCNNs(self):
+    def _addCNNs(self, image):
         #5 conv layers
         with tf.variable_scope("CNNs"):
             
-            conv1 = tf.layers.conv2d(inputs=self.images, 
+            conv1 = tf.layers.conv2d(inputs=image, 
                                      filters=64,
                                      kernel_size=[3, 3],
                                      padding="same",
@@ -165,7 +165,7 @@ class LSTMCNNModel(BaseModel):
         
         self.lstmOutput = self._addLSTM(self.lstmInput) #[batch_size, max_time, 1024]
         
-        self.imgFeatures = self._addCNNs() #already flattened
+        self.imgFeatures = self._addCNNs(self.img_vecs) 
         print('img_vecs shape: {}'.format(tf.shape(self.imgFeatures)))
         print('img_vecs shape: {}'.format(self.imgFeatures.get_shape()))
             
