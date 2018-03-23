@@ -34,8 +34,6 @@ def runtrain(args):
     model.construct()
     model.train(trainReader, valReader, config.logFile)
     model.destruct()
-    trainReader.destruct()
-    valReader.destruct()
 
 def parseArgs():
     parser = argparse.ArgumentParser()

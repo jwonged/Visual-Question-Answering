@@ -24,7 +24,6 @@ class InputProcessor(object):
     '''
     
     def __init__(self, annotFile, qnFile, imgPathsFile, config, is_training):
-        print('Reading {}'.format(imgPathsFile))
         self.idToImgpathMap = self._getidToImgpathMap(imgPathsFile)
         self.annots = self._readJsonFile(annotFile)
         self.rawQns = self._readJsonFile(qnFile)
@@ -198,6 +197,7 @@ class TestProcessor(object):
             image = cv2.resize(image, (224, 224),0,0)
             image = image.astype(np.float32)
             image_vec = np.multiply(image, 1.0 / 255.0)
+            print(image_vec.shape)
             img_vecs.append(image_vec)
             img_ids.append(img_id)
             
@@ -237,7 +237,5 @@ class TestProcessor(object):
                 idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
-    def destruct(self):
-        self.imgData.close()
 
         
