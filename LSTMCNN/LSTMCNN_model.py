@@ -27,7 +27,7 @@ class LSTMCNNModel(BaseModel):
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
         
         # shape = (batch size, image height, width, channels)
-        self.images = tf.placeholder(tf.float32, 
+        self.img_vecs = tf.placeholder(tf.float32, 
                                        shape=[None, 112, 112, 3], 
                                        name="img_vecs")
 
@@ -165,15 +165,15 @@ class LSTMCNNModel(BaseModel):
         
         self.lstmOutput = self._addLSTM(self.lstmInput) #[batch_size, max_time, 1024]
         
-        self.img_vecs = self._addCNNs() #already flattened
-        print('img_vecs shape: {}'.format(tf.shape(self.img_vecs)))
-        print('img_vecs shape: {}'.format(self.img_vecs.get_shape()))
+        self.imgFeatures = self._addCNNs() #already flattened
+        print('img_vecs shape: {}'.format(tf.shape(self.imgFeatures)))
+        print('img_vecs shape: {}'.format(self.imgFeatures.get_shape()))
             
         #Combine modes
         if self.config.elMult:
             print('Using pointwise mult')
             #4096 --> 1024
-            reduced_imgVecs = tf.layers.dense(inputs=self.img_vecs,
+            reduced_imgVecs = tf.layers.dense(inputs=self.imgFeatures,
                                        units=self.lstmOutput.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -187,7 +187,7 @@ class LSTMCNNModel(BaseModel):
             self.multimodalOutput = tf.multiply(self.lstmOutput, reduced_imgVecs) #size=512
         else: #using concat
             print('Using concat')
-            self.multimodalOutput = tf.concat([self.lstmOutput, self.img_vecs ], axis=-1)
+            self.multimodalOutput = tf.concat([self.lstmOutput, self.imgFeatures ], axis=-1)
     
         #fully connected layer
         with tf.variable_scope("proj"):
