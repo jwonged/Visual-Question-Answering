@@ -8,7 +8,7 @@ import json
 import os
 import pickle
 import time
-import os
+import csv
 
 from model_utils import getPretrainedw2v, generateForSubmission
 from InputProcessor import OnlineProcessor
@@ -251,8 +251,8 @@ class QnAttentionModel(BaseModel):
         
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
-        self.img_alpha = graph.get_tensor_by_name('image_attention/alpha:0')
-        self.qn_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+        self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
+        self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
     
     def solve(self, qn, img_id):
         processor = OnlineProcessor(self.config.trainImgFile, self.config)
@@ -266,4 +266,59 @@ class QnAttentionModel(BaseModel):
         qnAlphas, imgAlphas, labels_pred = self.sess.run(
             [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
         return qnAlphas[0], imgAlphas[0], self.classToAnsMap[labels_pred[0]]
+    
+    def runPredict(self, valReader, predfile, batch_size=None, mini=False):
+        """Evaluates performance on internal valtest set
+        Args:
+            valReader: 
+        Returns:
+            metrics:
+        """
+        if batch_size is None:
+            batch_size = self.config.batch_size
         
+        if not mini:
+            print('Predictions will be logged in {}'.format(predfile))
+            self.f2 =  open(predfile, 'wb') 
+            self.predFile = csv.writer(self.f2)
+            self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
+                 'label class', 'Correct?', 'img id', 'qn_id')
+        
+        accuracies = []
+        correct_predictions, total_predictions = 0., 0.
+        img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+        for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
+            in enumerate(valReader.getNextBatch(batch_size)):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+            }
+            qnAlphas, alphas, labels_pred = self.sess.run(
+                [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
+            
+            for lab, labPred, qn, img_id, qn_id in zip(
+                labels, labels_pred, rawQns, img_ids, qn_ids):
+                if (lab==labPred):
+                    correct_predictions += 1
+                total_predictions += 1
+                accuracies.append(lab==labPred)
+                
+                if not mini:
+                    self._logToCSV(nEpoch='', qn=qn, 
+                                   pred=self.classToAnsMap[labPred], 
+                                   lab=self.classToAnsMap[lab], 
+                                   predClass=labPred, labClass=lab, 
+                                   correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+            
+            if mini and nBatch > 1:
+                ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
+                img_ids_toreturn = img_ids
+                qns_to_return = rawQns
+                break
+        
+        valAcc = np.mean(accuracies)
+        print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
+        #return valAcc, correct_predictions, total_predictions
+        return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return

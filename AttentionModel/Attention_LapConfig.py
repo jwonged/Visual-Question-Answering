@@ -12,15 +12,17 @@ class Attention_LapConfig(Config):
     def __init__(self, load, args):
         super(Attention_LapConfig, self).__init__(load, args)
     
-    csvResults = '/media/jwong/Transcend/VQAresults/20MarAtt/Pred_Att2003.csv'
-    logFile = '/media/jwong/Transcend/VQAresults/20MarAtt/Res_Att2003.csv'
+    csvResults = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/Pred_Att2003.csv'
+    logFile = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/Res_Att2003.csv'
     
     saveModelFile = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto'
     saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
-    restoreModel = '/media/jwong/Transcend/VQAresults/20MarAtt/att20Mar-35.meta'
-    restoreModelPath = '/media/jwong/Transcend/VQAresults/20MarAtt/'
+    restoreModel = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/att20Mar-35.meta'
+    restoreModelPath = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/'
     testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/47LSTMIMG11MarSubmission.json'
     
+    restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/att22Mar0-12.meta'
+    restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/'
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     

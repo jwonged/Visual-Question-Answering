@@ -269,7 +269,7 @@ class BaseModel(object):
                 break
         
         valAcc = np.mean(accuracies)
-        print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
+        print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
         return alphas, img_ids_toreturn, qns_to_return, ans_to_return
     

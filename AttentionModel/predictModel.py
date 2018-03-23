@@ -114,6 +114,25 @@ def solve():
     499024
     '''
 
+def visQnImgAtt():
+    print('Running qn Visuals')
+    config = Attention_LapConfig(load=True, args=args)
+    reader = InputProcessor(config.testAnnotFile,
+                                 config.rawQnValTestFile,
+                                 config.valImgFile, 
+                                 config,
+                                 is_training=False)
+    
+    model = QnAttentionModel(config)
+    model.loadTrainedModel(config.restoreQnImAttModel, 
+                           config.restoreQnImAttModelPath)
+    qnAlphas, alphas, img_ids, qns, preds = model.runPredict(
+        reader, config.csvResults, 5, mini=True)
+    model.destruct()
+    
+    out = OutputGenerator(config.valImgPaths)
+    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds)
+
 def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', help='Display all print statement', 
@@ -121,7 +140,7 @@ def parseArgs():
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('--att', choices=['qn', 'im'], default='qn')
-    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve'], default='vis')
+    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve', 'qn'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     args = parser.parse_args()
     return args
@@ -135,4 +154,6 @@ if __name__ == '__main__':
         runVisualise()
     elif args.action == 'solve':
         solve()
+    elif args.action == 'qn':
+        visQnImgAtt()
     

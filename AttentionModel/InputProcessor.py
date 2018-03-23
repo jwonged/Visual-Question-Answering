@@ -351,6 +351,3 @@ class ImageProcessor(object):
             
         return featureData, img_id
         
-        
-        
-        

@@ -47,6 +47,7 @@ import skimage.transform
 import cv2
 from scipy import ndimage
 import numpy as np
+from nltk import word_tokenize
 from textwrap import wrap
 class OutputGenerator(object):
     def __init__(self, imgPathsFile):
@@ -68,10 +69,30 @@ class OutputGenerator(object):
     def convertIDtoPath(self, img_id):
         return self.idToImgpathMap[img_id]
     
-    def displayQnImgAttention(self, qnAlpha, imgAlpha, img_id, qn, pred):
-        alp_img = self._processImgAlpha(imgAlpha)
+    def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds):
+        for n, (qnAl, imAl, img_id, qn, pred) in enumerate(zip(
+            qnAlphas, imgAlphas, img_ids, qns, preds)):
+            if n > 0:
+                break
+            alp_img = self._processImgAlpha(imAl)
+            toks = word_tokenize(qn)
+            for tok, att in zip(toks, qnAl):
+                print('{} ( {} )  '.format(tok,att))
+            imgvec = cv2.imread(self.idToImgpathMap[img_id])
+            from PIL import Image
+            img = Image.open(self.idToImgpathMap[img_id])
+            img.show()
+            qn_2d = np.expand_dims(qnAl[:len(toks)], axis=0)
+            plt.subplot(2,1,1)
+            plt.title('Qn: {}, pred: {}'.format(qn, pred))
+            plt.imshow(imgvec)
+            plt.imshow(alp_img, alpha=0.80)
+            plt.axis('off')
+            plt.subplot(2,1,2)
+            plt.xticks(np.arange(len(toks)), (toks))
+            plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
+            plt.show()
         
-    
     def _processImgAlpha(self, imgAlpha):
         alp_img = skimage.transform.pyramid_expand(
             imgAlpha.reshape(14,14), upscale=32, sigma=20)
@@ -80,7 +101,8 @@ class OutputGenerator(object):
     
     def displaySingleOutput(self, alpha, img_id, qn, pred):
         print('Num of images: {}'.format(img_id))
-        imgvec = ndimage.imread(self.idToImgpathMap[img_id])
+        imgvec = cv2.imread(self.idToImgpathMap[img_id])
+        #imgvec = ndimage.imread(self.idToImgpathMap[img_id])
         imgvec = cv2.resize(imgvec, dsize=(448,448))
         
         alp_img = self._processImgAlpha(alpha)
@@ -104,22 +126,39 @@ class OutputGenerator(object):
         for n, (alp, img_id, qn, pred) in enumerate(zip(alphas, img_ids, qns, preds)):
             if n>2:
                 break
+            #imgvec = cv2.imread(self.idToImgpathMap[img_id])
+            
             imgvec = ndimage.imread(self.idToImgpathMap[img_id])
             imgvec = cv2.resize(imgvec, dsize=(448,448))
             
-            alp_img = self._processImgAlpha(alphas)
+            alp_img = self._processImgAlpha(alp)
             
+            plt.subplot(2,3,(n+1))
+            plt.title("\n".join(wrap(
+                "Qn: {} Pred: {}".format(qn, pred), 20)))
+            plt.imshow(imgvec)
+            plt.imshow(alp_img, alpha=0.80) #plt.imshow(arr, cmap='gray')
+            plt.axis('off')
+            
+            plt.subplot(2,3,(n+1)*2)
+            plt.title("\n".join(wrap(
+                "Qn: {} Pred: {}".format(qn, pred), 20)))
+            plt.imshow(imgvec)
+            plt.axis('off')
+            
+            
+            '''
             plt.subplot(2,4,(n+1))
             plt.title("\n".join(wrap(
                 "Qn: {} Pred: {}".format(qn, pred), 20)))
             plt.imshow(imgvec)
-            plt.imshow(alp_img, alpha=0.80)
+            plt.imshow(alp_img, alpha=0.80) #plt.imshow(arr, cmap='gray')
             plt.axis('off')
             
             plt.subplot(2,4,(n+1)*2)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
-            plt.axis('off')
+            plt.axis('off')'''
         #plt.tight_layout()
         plt.show()
 
