@@ -28,7 +28,7 @@ class LSTMCNNModel(BaseModel):
         
         # shape = (batch size, image height, width, channels)
         self.img_vecs = tf.placeholder(tf.float32, 
-                                       shape=[None, 112, 112, 3], 
+                                       shape=[None, 224, 224, 3], 
                                        name="img_vecs")
 
         # shape = (batch size)
