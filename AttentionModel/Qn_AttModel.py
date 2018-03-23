@@ -11,6 +11,7 @@ import time
 import os
 
 from model_utils import getPretrainedw2v, generateForSubmission
+from InputProcessor import OnlineProcessor
 import numpy as np
 import tensorflow as tf 
 from Base_AttModel import BaseModel
@@ -248,9 +249,21 @@ class QnAttentionModel(BaseModel):
         #init vars and session
         self._initSession()
         
-    
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         self.img_alpha = graph.get_tensor_by_name('image_attention/alpha:0')
         self.qn_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+    
+    def solve(self, qn, img_id):
+        processor = OnlineProcessor(self.config.trainImgFile, self.config)
+        qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
+        feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+        }
+        qnAlphas, imgAlphas, labels_pred = self.sess.run(
+            [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
+        return qnAlphas[0], imgAlphas[0], self.classToAnsMap[labels_pred[0]]
         

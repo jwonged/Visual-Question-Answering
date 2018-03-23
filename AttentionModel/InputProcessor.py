@@ -335,17 +335,22 @@ class ImageProcessor(object):
         img_id = int(suffix.split('.')[0])
         return img_id
     
-    def processSingleImage(self, imageFile):
-        
+    def processSingleImage(self, imageFile, getID=False):
         print('Extracting from layer: {}'.format(self.layer_name))
         input_image = caffe.io.load_image(imageFile.strip())
         prediction = self.net.predict([input_image], oversample=False)
         msg = ('{} : {} ( {} )'.format(imageFile.split('/')[-1], 
                                        self.labels[prediction[0].argmax()].strip(), 
                                        prediction[0][prediction[0].argmax()]))
-        img_id = self._getImageID(imageFile)
         featureData = self.net.blobs[self.layer_name].data[0]
         
-        return img_id, featureData
+        if getID:
+            img_id = self._getImageID(imageFile)
+        else:
+            img_id = -1
+            
+        return featureData, img_id
+        
+        
         
         

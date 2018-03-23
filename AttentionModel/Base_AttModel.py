@@ -27,13 +27,12 @@ class BaseModel(object):
         if not os.path.exists(self.config.saveModelPath):
             os.makedirs(self.config.saveModelPath)
         
-        
+        tf.set_random_seed(self.config.randomSeed)
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
         self.saver  = None
         self.f1 = None
         self.f2 = None
-        tf.set_random_seed(self.config.randomSeed)
         print(self._getDescription(config))
     
     def _logToCSV(self, nEpoch='', qn='', pred='', lab='', predClass='', labClass='', 
@@ -274,18 +273,6 @@ class BaseModel(object):
         #return valAcc, correct_predictions, total_predictions
         return alphas, img_ids_toreturn, qns_to_return, ans_to_return
     
-    def solve(self, qn, img_id):
-        processor = OnlineProcessor(self.config.trainImgFile, self.config)
-        qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
-        feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.dropout : 1.0
-        }
-        alphas, labels_pred = self.sess.run([self.alpha, self.labels_pred], feed_dict=feed)
-        return alphas[0], self.classToAnsMap[labels_pred[0]]
-        
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server
         '''
@@ -309,8 +296,9 @@ class BaseModel(object):
         generateForSubmission(allQnIds, allPreds, jsonOutputFile)
     
     def destruct(self):
-        if self.f1 is not None:
-            self.f1.close()
-        if self.f2 is not None:
-            self.f2.close()
+        pass
+        #if self.f1 is not None:
+        #    self.f1.close()
+        #if self.f2 is not None:
+        #    self.f2.close()
     

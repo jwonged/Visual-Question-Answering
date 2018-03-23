@@ -27,10 +27,6 @@ class Config(object):
             self.singleCountWords = data['singleCountWords']
             self.vocabSize = len(self.mapWordToID)
         
-        now = datetime.datetime.now()
-        self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
-                                            now.hour, now.minute)
-        
         #quick hyperparameters
         self.randomSeed = args.seed if args.seed else 42
         self.nTrainEpochs = 50
@@ -42,6 +38,10 @@ class Config(object):
         self.learningRateDecay = 0.95 #noDecay = 1; usually ~0.9
         self.max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
         self.attentionType = args.att if args.att else 'qn'
+        
+        now = datetime.datetime.now()
+        self.dateAppend = '{}{}{}-{}-{}'.format(now.day, calendar.month_name[now.month][:3],
+                                            now.hour, now.minute, self.randomSeed)
         
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'

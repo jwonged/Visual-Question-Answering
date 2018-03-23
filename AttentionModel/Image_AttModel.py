@@ -9,10 +9,10 @@ import json
 import os
 
 from Base_AttModel import BaseModel
+from InputProcessor import OnlineProcessor
 from model_utils import getPretrainedw2v
 import numpy as np
 import tensorflow as tf 
-
 
 class ImageAttentionModel(BaseModel):
     '''
@@ -235,4 +235,16 @@ class ImageAttentionModel(BaseModel):
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(ImageAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         self.alpha = graph.get_tensor_by_name('attention/alpha:0')
+    
+    def solve(self, qn, img_id):
+        processor = OnlineProcessor(self.config.trainImgFile, self.config)
+        qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
+        feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+        }
+        alphas, labels_pred = self.sess.run([self.alpha, self.labels_pred], feed_dict=feed)
+        return alphas[0], self.classToAnsMap[labels_pred[0]]
     

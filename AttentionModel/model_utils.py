@@ -68,14 +68,22 @@ class OutputGenerator(object):
     def convertIDtoPath(self, img_id):
         return self.idToImgpathMap[img_id]
     
+    def displayQnImgAttention(self, qnAlpha, imgAlpha, img_id, qn, pred):
+        alp_img = self._processImgAlpha(imgAlpha)
+        
+    
+    def _processImgAlpha(self, imgAlpha):
+        alp_img = skimage.transform.pyramid_expand(
+            imgAlpha.reshape(14,14), upscale=32, sigma=20)
+        alp_img = np.transpose(alp_img, (1,0))
+        return alp_img
+    
     def displaySingleOutput(self, alpha, img_id, qn, pred):
         print('Num of images: {}'.format(img_id))
         imgvec = ndimage.imread(self.idToImgpathMap[img_id])
         imgvec = cv2.resize(imgvec, dsize=(448,448))
         
-        alp_img = skimage.transform.pyramid_expand(
-            alpha.reshape(14,14), upscale=32, sigma=20)
-        alp_img = np.transpose(alp_img, (1,0))
+        alp_img = self._processImgAlpha(alpha)
         
         plt.subplot(1,1,1)
         plt.title('Qn: {}, pred: {}'.format(qn, pred))
@@ -91,8 +99,6 @@ class OutputGenerator(object):
         plt.show()
         
     def displayOutput(self, alphas, img_ids, qns, preds):
-        
-        
         print('Num of images: {}'.format(img_ids))
         fig = plt.figure()
         for n, (alp, img_id, qn, pred) in enumerate(zip(alphas, img_ids, qns, preds)):
@@ -101,10 +107,7 @@ class OutputGenerator(object):
             imgvec = ndimage.imread(self.idToImgpathMap[img_id])
             imgvec = cv2.resize(imgvec, dsize=(448,448))
             
-            alp_img = skimage.transform.pyramid_expand(
-                alp.reshape(14,14), upscale=32, sigma=20)
-            alp_img = np.transpose(alp_img, (1,0))
-            
+            alp_img = self._processImgAlpha(alphas)
             
             plt.subplot(2,4,(n+1))
             plt.title("\n".join(wrap(

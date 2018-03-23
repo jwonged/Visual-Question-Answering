@@ -12,7 +12,6 @@ from model_utils import OutputGenerator
 import argparse
 
 
-        
 def loadOfficialTest(args):
     #config = Attention_LapConfig(load=True, args)
     config = Attention_GPUConfig(load=True, args=args)
