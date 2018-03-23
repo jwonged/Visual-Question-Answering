@@ -101,7 +101,7 @@ class InputProcessor(object):
                 #process img
                 img_id = str(annot['image_id'])
                 image = cv2.imread(self.config.imgPrePath + self.idToImgpathMap[img_id])
-                image = cv2.resize(image, (112, 112),0,0)
+                image = cv2.resize(image, (224, 224),0,0)
                 image = image.astype(np.float32)
                 image_vec = np.multiply(image, 1.0 / 255.0)
                 img_vecs.append(image_vec)
@@ -194,7 +194,7 @@ class TestProcessor(object):
             #process img
             img_id = str(qn['image_id'])
             image = cv2.imread(self.config.imgPrePath + self.idToImgpathMap[img_id])
-            image = cv2.resize(image, (112, 112),0,0)
+            image = cv2.resize(image, (224, 224),0,0)
             image = image.astype(np.float32)
             image_vec = np.multiply(image, 1.0 / 255.0)
             img_vecs.append(image_vec)
