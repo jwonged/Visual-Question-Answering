@@ -28,7 +28,7 @@ class LSTMCNNModel(BaseModel):
         
         # shape = (batch size, image height, width, channels)
         self.images = tf.placeholder(tf.float32, 
-                                       shape=[None, 224, 224, 3], 
+                                       shape=[None, 112, 112, 3], 
                                        name="img_vecs")
 
         # shape = (batch size)
@@ -97,7 +97,7 @@ class LSTMCNNModel(BaseModel):
     
     def _addCNNs(self):
         #5 conv layers
-        with tf.variable_scope("convolutional_layers"):
+        with tf.variable_scope("CNNs"):
             
             conv1 = tf.layers.conv2d(inputs=self.images, 
                                      filters=64,
@@ -136,10 +136,21 @@ class LSTMCNNModel(BaseModel):
                                      activation=tf.nn.relu)
             
             pool5 = tf.layers.max_pooling2d(inputs=conv5, pool_size=[2, 2], strides=2)
+            
+            conv6 = tf.layers.conv2d(inputs=pool5, 
+                                     filters=512,
+                                     kernel_size=[3, 3],
+                                     padding="same",
+                                     activation=tf.nn.relu)
+            
+            pool6 = tf.layers.max_pooling2d(inputs=conv6, pool_size=[2, 2], strides=2)
+            print('pool6 shape: {}'.format(tf.shape(pool6)))
+            print('pool6 shape: {}'.format(pool6.get_shape()))
+            
             #[bx28x28x512]
-            flattenedImgVec = tf.reshape(pool5, [-1, pool5.get_shape()[1:4].num_elements()])
-            #print('flattened shape: {}'.format(tf.shape(flattenedImgVec)))
-            #print('flattened shape: {}'.format(flattenedImgVec.get_shape()))
+            flattenedImgVec = tf.reshape(pool6, [-1, pool6.get_shape()[1:4].num_elements()])
+            print('flattened shape: {}'.format(tf.shape(flattenedImgVec)))
+            print('flattened shape: {}'.format(flattenedImgVec.get_shape()))
             #401,408 --> 4096
             reduced_imgVecs = tf.layers.dense(inputs=flattenedImgVec,
                                        units=4096,
