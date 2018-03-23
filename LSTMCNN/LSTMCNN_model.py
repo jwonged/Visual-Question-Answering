@@ -129,7 +129,7 @@ class LSTMCNNModel(BaseModel):
                                      padding="same",
                                      activation=tf.nn.relu)
             
-            pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[2, 2], strides=2)
+            pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[4, 4], strides=4)
             
             print('pool6 shape: {}'.format(tf.shape(pool4)))
             print('pool6 shape: {}'.format(pool4.get_shape()))
