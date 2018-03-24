@@ -72,21 +72,29 @@ class OutputGenerator(object):
     def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds):
         for n, (qnAl, imAl, img_id, qn, pred) in enumerate(zip(
             qnAlphas, imgAlphas, img_ids, qns, preds)):
-            if n > 0:
+            if n > 6:
                 break
             alp_img = self._processImgAlpha(imAl)
             toks = word_tokenize(qn)
             for tok, att in zip(toks, qnAl):
                 print('{} ( {} )  '.format(tok,att))
-            imgvec = cv2.imread(self.idToImgpathMap[img_id])
-            from PIL import Image
-            img = Image.open(self.idToImgpathMap[img_id])
-            img.show()
+            #imgvec = cv2.imread(self.idToImgpathMap[img_id])
+            #imgvec = cv2.resize(imgvec, dsize=(448,448))
+            #from PIL import Image
+            #img = Image.open(self.idToImgpathMap[img_id])
+            #img.show()
+            imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
+            
             qn_2d = np.expand_dims(qnAl[:len(toks)], axis=0)
-            plt.subplot(2,1,1)
+            print(qn_2d)
+            plt.subplot(2,2,1)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
             plt.imshow(alp_img, alpha=0.80)
+            plt.axis('off')
+            plt.subplot(2,2,2)
+            plt.title('Qn: {}, pred: {}'.format(qn, pred))
+            plt.imshow(imgvec)
             plt.axis('off')
             plt.subplot(2,1,2)
             plt.xticks(np.arange(len(toks)), (toks))
@@ -95,15 +103,26 @@ class OutputGenerator(object):
         
     def _processImgAlpha(self, imgAlpha):
         alp_img = skimage.transform.pyramid_expand(
-            imgAlpha.reshape(14,14), upscale=32, sigma=20)
+            imgAlpha.reshape(14,14), upscale=32, sigma=20)#, sigma=20)
         alp_img = np.transpose(alp_img, (1,0))
         return alp_img
     
+    def _readImageAndResize(self, path):
+        from PIL import Image
+        img = Image.open(path)
+        img = img.resize((448,448))
+        imgvec = np.asarray(img)
+        #plt.imread(path)
+        return imgvec
+    
     def displaySingleOutput(self, alpha, img_id, qn, pred):
         print('Num of images: {}'.format(img_id))
-        imgvec = cv2.imread(self.idToImgpathMap[img_id])
+        
+        imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
+        
+        #imgvec = cv2.imread(self.idToImgpathMap[img_id])
         #imgvec = ndimage.imread(self.idToImgpathMap[img_id])
-        imgvec = cv2.resize(imgvec, dsize=(448,448))
+        #imgvec = cv2.resize(imgvec, dsize=(448,448))
         
         alp_img = self._processImgAlpha(alpha)
         
@@ -126,10 +145,11 @@ class OutputGenerator(object):
         for n, (alp, img_id, qn, pred) in enumerate(zip(alphas, img_ids, qns, preds)):
             if n>2:
                 break
-            #imgvec = cv2.imread(self.idToImgpathMap[img_id])
             
-            imgvec = ndimage.imread(self.idToImgpathMap[img_id])
-            imgvec = cv2.resize(imgvec, dsize=(448,448))
+            imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
+            #imgvec = cv2.imread(self.idToImgpathMap[img_id])
+            #imgvec = ndimage.imread(self.idToImgpathMap[img_id])
+            #imgvec = cv2.resize(imgvec, dsize=(448,448))
             
             alp_img = self._processImgAlpha(alp)
             

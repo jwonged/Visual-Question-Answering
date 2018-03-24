@@ -92,8 +92,9 @@ def solve():
     imgpaths = '/media/jwong/Transcend/VQADataset/TrainSet/trainImgPaths.txt'
     config = Attention_LapConfig(load=True, args=args)
     out = OutputGenerator(imgpaths)
-    img_id = raw_input('Img_id--> ')
-    img = Image.open(out.convertIDtoPath(img_id))
+    #img_id = raw_input('Img_id--> ')
+    img_id = str(499024)
+    img = Image.open(out.convertIDtoPath(str(img_id)))
     img.show()
     
     qn = raw_input('Question--> ')
@@ -127,7 +128,7 @@ def visQnImgAtt():
     model.loadTrainedModel(config.restoreQnImAttModel, 
                            config.restoreQnImAttModelPath)
     qnAlphas, alphas, img_ids, qns, preds = model.runPredict(
-        reader, config.csvResults, 5, mini=True)
+        reader, config.csvResults, 6, mini=True)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
