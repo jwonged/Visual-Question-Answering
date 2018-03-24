@@ -224,8 +224,9 @@ class ImageAttentionModel(BaseModel):
                     logits=y, labels=self.labels)
         self.loss = tf.reduce_mean(crossEntropyLoss)
 
-        # Add loss to tensorboard
+        # Add to tensorboard
         tf.summary.scalar("loss", self.loss)
+        tf.summary.scalar("accuracy", self.accuracy)
         
         self._addOptimizer()
         

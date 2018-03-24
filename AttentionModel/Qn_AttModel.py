@@ -66,13 +66,10 @@ class QnAttentionModel(BaseModel):
                 self.word_ids, name="word_embeddings")
         
         self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
+        word_embeddings = self.word_embeddings
+        return word_embeddings
     
-    def _addLSTMInput(self):
-        #Handle LSTM Input
-        print('Constructing imageAfterLSTM model')
-        self.LSTMinput = self.word_embeddings
-    
-    def _addLSTM(self):
+    def _addLSTM(self, LSTMinput):
         #LSTM part
         with tf.variable_scope("lstm"):
             if self.config.LSTMType == 'bi':
@@ -83,7 +80,7 @@ class QnAttentionModel(BaseModel):
                 #Out [batch_size, max_time, cell_output_size] output, outputState.c and .h
                 (output_fw, output_bw), (fw_state, bw_state) = tf.nn.bidirectional_dynamic_rnn(
                     cell_fw, cell_bw, 
-                    self.LSTMinput, 
+                    LSTMinput, 
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
                 #print('Shape of state.c: {}'.format(fw_state.c.get_shape()))
                 print('Shape of output_fw: {}'.format(output_fw.get_shape()))
@@ -121,18 +118,10 @@ class QnAttentionModel(BaseModel):
                 lstmOutput = lstmOutState.c #output state 512
                 #lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1) #1024
         
-        self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
-        
+        lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+        return lstmOutput
     
-    def construct(self):
-        self._addPlaceholders()
-        
-        self._addEmbeddings()
-        
-        self._addLSTMInput() 
-        
-        self._addLSTM() #[batch_size, max_time, 1024]
-        
+    def _addQuestionAttention(self):
         #########Question Attention##########
         with tf.variable_scope("qn_attention"):
             #qnAtt_f output: [b x seqLen x 1024]
@@ -151,8 +140,19 @@ class QnAttentionModel(BaseModel):
             
             self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
-            self.qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, self.lstmOutput), axis=1)
+            qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, self.lstmOutput), axis=1)
             #[b, 1024]
+        return qnContext
+        
+    
+    def construct(self):
+        self._addPlaceholders()
+        
+        self.LSTMinput = self._addEmbeddings()
+        
+        self.lstmOutput = self._addLSTM(self.LSTMinput) #[batch_size, max_time, 1024]
+        
+        self.qnContext = self._addQuestionAttention()
             
         self.batch_size = tf.shape(self.img_vecs)[0]
         print('Batch size = {}'.format(self.batch_size))
@@ -162,7 +162,6 @@ class QnAttentionModel(BaseModel):
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
          
-        
         
         #########Image Attention layer##########
         with tf.variable_scope("image_attention"):
@@ -236,13 +235,15 @@ class QnAttentionModel(BaseModel):
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
+        
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=y, labels=self.labels)
         self.loss = tf.reduce_mean(crossEntropyLoss)
 
-        # Add loss to tensorboard
+        # Add loss, acc to tensorboard
         tf.summary.scalar("loss", self.loss)
+        tf.summary.scalar("accuracy", self.accuracy)
         
         self._addOptimizer()
         
