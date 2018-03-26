@@ -148,7 +148,7 @@ class BaseModel(object):
             if (i%10==0):
                 self.tb_writer.add_summary(summary, global_step=nBatches*nEpoch + i)
             
-            if (i%100==0):
+            if (i%1000==0):
                 print('Batch {}'.format(i))
             '''valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
             resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(

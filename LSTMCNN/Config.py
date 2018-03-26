@@ -38,7 +38,7 @@ class Config(object):
         self.decayAfterEpoch = 20
         self.dropoutVal = 0.5 #standard 0.5, 1.0 for none
         self.modelOptimizer = 'adam'
-        self.learningRate = 0.0001 
+        self.learningRate = 0.0005 
         self.learningRateDecay = 0.95 #noDecay = 1; usually ~0.9
         self.max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
         self.attentionType = args.att if args.att else 'none'
