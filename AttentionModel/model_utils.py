@@ -103,11 +103,24 @@ class OutputGenerator(object):
         
     def _processImgAlpha(self, imgAlpha):
         alp_img = skimage.transform.pyramid_expand(
-            imgAlpha.reshape(14,14), upscale=32, sigma=20)#, sigma=20)
+            imgAlpha.reshape(14,14), upscale=32, sigma=20)
+        #alp_img = skimage.transform.resize(
+        #    imgAlpha.reshape(14,14), [448, 448])
         alp_img = np.transpose(alp_img, (1,0))
         return alp_img
     
     def _readImageAndResize(self, path):
+        '''
+        from skimage.transform import resize
+        import skimage.io
+        img = skimage.img_as_float(skimage.io.imread(
+            path, as_grey=False)).astype(np.float32)
+        im_min, im_max = img.min(), img.max()
+        im_std = (img - im_min) / (im_max - im_min)
+        resized_std = resize(im_std, (448,448), order=1, mode='constant')
+        resized_im = resized_std * (im_max - im_min) + im_min
+        imgvec = resized_im
+        '''
         from PIL import Image
         img = Image.open(path)
         img = img.resize((448,448))

@@ -230,12 +230,14 @@ class QnAttentionModel(BaseModel):
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             print('Shape of y: {}'.format(y.get_shape()))
         #predict & get accuracy
-        self.labels_pred = tf.cast(tf.argmax(tf.nn.softmax(y), axis=1), tf.int32, name='labels_pred')
+        predProbs = tf.nn.softmax(y)
+        self.labels_pred = tf.cast(tf.argmax(predProbs, axis=1), tf.int32, name='labels_pred')
         
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
-        
+        self.topK = tf.nn.top_k(predProbs, name='topK')
+                                
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=y, labels=self.labels)
@@ -255,8 +257,7 @@ class QnAttentionModel(BaseModel):
         self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
         self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
     
-    def solve(self, qn, img_id):
-        processor = OnlineProcessor(self.config.trainImgFile, self.config)
+    def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
         feed = {
                 self.word_ids : qnAsWordIDsBatch,

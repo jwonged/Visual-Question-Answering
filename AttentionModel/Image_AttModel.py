@@ -222,6 +222,9 @@ class ImageAttentionModel(BaseModel):
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=y, labels=self.labels)
         self.loss = tf.reduce_mean(crossEntropyLoss)
+        
+        predProbs = tf.nn.softmax(y)
+        self.topK = tf.nn.top_k(predProbs, name='topK')
 
         # Add to tensorboard
         tf.summary.scalar("loss", self.loss)

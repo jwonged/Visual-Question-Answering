@@ -33,6 +33,7 @@ def loadOfficialTest(args):
     testReader.destruct()
 
 def runValTest(args):
+    from VQA.PythonEvaluationTools.vqaEvaluation import vqaEval
     #Val set's split -- test
     print('Running Val Test')
     config = Attention_LapConfig(load=True, args=args)
@@ -60,7 +61,7 @@ def runVisualiseVal():
     model = ImageAttentionModel(config)
     model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
     alphas, img_ids, qns, preds = model.runPredict(
-        reader, config.csvResults, 5, mini=True)
+        reader, config.csvResults, 9, mini=True)
     model.destruct()
     reader.destruct()
     
@@ -89,11 +90,10 @@ def runVisualise():
 from PIL import Image                  
 def solve():
     print('Running solve')
-    imgpaths = '/media/jwong/Transcend/VQADataset/TrainSet/trainImgPaths.txt'
     config = Attention_LapConfig(load=True, args=args)
-    out = OutputGenerator(imgpaths)
+    out = OutputGenerator(config.trainImgPaths)
     #img_id = raw_input('Img_id--> ')
-    img_id = str(499024)
+    img_id = str(262415)
     img = Image.open(out.convertIDtoPath(str(img_id)))
     img.show()
     
@@ -114,6 +114,27 @@ def solve():
     246470
     499024
     '''
+    
+def solveqn():
+    from InputProcessor import OnlineProcessor
+    print('Running solve')
+    config = Attention_LapConfig(load=True, args=args)
+    out = OutputGenerator(config.valImgPaths)
+    #img_id = raw_input('Img_id--> ')
+    img_id = str(337826) #214587
+    img = Image.open(out.convertIDtoPath(str(img_id)))
+    img.show()
+    model = QnAttentionModel(config)
+    model.loadTrainedModel(config.restoreQnImAttModel, 
+                           config.restoreQnImAttModelPath)
+    processor = OnlineProcessor(config.valImgFile, config)
+    
+    for i in range(5):
+        qn = raw_input('Question--> ')
+        print(qn)
+        qnalpha, alpha, pred = model.solve(qn, img_id, processor)
+        out.displaySingleOutput(alpha, img_id, qn, pred)
+
 
 def visQnImgAtt():
     print('Running qn Visuals')
@@ -128,7 +149,7 @@ def visQnImgAtt():
     model.loadTrainedModel(config.restoreQnImAttModel, 
                            config.restoreQnImAttModelPath)
     qnAlphas, alphas, img_ids, qns, preds = model.runPredict(
-        reader, config.csvResults, 6, mini=True)
+        reader, config.csvResults, 7, mini=True)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
@@ -141,7 +162,7 @@ def parseArgs():
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('--att', choices=['qn', 'im'], default='qn')
-    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve', 'qn'], default='vis')
+    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve', 'qn', 'visval', 'solveqn'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     args = parser.parse_args()
     return args
@@ -157,4 +178,8 @@ if __name__ == '__main__':
         solve()
     elif args.action == 'qn':
         visQnImgAtt()
+    elif args.action == 'visval':
+        runVisualiseVal()
+    elif args.action == 'solveqn':
+        solveqn()
     
