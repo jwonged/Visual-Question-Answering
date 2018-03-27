@@ -145,14 +145,14 @@ class BaseModel(object):
             }
             
             if i == 1:
-                _, _, labels_pred, summary, regionWs, mask, maskedRWs, denominator = self.sess.run(
+                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
-                 self.qnAtt_regionWeights, self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)
+                 self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)
                 
-                print('RegionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}'.format(
-                    regionWs, mask, maskedRWs, denominator))
-                print('RegionWs:{} \n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
-                    regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
+                print('RegionWs:\n {} \n exp_regionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}'.format(
+                    regionWs, exp_regionWs, mask, maskedRWs, denominator))
+                print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
+                    regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
                 
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)

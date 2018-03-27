@@ -143,10 +143,11 @@ class QnAttentionModel(BaseModel):
             exp_regionWs = tf.exp(qnAtt_regionWeights)
             mask = tf.to_float(tf.sequence_mask(self.sequence_lengths))
             masked_expRegionWs = tf.multiply(exp_regionWs, mask)
-            self.qnAtt_alpha = exp_regionWs / tf.reduce_sum(masked_expRegionWs)
+            self.qnAtt_alpha = exp_regionWs / tf.reduce_sum(masked_expRegionWs, axis=-1)
             
             
             self.qnAtt_regionWeights = qnAtt_regionWeights
+            self.exp_regionWs = exp_regionWs
             self.mask = mask 
             self.masked_expRegionWs = masked_expRegionWs
             self.denominator = tf.reduce_sum(masked_expRegionWs)
