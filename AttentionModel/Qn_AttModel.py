@@ -121,11 +121,11 @@ class QnAttentionModel(BaseModel):
         lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
         return lstmOutput
     
-    def _addQuestionAttention(self):
+    def _addQuestionAttention(self, lstmOutput):
         #########Question Attention##########
         with tf.variable_scope("qn_attention"):
             #qnAtt_f output: [b x seqLen x 1024]
-            qnAtt_f =  tf.layers.dense(self.lstmOutput, units=self.lstmOutput.get_shape()[-1],
+            qnAtt_f =  tf.layers.dense(lstmOutput, units=lstmOutput.get_shape()[-1],
                                 activation=tf.tanh,
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
@@ -135,47 +135,39 @@ class QnAttentionModel(BaseModel):
             
             qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
             qnAtt_regionWeights = tf.reshape(
-                qnAtt_flatWeights, shape=[-1, tf.shape(self.lstmOutput)[1]])
+                qnAtt_flatWeights, shape=[-1, tf.shape(lstmOutput)[1]])
             #[b, seqLen(==nRegions)]
             
-            self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
+            #Mask output padding for softmax -- Take exp; mask; normalize
+            exp_regionWeights = tf.exp(qnAtt_regionWeights)
+            mask = tf.sequence_mask(self.sequence_lengths)
+            masked_regionWeights = tf.boolean_mask(exp_regionWeights, mask)
+            self.qnAtt_alpha = exp_regionWeights / tf.reduce_sum(masked_regionWeights)
+            
+            #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
-            qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, self.lstmOutput), axis=1)
+            qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, lstmOutput), axis=1)
             #[b, 1024]
         return qnContext
-        
     
-    def construct(self):
-        self._addPlaceholders()
-        
-        self.LSTMinput = self._addEmbeddings()
-        
-        self.lstmOutput = self._addLSTM(self.LSTMinput) #[batch_size, max_time, 1024]
-        
-        self.qnContext = self._addQuestionAttention()
-            
-        self.batch_size = tf.shape(self.img_vecs)[0]
-        print('Batch size = {}'.format(self.batch_size))
-        
-        #reshape image features [bx512x14x14] --> [bx196x512]
-        transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
-        print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
-        self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
-         
-        
+    def _addImageAttention(self, qnContext, flattenedImgVecs):
         #########Image Attention layer##########
         with tf.variable_scope("image_attention"):
-            qnContext_in = tf.layers.dense(inputs=self.qnContext,
-                                           units=self.qnContext.get_shape()[-1],
+            qnContext_in = tf.layers.dense(inputs=qnContext,
+                                           units=qnContext.get_shape()[-1],
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
+                                           units=flattenedImgVecs.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             #[bx1024]
             
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
-            qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
+            qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(flattenedImgVecs)[1],1]) 
             print('Shape of qnAatt_in : {}'.format(qnAtt_in.get_shape()))
-            att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
+            att_in = tf.concat([imgAtt_in, qnAtt_in], axis=-1) #[bx196x1536]
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
             #compute attention weights
@@ -195,13 +187,37 @@ class QnAttentionModel(BaseModel):
             att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196])  #[b, 196]
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
             
-            #compute context: c = sum alpha * img
+            #softmax
             self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
             alpha = tf.expand_dims(self.alpha, axis=-1)
             
+            #compute context: c = sum(alpha) * img
             #broadcast; output shape=[bx1024 or bx1536]
-            self.imgContext = tf.reduce_sum(tf.multiply(alpha, self.flattenedImgVecs), axis=1) 
+            imgContext = tf.reduce_sum(tf.multiply(alpha, flattenedImgVecs), axis=1) 
             
+            return imgContext
+        
+    
+    def construct(self):
+        self._addPlaceholders()
+        
+        self.LSTMinput = self._addEmbeddings()
+        
+        self.lstmOutput = self._addLSTM(self.LSTMinput) #[batch_size, max_time, 1024]
+        
+        self.qnContext = self._addQuestionAttention(self.lstmOutput)
+            
+        self.batch_size = tf.shape(self.img_vecs)[0]
+        print('Batch size = {}'.format(self.batch_size))
+        
+        #reshape image features [bx512x14x14] --> [bx196x512]
+        transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
+        print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
+        self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
+        
+        #image attention layer 
+        self.imgContext = self._addImageAttention(self.qnContext, self.flattenedImgVecs)
+        
         #Combine modes
         if self.config.elMult:
             print('Using pointwise mult')
