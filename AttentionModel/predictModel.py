@@ -55,8 +55,8 @@ def internalValTest(args):
     annFile = config.originalAnnotVal
     quesFile = config.valTestQns
     
-    
     vqa = VQA(annFile, quesFile)
+    
 
 def runVisualiseVal():
     print('Running Visuals')

@@ -143,6 +143,15 @@ class BaseModel(object):
                 self.lr : self.config.learningRate,
                 self.dropout : self.config.dropoutVal
             }
+            
+            if i == 1:
+                _, _, labels_pred, summary, regionWs, mask, maskedRWs = self.sess.run(
+                [self.train_op, self.loss, self.labels_pred, self.merged,
+                 self.qnAtt_regionWeights, self.mask, self.masked_regionWeights], feed_dict=feed)
+                
+                print('RegionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n'.format(
+                    regionWs, mask, maskedRWs))
+                
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
