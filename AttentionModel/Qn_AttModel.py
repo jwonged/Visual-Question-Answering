@@ -145,7 +145,7 @@ class QnAttentionModel(BaseModel):
             self.qnAtt_regionWeights = qnAtt_regionWeights
             self.mask = mask 
             self.masked_regionWeights = masked_regionWeights
-            
+            self.denominator = tf.reduce_sum(tf.exp(masked_regionWeights))
             self.qnAtt_alpha = tf.exp(qnAtt_regionWeights) / tf.reduce_sum(tf.exp(masked_regionWeights))
             
             print('mask shape: {}'.format(mask.get_shape()))
