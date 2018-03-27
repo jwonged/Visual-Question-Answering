@@ -40,19 +40,25 @@ class BaseModel(object):
         self.predFile.writerow([nEpoch, qn, pred, lab, predClass, labClass,
                                  correct, img_id, qn_id])
     
+    def comment(self):
+        return ''
+    
     def _getDescription(self, config):
+        #For logging
         info = 'model: {}, classes: {}, batchSize: {}, \
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
              usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}, \
-             epochsWOimprov: {}, decayAfterEpoch: {}, seed: {}, attentionType: {},'.format(
+             epochsWOimprov: {}, decayAfterEpoch: {}, seed: {}, attentionType: {}, \
+             attentionFunc: {}, '.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.learningRate,
                 config.learningRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
                 config.LSTMType, config.elMult, config.imgModel, config.nEpochsWithoutImprov,
-                config.decayAfterEpoch, config.randomSeed, config.attentionType)
-        return info + 'fc: 2 layers (1000)'
+                config.decayAfterEpoch, config.randomSeed, config.attentionType, 
+                config.attentionFunc)
+        return info + 'fc: 2 layers (1000), ' + self.comment() 
     
     def _addOptimizer(self):
         #training optimizer

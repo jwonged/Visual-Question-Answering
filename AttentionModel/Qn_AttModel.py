@@ -23,6 +23,8 @@ class QnAttentionModel(BaseModel):
     def __init__(self, config):
         super(QnAttentionModel, self).__init__(config)
     
+    def comment(self):
+        return 'QnAtt model with img att layer and qn boolean masking'
     
     def _addPlaceholders(self):
         # add network placeholders
@@ -141,7 +143,7 @@ class QnAttentionModel(BaseModel):
             exp_regionWeights = tf.exp(qnAtt_regionWeights)
             mask = tf.sequence_mask(self.sequence_lengths)
             masked_regionWeights = tf.boolean_mask(exp_regionWeights, mask)
-            self.qnAtt_alpha = exp_regionWeights / tf.reduce_sum(masked_regionWeights)
+            self.qnAtt_alpha = exp_regionWeights / tf.reduce_sum(tf.exp(masked_regionWeights))
             
             print('mask shape: {}'.format(mask.get_shape()))
             print('masked_regionWeights shape: {}'.format(masked_regionWeights.get_shape()))

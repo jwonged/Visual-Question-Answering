@@ -38,6 +38,7 @@ class Config(object):
         self.learningRateDecay = 0.95 #noDecay= 1; usually ~0.9
         self.max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
         self.attentionType = args.att if args.att else 'qn'
+        self.attentionFunc = args.attfunc if args.attfunc else 'softmax'
         
         now = datetime.datetime.now()
         self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
