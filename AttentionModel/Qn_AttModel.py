@@ -140,10 +140,9 @@ class QnAttentionModel(BaseModel):
             #[b, seqLen(==nRegions)]
             
             #Mask output padding for softmax -- Take exp; mask; normalize
-            exp_regionWeights = tf.exp(qnAtt_regionWeights)
             mask = tf.sequence_mask(self.sequence_lengths)
-            masked_regionWeights = tf.boolean_mask(exp_regionWeights, mask)
-            self.qnAtt_alpha = exp_regionWeights / tf.reduce_sum(tf.exp(masked_regionWeights))
+            masked_regionWeights = tf.boolean_mask(qnAtt_regionWeights, mask)
+            self.qnAtt_alpha = tf.exp(qnAtt_regionWeights) / tf.reduce_sum(tf.exp(masked_regionWeights))
             
             print('mask shape: {}'.format(mask.get_shape()))
             print('masked_regionWeights shape: {}'.format(masked_regionWeights.get_shape()))
@@ -162,10 +161,10 @@ class QnAttentionModel(BaseModel):
                                            units=qnContext.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-            imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
-                                           units=flattenedImgVecs.get_shape()[-1],
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            #imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
+            #                               units=flattenedImgVecs.get_shape()[-1],
+            #                               activation=tf.tanh,
+            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
             #[bx1024]
             
             #duplicate qn vec to combine with each region to get [v_i, q]
@@ -192,8 +191,13 @@ class QnAttentionModel(BaseModel):
             att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196])  #[b, 196]
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
             
-            #softmax
-            self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
+            #attention function
+            if self.config.attentionFunc == 'softmax':
+                self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
+            elif self.config.attentionFunc == 'sigmoid':
+                self.alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
+            else:
+                raise NotImplementedError
             alpha = tf.expand_dims(self.alpha, axis=-1)
             
             #compute context: c = sum(alpha) * img

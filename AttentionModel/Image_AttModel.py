@@ -173,7 +173,13 @@ class ImageAttentionModel(BaseModel):
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
             
             #compute context: c = sum alpha * img
-            self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
+            if self.config.attentionFunc == 'softmax':
+                self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
+            elif self.config.attentionFunc == 'sigmoid':
+                self.alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
+            else:
+                raise NotImplementedError
+            
             alpha = tf.expand_dims(self.alpha, axis=-1)
             
             #broadcast; output shape=[bx1024 or bx1536]

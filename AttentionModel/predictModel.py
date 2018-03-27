@@ -33,7 +33,6 @@ def loadOfficialTest(args):
     testReader.destruct()
 
 def runValTest(args):
-    from VQA.PythonEvaluationTools.vqaEvaluation import vqaEval
     #Val set's split -- test
     print('Running Val Test')
     config = Attention_LapConfig(load=True, args=args)
@@ -48,6 +47,16 @@ def runValTest(args):
     model.runPredict(valTestReader, config.csvResults)
     model.destruct()
     valTestReader.destruct()
+    
+def internalValTest(args):
+    from vqaTools.vqa import VQA
+    from vqaTools.vqaEval import VQAEval
+    config = Attention_LapConfig(load=False, args=args)
+    annFile = config.originalAnnotVal
+    quesFile = config.valTestQns
+    
+    
+    vqa = VQA(annFile, quesFile)
 
 def runVisualiseVal():
     print('Running Visuals')
