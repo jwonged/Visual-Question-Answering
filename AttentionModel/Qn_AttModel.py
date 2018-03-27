@@ -166,6 +166,7 @@ class QnAttentionModel(BaseModel):
             #                               activation=tf.tanh,
             #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
             #[bx1024]
+            imgAtt_in = flattenedImgVecs
             
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
