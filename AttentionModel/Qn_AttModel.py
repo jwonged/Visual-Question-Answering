@@ -140,16 +140,20 @@ class QnAttentionModel(BaseModel):
             #[b, seqLen(==nRegions)]
             
             #Mask output padding for softmax -- Take exp; mask; normalize
+            exp_regionWs = tf.exp(qnAtt_regionWeights)
             mask = tf.sequence_mask(self.sequence_lengths)
-            masked_regionWeights = tf.boolean_mask(qnAtt_regionWeights, mask)
+            masked_expRegionWs = tf.multiply(exp_regionWs, mask)
+            self.qnAtt_alpha = exp_regionWs / tf.reduce_sum(masked_expRegionWs)
+            
+            
             self.qnAtt_regionWeights = qnAtt_regionWeights
             self.mask = mask 
-            self.masked_regionWeights = masked_regionWeights
-            self.denominator = tf.reduce_sum(tf.exp(masked_regionWeights))
-            self.qnAtt_alpha = tf.exp(qnAtt_regionWeights) / tf.reduce_sum(tf.exp(masked_regionWeights))
+            self.masked_expRegionWs = masked_expRegionWs
+            self.denominator = tf.reduce_sum(masked_expRegionWs)
+            
             
             print('mask shape: {}'.format(mask.get_shape()))
-            print('masked_regionWeights shape: {}'.format(masked_regionWeights.get_shape()))
+            print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
             print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
             #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
