@@ -230,7 +230,7 @@ class ImageAttentionModel(BaseModel):
         self.loss = tf.reduce_mean(crossEntropyLoss)
         
         predProbs = tf.nn.softmax(y)
-        self.topK = tf.nn.top_k(predProbs, name='topK')
+        self.topK = tf.nn.top_k(predProbs, k=5, name='topK')
 
         # Add to tensorboard
         tf.summary.scalar("loss", self.loss)

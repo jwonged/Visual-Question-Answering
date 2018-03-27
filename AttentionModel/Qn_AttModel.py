@@ -202,8 +202,10 @@ class QnAttentionModel(BaseModel):
             
             #attention function
             if self.config.attentionFunc == 'softmax':
+                print('Using softmax attention function')
                 self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
+                print('Using sigmoid attention function')
                 self.alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
             else:
                 raise NotImplementedError
@@ -270,7 +272,7 @@ class QnAttentionModel(BaseModel):
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
-        self.topK = tf.nn.top_k(predProbs, name='topK')
+        self.topK = tf.nn.top_k(predProbs, k=5, name='topK')
                                 
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(

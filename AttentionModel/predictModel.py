@@ -54,8 +54,10 @@ def internalValTest(args):
     config = Attention_LapConfig(load=False, args=args)
     annFile = config.originalAnnotVal
     quesFile = config.valTestQns
+    resFile = ''
     
     vqa = VQA(annFile, quesFile)
+    vqaRes = vqa.loadRes(resFile, quesFile)
     
 
 def runVisualiseVal():
