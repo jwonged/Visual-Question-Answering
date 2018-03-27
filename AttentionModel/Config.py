@@ -40,6 +40,8 @@ class Config(object):
         self.attentionType = args.att if args.att else 'qn'
         self.attentionFunc = args.attfunc if args.attfunc else 'softmax'
         
+        self.debugMode = False
+        
         now = datetime.datetime.now()
         self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
                                             now.hour, now.minute)

@@ -144,7 +144,7 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if i == 1:
+            if i == 1 and self.config.debugMode:
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)

@@ -146,13 +146,12 @@ class QnAttentionModel(BaseModel):
             denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1)
             self.qnAtt_alpha = exp_regionWs / denominator
             
-            
-            self.qnAtt_regionWeights = qnAtt_regionWeights
-            self.exp_regionWs = exp_regionWs
-            self.mask = mask 
-            self.masked_expRegionWs = masked_expRegionWs
-            self.denominator = denominator
-            
+            if self.config.debugMode:
+                self.qnAtt_regionWeights = qnAtt_regionWeights
+                self.exp_regionWs = exp_regionWs
+                self.mask = mask 
+                self.masked_expRegionWs = masked_expRegionWs
+                self.denominator = denominator
             
             print('mask shape: {}'.format(mask.get_shape()))
             print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
@@ -171,12 +170,11 @@ class QnAttentionModel(BaseModel):
                                            units=qnContext.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-            #imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
-            #                               units=flattenedImgVecs.get_shape()[-1],
-            #                               activation=tf.tanh,
-            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+            imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
+                                           units=flattenedImgVecs.get_shape()[-1],
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
             #[bx1024]
-            imgAtt_in = flattenedImgVecs
             
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
