@@ -129,7 +129,6 @@ class QnAttentionModel(BaseModel):
                                 activation=tf.tanh,
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
-            print('qnAtt_f shape: {}'.format(tf.shape(qnAtt_f)))
             qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 1024]
             qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
             
@@ -143,6 +142,10 @@ class QnAttentionModel(BaseModel):
             mask = tf.sequence_mask(self.sequence_lengths)
             masked_regionWeights = tf.boolean_mask(exp_regionWeights, mask)
             self.qnAtt_alpha = exp_regionWeights / tf.reduce_sum(masked_regionWeights)
+            
+            print('mask shape: {}'.format(mask.get_shape()))
+            print('masked_regionWeights shape: {}'.format(masked_regionWeights.get_shape()))
+            print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
             #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
