@@ -152,7 +152,7 @@ class BaseModel(object):
                 print('RegionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n'.format(
                     regionWs, mask, maskedRWs))
                 print('RegionWs:{} \n mask: {} \n maskedRWs:{} \n'.format(
-                    regionWs.shape, mask.shape, maskedRWs.shape)
+                    regionWs.shape, mask.shape, maskedRWs.shape))
                 
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
