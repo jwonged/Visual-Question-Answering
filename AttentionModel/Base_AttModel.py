@@ -150,9 +150,9 @@ class BaseModel(object):
                  self.qnAtt_regionWeights, self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)
                 
                 print('RegionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}'.format(
-                    regionWs, mask, self.masked_expRegionWs, denominator))
+                    regionWs, mask, maskedRWs, denominator))
                 print('RegionWs:{} \n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
-                    regionWs.shape, mask.shape, self.masked_expRegionWs.shape, denominator.shape))
+                    regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
                 
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
