@@ -141,7 +141,7 @@ class QnAttentionModel(BaseModel):
             
             #Mask output padding for softmax -- Take exp; mask; normalize
             exp_regionWs = tf.exp(qnAtt_regionWeights)
-            mask = tf.sequence_mask(self.sequence_lengths)
+            mask = tf.to_float(tf.sequence_mask(self.sequence_lengths))
             masked_expRegionWs = tf.multiply(exp_regionWs, mask)
             self.qnAtt_alpha = exp_regionWs / tf.reduce_sum(masked_expRegionWs)
             
