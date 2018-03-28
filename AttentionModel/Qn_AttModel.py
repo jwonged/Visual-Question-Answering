@@ -337,8 +337,7 @@ class QnAttentionModel(BaseModel):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run(
-                [self.labels_pred], feed_dict=feed)
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             #qnAlphas, alphas, labels_pred = self.sess.run(
             #    [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
             
