@@ -58,6 +58,22 @@ def runValTest(args):
     model.runTest(valTestReader, 'testResFile.json')
     model.destruct()
     valTestReader.destruct()
+
+def predAnalysis(args):
+    print('Running Val Test')
+    predFile = 'Pred_QnAtt47.9.csv'
+    config = Attention_GPUConfig(load=True, args=args)
+    valTestReader = InputProcessor(config.testAnnotFile, 
+                                 config.rawQnValTestFile, 
+                                 config.testImgFile, 
+                                 config,
+                                 is_training=False)
+    
+    model = QnAttentionModel(config)
+    model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
+    model.runPredict(valTestReader, predFile)
+    model.destruct()
+    valTestReader.destruct()
     
 def internalValTest(args):
     import sys
@@ -205,7 +221,7 @@ def parseArgs():
     parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='softmax')
     parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve',
                                                     'qn', 'visval', 'solveqn', 'mkres',
-                                                    'eval'], default='vis')
+                                                    'eval', 'pred'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     args = parser.parse_args()
     return args
@@ -229,3 +245,7 @@ if __name__ == '__main__':
         runValTest(args)
     elif args.action == 'eval':
         internalValTest(args)
+    elif args.action == 'pred':
+        predAnalysis(args)
+        
+        
