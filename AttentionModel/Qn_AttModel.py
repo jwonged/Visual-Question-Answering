@@ -140,11 +140,11 @@ class QnAttentionModel(BaseModel):
             #[b, seqLen(==nRegions)]
             
             #Mask output padding for softmax -- Take exp; mask; normalize
-            exp_regionWs = tf.exp(qnAtt_regionWeights)
-            mask = tf.to_float(tf.sequence_mask(self.sequence_lengths))
-            masked_expRegionWs = tf.multiply(exp_regionWs, mask)
-            denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1)
-            self.qnAtt_alpha = exp_regionWs / denominator
+            exp_regionWs = tf.exp(qnAtt_regionWeights) #[b, maxLen]
+            mask = tf.to_float(tf.sequence_mask(self.sequence_lengths)) #[b, maxLen]
+            masked_expRegionWs = tf.multiply(exp_regionWs, mask) #[b, maxLen]
+            denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1) #[b, 1]
+            self.qnAtt_alpha = tf.div(exp_regionWs, denominator, name='qn_alpha') #[b, maxLen]
             
             if self.config.debugMode:
                 self.qnAtt_regionWeights = qnAtt_regionWeights
@@ -206,10 +206,10 @@ class QnAttentionModel(BaseModel):
                 self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
                 print('Using sigmoid attention function')
-                unnorm_alpha = tf.nn.sigmoid(att_regionWeights, name='alpha') #b, 196]
+                unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #b, 196]
                 norm_denominator = tf.expand_dims(
                     tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
-                self.alpha = unnorm_alpha / norm_denominator #[b, 196]
+                self.alpha = tf.div(unnorm_alpha, norm_denominator, name='alpha') #[b, 196]
             else:
                 raise NotImplementedError
             
@@ -294,8 +294,8 @@ class QnAttentionModel(BaseModel):
         
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
-        self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
-        self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+        #self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
+        #self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
