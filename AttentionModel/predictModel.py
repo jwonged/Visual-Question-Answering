@@ -65,7 +65,7 @@ def predAnalysis(args):
     config = Attention_GPUConfig(load=True, args=args)
     valTestReader = InputProcessor(config.testAnnotFile, 
                                  config.rawQnValTestFile, 
-                                 config.testImgFile, 
+                                 config.valImgFile, 
                                  config,
                                  is_training=False)
     
