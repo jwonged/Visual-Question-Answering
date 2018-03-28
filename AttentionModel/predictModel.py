@@ -36,28 +36,57 @@ def runValTest(args):
     #Val set's split -- test
     print('Running Val Test')
     config = Attention_LapConfig(load=True, args=args)
-    valTestReader = InputProcessor(config.testAnnotFile, 
-                                 config.rawQnValTestFile, 
-                                 config.valImgFile, 
-                                 config,
-                                 is_training=False)
     
-    model = ImageAttentionModel(config)
-    model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
-    model.runPredict(valTestReader, config.csvResults)
+    valTestReader = TestProcessor(qnFile=config.valTestQns, 
+                               imgFile=config.valImgFile, 
+                               config=config)
+    
+    #valTestReader = InputProcessor(config.testAnnotFile, 
+    #                             config.rawQnValTestFile, 
+    #                             config.valImgFile, 
+    #                             config,
+    #                             is_training=False)
+    
+    if args.att == 'qn':
+        print('Attention over question and image model')
+        model = QnAttentionModel(config)
+    elif args.att == 'im':
+        print('Attention over image model')
+        model = ImageAttentionModel(config)
+    model.loadTrainedModel(config.restoreQnImAttModel, 
+                           config.restoreQnImAttModelPath)
+    model.runTest(valTestReader, 'testResFile.json')
     model.destruct()
     valTestReader.destruct()
     
 def internalValTest(args):
+    import sys
+    sys.path.insert(0, '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering')
     from vqaTools.vqa import VQA
     from vqaTools.vqaEval import VQAEval
+    
     config = Attention_LapConfig(load=False, args=args)
     annFile = config.originalAnnotVal
     quesFile = config.valTestQns
-    resFile = ''
+    resFile = 'testResFile.json'
     
     vqa = VQA(annFile, quesFile)
     vqaRes = vqa.loadRes(resFile, quesFile)
+    
+    vqaEval = VQAEval(vqa, vqaRes, n=2)
+    vqaEval.evaluate() 
+    
+    # print accuracies
+    print "\n"
+    print "Overall Accuracy is: %.02f\n" %(vqaEval.accuracy['overall'])
+    print "Per Question Type Accuracy is the following:"
+    for quesType in vqaEval.accuracy['perQuestionType']:
+        print "%s : %.02f" %(quesType, vqaEval.accuracy['perQuestionType'][quesType])
+    print "\n"
+    print "Per Answer Type Accuracy is the following:"
+    for ansType in vqaEval.accuracy['perAnswerType']:
+        print "%s : %.02f" %(ansType, vqaEval.accuracy['perAnswerType'][ansType])
+    print "\n"
     
 
 def runVisualiseVal():
@@ -174,7 +203,9 @@ def parseArgs():
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('--att', choices=['qn', 'im'], default='qn')
     parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='softmax')
-    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve', 'qn', 'visval', 'solveqn'], default='vis')
+    parser.add_argument('-a', '--action', choices=['otest', 'vtest', 'vis', 'solve',
+                                                    'qn', 'visval', 'solveqn', 'mkres',
+                                                    'eval'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     args = parser.parse_args()
     return args
@@ -194,4 +225,7 @@ if __name__ == '__main__':
         runVisualiseVal()
     elif args.action == 'solveqn':
         solveqn()
-    
+    elif args.action == 'mkres':
+        runValTest(args)
+    elif args.action == 'eval':
+        internalValTest(args)

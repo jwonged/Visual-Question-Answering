@@ -176,7 +176,11 @@ class ImageAttentionModel(BaseModel):
             if self.config.attentionFunc == 'softmax':
                 self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
-                self.alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
+                print('Using sigmoid attention function')
+                unnorm_alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
+                norm_denominator = tf.expand_dims(
+                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1)
+                self.alpha = unnorm_alpha / norm_denominator
             else:
                 raise NotImplementedError
             

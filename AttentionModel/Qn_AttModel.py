@@ -206,9 +206,13 @@ class QnAttentionModel(BaseModel):
                 self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
                 print('Using sigmoid attention function')
-                self.alpha = tf.nn.sigmoid(att_regionWeights, name='alpha')
+                unnorm_alpha = tf.nn.sigmoid(att_regionWeights, name='alpha') #b, 196]
+                norm_denominator = tf.expand_dims(
+                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+                self.alpha = unnorm_alpha / norm_denominator #[b, 196]
             else:
                 raise NotImplementedError
+            
             alpha = tf.expand_dims(self.alpha, axis=-1)
             
             #compute context: c = sum(alpha) * img
