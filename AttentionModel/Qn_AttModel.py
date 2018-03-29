@@ -294,8 +294,8 @@ class QnAttentionModel(BaseModel):
         
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
-        #self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
-        #self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+        self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
+        self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
@@ -337,9 +337,9 @@ class QnAttentionModel(BaseModel):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            #qnAlphas, alphas, labels_pred = self.sess.run(
-            #    [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
+            #labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            qnAlphas, alphas, labels_pred = self.sess.run(
+                [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
             
             for lab, labPred, qn, img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
@@ -364,5 +364,5 @@ class QnAttentionModel(BaseModel):
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
-        #return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return
     

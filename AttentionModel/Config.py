@@ -29,8 +29,8 @@ class Config(object):
         
         #quick hyperparameters
         self.randomSeed = args.seed if args.seed else 42
-        self.nTrainEpochs = 70
-        self.nEpochsWithoutImprov = 10
+        self.nTrainEpochs = 45
+        self.nEpochsWithoutImprov = 6
         self.decayAfterEpoch = 20
         self.dropoutVal = 0.5 #standard 0.5, 1.0 for none
         self.modelOptimizer = 'adam'
