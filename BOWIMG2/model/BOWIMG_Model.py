@@ -71,8 +71,8 @@ class BOWIMGModel(BaseModel):
         #mask paddings and sum words
         mask = tf.sequence_mask(self.sequence_lengths) #[b x seqLens]
         float_mask =  tf.expand_dims(tf.to_float(mask), axis=-1) #[b x seqLens x 1]
-        masked_embeddings = tf.multiply(word_embeddings, float_mask)
-        bows = tf.reduce_sum(masked_embeddings, axis=-1) #[bx300]
+        masked_embeddings = tf.multiply(word_embeddings, float_mask) #[bxmaxlenx300]
+        bows = tf.reduce_sum(masked_embeddings, axis=1) #[bx300]
         
         #for debugging
         print('Shape of float_mask: {}'.format(float_mask.get_shape()))
