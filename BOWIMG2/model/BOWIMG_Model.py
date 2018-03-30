@@ -60,7 +60,7 @@ class BOWIMGModel(BaseModel):
                 self.word_ids, name="word_embeddings")
         
         word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
-        return word_embeddings
+        return word_embeddings #[b, maxLen, 300]
     
     def construct(self):
         self._addPlaceholders()
@@ -82,18 +82,13 @@ class BOWIMGModel(BaseModel):
         self.mask_embeddings = masked_embeddings
         self.bows = bows
         
-        multimodalOutput = tf.concat([bows, self.img_vecs], axis=-1)
+        multimodalOutput = tf.concat([bows, self.img_vecs], axis=-1) #[bx1324]
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            hidden_layer2 = tf.layers.dense(inputs=multimodalOutput,
-                                           units=1000,
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            y = tf.layers.dense(inputs=hidden_layer2,
-                                           units=self.config.nOutClasses,
-                                           activation=None,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            y = self._denseLayer(multimodalOutput, 
+                                 self.config.wordVecSize+self.config.imgVecSize, 
+                                 self.config.nOutClasses, activationf=False)
             print('Shape of y: {}'.format(y.get_shape()))
             
         #predict & get accuracy
@@ -118,5 +113,15 @@ class BOWIMGModel(BaseModel):
         
         #init vars and session
         self._initSession()
+        
+    def _denseLayer(self, input, nInputs, nOutputs, activationf=True):
+        w = tf.Variable(tf.zeros([nInputs, nOutputs]))
+        b = tf.Variable(tf.zeros([nOutputs]))
+        y = tf.matmul(input, w) + b
+        
+        if activationf:
+            y = tf.tanh(y)
+        
+        return y
         
     
