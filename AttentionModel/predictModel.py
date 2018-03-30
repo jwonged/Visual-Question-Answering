@@ -5,8 +5,8 @@ Created on 13 Feb 2018
 '''
 from model.Image_AttModel import ImageAttentionModel
 from model.Qn_AttModel import QnAttentionModel
-from configs import Attention_LapConfig
-from configs import Attention_GPUConfig
+from configs.Attention_LapConfig import Attention_LapConfig
+from configs.Attention_GPUConfig import Attention_GPUConfig
 from utils.TrainProcessors import AttModelInputProcessor, TestProcessor
 from utils.Output_Generator import OutputGenerator
 from utils.Online_Processor import OnlineProcessor
