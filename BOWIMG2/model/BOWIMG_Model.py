@@ -74,17 +74,18 @@ class BOWIMGModel(BaseModel):
         masked_embeddings = tf.multiply(word_embeddings, float_mask) #[bxmaxlenx300]
         bows = tf.reduce_sum(masked_embeddings, axis=1) #[bx300]
         
-        #for debugging
-        print('Shape of float_mask: {}'.format(float_mask.get_shape()))
-        print('Shape of masked_embeddings: {}'.format(masked_embeddings.get_shape()))
-        print('Shape of bows: {}'.format(bows.get_shape()))
-        self.word_embeddings = word_embeddings
-        self.float_mask = float_mask
-        self.mask_embeddings = masked_embeddings
-        self.bows = bows
-        
         multimodalOutput = tf.concat([bows, self.img_vecs], axis=-1) #[bx1324]
-        self.multimodalOutput = multimodalOutput
+        
+        #for debugging
+        if self.config.debugMode:
+            print('Shape of float_mask: {}'.format(float_mask.get_shape()))
+            print('Shape of masked_embeddings: {}'.format(masked_embeddings.get_shape()))
+            print('Shape of bows: {}'.format(bows.get_shape()))
+            self.word_embeddings = word_embeddings
+            self.float_mask = float_mask
+            self.mask_embeddings = masked_embeddings
+            self.bows = bows
+            self.multimodalOutput = multimodalOutput
         
         #fully connected layer
         with tf.variable_scope("proj"):

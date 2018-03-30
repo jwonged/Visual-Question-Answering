@@ -114,7 +114,7 @@ class BaseModel(object):
         
         timeTaken = time.time() - startTime
         print('Time taken: {}'.format(timeTaken))
-        self.logFile.writerow['Time taken', str(timeTaken)]
+        self.logFile.writerow(['Time taken', str(timeTaken)])
         
     
     def _run_epoch(self, trainReader, valReader, nEpoch):
