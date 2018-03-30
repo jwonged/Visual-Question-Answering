@@ -3,35 +3,30 @@ Created on 15 Jan 2018
 
 @author: jwong
 '''
-from AttentionModel.model.Image_AttModel import ImageAttentionModel
-from AttentionModel.model.Qn_AttModel import QnAttentionModel
-from AttentionModel.configs import Attention_LapConfig
-from AttentionModel.configs import Attention_GPUConfig
-from AttentionModel.utils.TrainProcessors import AttModelInputProcessor
+
+from model.BOWIMG_Model import BOWIMGModel
+from configs.LaptopConfig import BOWIMG_LapConfig
+from configs.GPUConfig import BOWIMG_GPUConfig
+from utils.BOWIMG_Processor import BOWIMGProcessor
 import argparse
 
 def runtrain(args):
-    #config = Attention_LapConfig(load=True, args)
-    config = Attention_GPUConfig(load=True, args=args)
+    #config = BOWIMG_LapConfig(load=True, args)
+    config = BOWIMG_GPUConfig(load=True, args=args)
     
-    trainReader = AttModelInputProcessor(config.trainAnnotFile, 
+    trainReader = BOWIMGProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
                                  config.trainImgFile, 
                                  config,
                                  is_training=True)
     
-    valReader = AttModelInputProcessor(config.valAnnotFile, 
+    valReader = BOWIMGProcessor(config.valAnnotFile, 
                                  config.rawQnValTestFile, 
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
-     
-    if args.att == 'qn':
-        print('Attention over question and image model')
-        model = QnAttentionModel(config)
-    elif args.att == 'im':
-        print('Attention over image model')
-        model = ImageAttentionModel(config)
+    
+    model = BOWIMGModel(config)
 
     model.construct()
     model.train(trainReader, valReader, config.logFile)
@@ -43,8 +38,6 @@ def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     parser.add_argument('-v', '--verbose', help='Display all print statement', action='store_true')
-    parser.add_argument('--att', choices=['qn', 'im'], default='qn')
-    parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='softmax')
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     args = parser.parse_args()

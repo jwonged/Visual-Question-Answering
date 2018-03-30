@@ -8,10 +8,8 @@ import csv
 import json
 import os
 
-from Base_AttModel import BaseModel
-from InputProcessor import OnlineProcessor
-from model_utils import getPretrainedw2v
-import numpy as np
+from AttentionModel.model.Base_AttModel import BaseModel
+from AttentionModel.utils.model_utils import getPretrainedw2v
 import tensorflow as tf 
 
 class ImageAttentionModel(BaseModel):
@@ -249,8 +247,7 @@ class ImageAttentionModel(BaseModel):
         graph = super(ImageAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         self.alpha = graph.get_tensor_by_name('attention/alpha:0')
     
-    def solve(self, qn, img_id):
-        processor = OnlineProcessor(self.config.trainImgFile, self.config)
+    def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
         feed = {
                 self.word_ids : qnAsWordIDsBatch,

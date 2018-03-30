@@ -6,11 +6,10 @@ Created on 12 Mar 2018
 import unittest
 import argparse
 
-from AttentionModel.Attention_LapConfig import Attention_LapConfig
-from AttentionModel.Qn_AttModel import QnAttentionModel
+from AttentionModel.configs import Attention_LapConfig
+from AttentionModel.model.Qn_AttModel import QnAttentionModel
 
 class Test(unittest.TestCase):
-
 
     def test_AttentionModel(self):
         pass

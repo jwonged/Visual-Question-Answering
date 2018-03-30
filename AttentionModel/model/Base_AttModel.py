@@ -11,8 +11,7 @@ import pickle
 import time
 import os
 
-from InputProcessor import OnlineProcessor
-from model_utils import getPretrainedw2v, generateForSubmission
+from AttentionModel.utils.model_utils import generateForSubmission
 import numpy as np
 import tensorflow as tf 
 
@@ -315,8 +314,4 @@ class BaseModel(object):
     
     def destruct(self):
         pass
-        #if self.f1 is not None:
-        #    self.f1.close()
-        #if self.f2 is not None:
-        #    self.f2.close()
     

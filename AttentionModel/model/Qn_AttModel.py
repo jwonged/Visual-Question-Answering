@@ -10,11 +10,11 @@ import pickle
 import time
 import csv
 
-from model_utils import getPretrainedw2v, generateForSubmission
-from InputProcessor import OnlineProcessor
+from AttentionModel.utils.model_utils import getPretrainedw2v
+from AttentionModel.model.Base_AttModel import BaseModel
 import numpy as np
 import tensorflow as tf 
-from Base_AttModel import BaseModel
+
 
 class QnAttentionModel(BaseModel):
     '''
