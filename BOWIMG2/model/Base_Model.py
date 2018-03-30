@@ -15,7 +15,6 @@ from ..utils.model_utils import generateForSubmission
 import numpy as np
 import tensorflow as tf 
 
-
 class BaseModel(object):
     '''
     BOW+IMG base_model
