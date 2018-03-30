@@ -86,6 +86,7 @@ class BaseModel(object):
         self.logFile.writerow([
             'Epoch', 'Val score', 'Train score', 'Train correct', 
             'Train predictions', 'Val correct', 'Val predictions'])
+        startTime = time.time()
         #self.add_summary()
         highestScore = 0
         nEpochWithoutImprovement = 0
@@ -110,6 +111,11 @@ class BaseModel(object):
                         'Early stopping at epoch {} with {} epochs without improvement'.format(
                             nEpoch+1, nEpochWithoutImprovement)])
                     break
+        
+        timeTaken = time.time() - startTime
+        print('Time taken: {}'.format(timeTaken))
+        self.logFile.writerow['Time taken', str(timeTaken)]
+        
     
     def _run_epoch(self, trainReader, valReader, nEpoch):
         '''
