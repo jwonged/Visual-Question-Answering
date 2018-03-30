@@ -10,8 +10,8 @@ import pickle
 import json
 import numpy as np
 
-from AttentionModel.configs import Attention_LapConfig
-from AttentionModel.utils.model_utils import AnswerProcessor
+from configs import Attention_LapConfig
+from utils.model_utils import AnswerProcessor
 
 class VQAPreprocessor(object):
     '''

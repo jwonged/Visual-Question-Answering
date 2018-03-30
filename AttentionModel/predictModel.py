@@ -3,13 +3,13 @@ Created on 13 Feb 2018
 
 @author: jwong
 '''
-from AttentionModel.model.Image_AttModel import ImageAttentionModel
-from AttentionModel.model.Qn_AttModel import QnAttentionModel
-from AttentionModel.configs import Attention_LapConfig
-from AttentionModel.configs import Attention_GPUConfig
-from AttentionModel.utils.TrainProcessors import AttModelInputProcessor, TestProcessor
-from AttentionModel.utils.Output_Generator import OutputGenerator
-from AttentionModel.utils.Online_Processor import OnlineProcessor
+from model.Image_AttModel import ImageAttentionModel
+from model.Qn_AttModel import QnAttentionModel
+from configs import Attention_LapConfig
+from configs import Attention_GPUConfig
+from utils.TrainProcessors import AttModelInputProcessor, TestProcessor
+from utils.Output_Generator import OutputGenerator
+from utils.Online_Processor import OnlineProcessor
 import argparse
 
 '''

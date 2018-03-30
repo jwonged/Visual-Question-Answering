@@ -8,8 +8,8 @@ import csv
 import json
 import os
 
-from AttentionModel.model.Base_AttModel import BaseModel
-from AttentionModel.utils.model_utils import getPretrainedw2v
+from model.Base_AttModel import BaseModel
+from utils.model_utils import getPretrainedw2v
 import tensorflow as tf 
 
 class ImageAttentionModel(BaseModel):

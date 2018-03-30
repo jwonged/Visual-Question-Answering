@@ -10,8 +10,8 @@ import pickle
 import time
 import csv
 
-from AttentionModel.utils.model_utils import getPretrainedw2v
-from AttentionModel.model.Base_AttModel import BaseModel
+from utils.model_utils import getPretrainedw2v
+from model.Base_AttModel import BaseModel
 import numpy as np
 import tensorflow as tf 
 

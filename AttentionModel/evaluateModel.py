@@ -4,11 +4,11 @@ Created on 30 Mar 2018
 @author: jwong
 '''
 
-from AttentionModel.model.Image_AttModel import ImageAttentionModel
-from AttentionModel.model.Qn_AttModel import QnAttentionModel
-from AttentionModel.configs import Attention_LapConfig
-from AttentionModel.configs import Attention_GPUConfig
-from AttentionModel.utils.TrainProcessors import TestProcessor, AttModelInputProcessor
+from model.Image_AttModel import ImageAttentionModel
+from model.Qn_AttModel import QnAttentionModel
+from configs import Attention_LapConfig
+from configs import Attention_GPUConfig
+from utils.TrainProcessors import TestProcessor, AttModelInputProcessor
 import argparse
 
 '''
