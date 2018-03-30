@@ -133,8 +133,20 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
+            if self.config.debugMode:
+                we, fm, me, bow, _, _, labels_pred, summary = self.sess.run(
+                [self.word_embeddings, self.float_mask,
+                  self.mask_embeddings, self.bows, 
+                  self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
+                
+                print('word_em: \n {} \n floatmask: \n {} \n maskem: \n {} \n bow: \n {} \n'.format(
+                    we, fm, me, bow))
+                print('word_em: {} \n floatmask: {} \n maskem: {} \n bow: {} \n'.format(
+                    we.shape, fm.shape, me.shape, bow.shape))
+            
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
+            
             
             for lab, labPred in zip(labels, labels_pred):
                 if lab==labPred:

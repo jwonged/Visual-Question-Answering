@@ -37,7 +37,7 @@ class Config(object):
         self.learningRate = 0.0001 
         self.learningRateDecay = 0.95 #noDecay= 1; usually ~0.9
         
-        self.debugMode = False
+        self.debugMode = True
         
         now = datetime.datetime.now()
         self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
