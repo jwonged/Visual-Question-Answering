@@ -15,7 +15,6 @@ from utils.model_utils import generateForSubmission
 import numpy as np
 import tensorflow as tf 
 
-
 class BaseModel(object):
     '''
     BOW+IMG base_model
@@ -46,12 +45,12 @@ class BaseModel(object):
         #For logging
         info = 'model: {}, classes: {}, batchSize: {}, dropout: {}, \
             optimizer: {}, lr: {}, decay: {}, shuffle: {}, trainEmbeddings: {}, \
-             usePretrainedEmbeddings: {},  elMult: {}, imgModel: {}, \
+             usePretrainedEmbeddings: {},   imgModel: {}, \
              epochsWOimprov: {}, decayAfterEpoch: {}, seed: {},'.format(
                  config.modelStruct, config.nOutClasses, config.batch_size,
                  config.dropoutVal, config.modelOptimizer, config.learningRate,
                  config.learningRateDecay, config.shuffle, config.trainEmbeddings,  
-                 config.usePretrainedEmbeddings,config.elMult, config.imgModel, 
+                 config.usePretrainedEmbeddings, config.imgModel, 
                  config.nEpochsWithoutImprov, config.decayAfterEpoch, config.randomSeed)
         return info + 'fc: 2 layers (1000), ' + self.comment() 
     

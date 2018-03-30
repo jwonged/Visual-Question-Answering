@@ -35,6 +35,9 @@ class BOWIMGModel(BaseModel):
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
     
+    def comment(self):
+        return 'Standard BOWIMG baseline'
+    
     def _addEmbeddings(self):
         #add word embeddings
         with tf.variable_scope("words"):
