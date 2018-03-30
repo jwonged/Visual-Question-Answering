@@ -5,7 +5,6 @@ Created on 7 Feb 2018
 '''
 from Config import Config
 
-
 class BOWIMG_GPUConfig(Config):
     '''
     Config file for BOWIMG

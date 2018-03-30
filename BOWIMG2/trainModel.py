@@ -5,8 +5,8 @@ Created on 15 Jan 2018
 '''
 
 from model.BOWIMG_Model import BOWIMGModel
-from configs.LaptopConfig import BOWIMG_LapConfig
-from configs.GPUConfig import BOWIMG_GPUConfig
+from BOWIMG2.configs.LaptopConfig import BOWIMG_LapConfig
+from BOWIMG2.configs.GPUConfig import BOWIMG_GPUConfig
 from utils.BOWIMG_Processor import BOWIMGProcessor
 import argparse
 
@@ -26,6 +26,7 @@ def runtrain(args):
                                  config,
                                  is_training=False)
     
+    print('Using BOWIMG model')
     model = BOWIMGModel(config)
 
     model.construct()
