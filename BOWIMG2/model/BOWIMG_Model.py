@@ -64,6 +64,7 @@ class BOWIMGModel(BaseModel):
     
     def construct(self):
         self._addPlaceholders()
+        print('ImgVecSize: {}'.format(self.img_vecs.get_shape()))
         
         word_embeddings = self._addEmbeddings() #[b x maxlen x 300]
         

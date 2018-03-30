@@ -123,6 +123,7 @@ class BaseModel(object):
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
+            print(np.asarray(img_vecs).shape)
             
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
