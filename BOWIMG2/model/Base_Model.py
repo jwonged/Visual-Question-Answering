@@ -11,7 +11,7 @@ import pickle
 import time
 import os
 
-from BOWIMG2.utils.model_utils import generateForSubmission
+from ..utils.model_utils import generateForSubmission
 import numpy as np
 import tensorflow as tf 
 

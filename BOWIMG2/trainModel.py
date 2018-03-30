@@ -10,6 +10,9 @@ from BOWIMG2.configs.GPUConfig import BOWIMG_GPUConfig
 from utils.BOWIMG_Processor import BOWIMGProcessor
 import argparse
 
+#import sys
+#sys.path.insert(0, '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering')
+
 def runtrain(args):
     #config = BOWIMG_LapConfig(load=True, args)
     config = BOWIMG_GPUConfig(load=True, args=args)
