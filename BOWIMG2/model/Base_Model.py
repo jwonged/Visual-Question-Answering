@@ -123,7 +123,6 @@ class BaseModel(object):
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
-            print(np.asarray(img_vecs).shape)
             
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
@@ -134,7 +133,7 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if self.config.debugMode:
+            if i==0 and self.config.debugMode:
                 we, fm, me, bow, mm, _, _, labels_pred, summary = self.sess.run(
                 [self.word_embeddings, self.float_mask,
                   self.mask_embeddings, self.bows, self.multimodalOutput,
