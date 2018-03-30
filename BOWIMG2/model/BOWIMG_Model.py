@@ -5,7 +5,7 @@ Created on 15 Jan 2018
 '''
 
 from Base_Model import BaseModel
-from BOWIMG2.utils.model_utils import getPretrainedw2v
+from utils.model_utils import getPretrainedw2v
 import numpy as np
 import tensorflow as tf 
 

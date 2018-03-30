@@ -4,10 +4,10 @@ Created on 30 Mar 2018
 @author: jwong
 '''
 
-from BOWIMG2.utils.BOWIMG_Processor import BOWIMGProcessor, TestProcessor
-from BOWIMG2.configs.LaptopConfig import BOWIMG_LapConfig
-from BOWIMG2.configs.GPUConfig import BOWIMG_GPUConfig
-from BOWIMG2.model.BOWIMG_Model import BOWIMGModel
+from utils.BOWIMG_Processor import BOWIMGProcessor, TestProcessor
+from configs.LaptopConfig import BOWIMG_LapConfig
+from configs.GPUConfig import BOWIMG_GPUConfig
+from model.BOWIMG_Model import BOWIMGModel
 import argparse
 
 '''
