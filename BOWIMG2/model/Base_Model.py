@@ -134,15 +134,15 @@ class BaseModel(object):
             }
             
             if self.config.debugMode:
-                we, fm, me, bow, _, _, labels_pred, summary = self.sess.run(
+                we, fm, me, bow, mm, _, _, labels_pred, summary = self.sess.run(
                 [self.word_embeddings, self.float_mask,
-                  self.mask_embeddings, self.bows, 
+                  self.mask_embeddings, self.bows, self.multimodalOutput,
                   self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
                 
                 print('word_em: \n {} \n floatmask: \n {} \n maskem: \n {} \n bow: \n {} \n'.format(
                     we, fm, me, bow))
-                print('word_em: {} \n floatmask: {} \n maskem: {} \n bow: {} \n'.format(
-                    we.shape, fm.shape, me.shape, bow.shape))
+                print('word_em: {} \n floatmask: {} \n maskem: {} \n bow: {} \n mm: {}\n'.format(
+                    we.shape, fm.shape, me.shape, bow.shape, mm.shape))
             
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)

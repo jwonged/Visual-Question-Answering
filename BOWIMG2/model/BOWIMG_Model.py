@@ -83,6 +83,7 @@ class BOWIMGModel(BaseModel):
         self.bows = bows
         
         multimodalOutput = tf.concat([bows, self.img_vecs], axis=-1) #[bx1324]
+        self.multimodalOutput = multimodalOutput
         
         #fully connected layer
         with tf.variable_scope("proj"):
