@@ -51,6 +51,7 @@ class Config(object):
     nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
     batch_size = 32
     wordVecSize = 300
+    imgVecSize = 1024
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
