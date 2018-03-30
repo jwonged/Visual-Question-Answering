@@ -115,10 +115,10 @@ class BOWIMGModel(BaseModel):
         #init vars and session
         self._initSession()
         
-    def _denseLayer(self, input, nInputs, nOutputs, activationf=True):
+    def _denseLayer(self, x, nInputs, nOutputs, activationf=True):
         w = tf.Variable(tf.zeros([nInputs, nOutputs]))
         b = tf.Variable(tf.zeros([nOutputs]))
-        y = tf.matmul(input, w) + b
+        y = tf.matmul(x, w) + b
         
         if activationf:
             y = tf.tanh(y)
