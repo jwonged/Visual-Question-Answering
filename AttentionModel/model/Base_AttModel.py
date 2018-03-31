@@ -292,10 +292,13 @@ class BaseModel(object):
                 qns_to_return = rawQns
                 break
         
-        valAcc = np.mean(accuracies)
-        print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
+        print('Results below')
         print(results)
         print(type(results))
+        print('Results above')
+        valAcc = np.mean(accuracies)
+        print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
+        
         return results
         #return valAcc, correct_predictions, total_predictions
         
