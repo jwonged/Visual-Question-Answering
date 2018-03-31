@@ -48,7 +48,7 @@ def validateInternalTestSet(args):
     restoreModel = config.restoreModel
     restoreModelPath = config.restoreModelPath
     
-    vqa = VQA(config.testAnnotFileUnresolved, config.valTestQns)
+    vqa = VQA(config.testAnnotFileUnresolved, config.originalValQns)
     
     print('Running Validation Test on Model')
     valTestReader = AttModelInputProcessor(config.testAnnotFile, 
