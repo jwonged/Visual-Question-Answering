@@ -65,9 +65,13 @@ class VQA:
         print 'index created!'
 
         # create class members
-        self.qa = qa
-        self.qqa = qqa
-        self.imgToQA = imgToQA
+        self.qa = qa #qn id --> ann
+        self.qqa = qqa #qnId --> ques
+        self.imgToQA = imgToQA #imgID --> ann
+    
+    def getImgFromQnId(self, qnId):
+        return self.qa[qnId]['image_id']
+        
 
     def info(self):
         """
