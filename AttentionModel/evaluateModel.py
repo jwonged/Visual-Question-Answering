@@ -65,16 +65,17 @@ def validateInternalTestSet(args):
         model = ImageAttentionModel(config)
     
     model.loadTrainedModel(restoreModel, restoreModelPath)
-    res, strictAcc = model.runPredict(
-        valTestReader, '{}PredsAtt{}.csv'.format(restoreModelPath, args.att))
+    results, strictAcc = model.runPredict(valTestReader, 
+                                '{}PredsAtt{}.csv'.format(restoreModelPath, args.att))
     model.destruct()
     valTestReader.destruct()
+    print('predictions made')
     
     
-    vqaRes = vqa.loadRes(res, config.originalValQns)
+    vqaRes = vqa.loadRes(results, config.originalValQns)
     vqaEval = VQAEval(vqa, vqaRes, n=2)
     vqaEval.evaluate() 
-    
+    print('Writing to file..')
     writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
         
 def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
