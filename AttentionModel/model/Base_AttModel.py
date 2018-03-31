@@ -294,6 +294,8 @@ class BaseModel(object):
         
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
+        print(results)
+        print(type(results))
         return results
         #return valAcc, correct_predictions, total_predictions
         
