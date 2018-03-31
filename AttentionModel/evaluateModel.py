@@ -39,7 +39,7 @@ def loadOfficialTest(args):
     testReader.destruct()
 
 def validateInternalTestSet(args):
-    from vqaTools.vqa import VQA
+    from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
     #config = Attention_LapConfig(load=True, args)
@@ -47,6 +47,8 @@ def validateInternalTestSet(args):
     
     restoreModel = config.restoreModel
     restoreModelPath = config.restoreModelPath
+    
+    vqa = VQA(config.testAnnotFileUnresolved, config.valTestQns)
     
     print('Running Validation Test on Model')
     valTestReader = AttModelInputProcessor(config.testAnnotFile, 
@@ -68,7 +70,7 @@ def validateInternalTestSet(args):
     model.destruct()
     valTestReader.destruct()
     
-    vqa = VQA(config.testAnnotFileUnresolved, config.valTestQns)
+    
     vqaRes = vqa.loadRes(res, config.originalValQns)
     vqaEval = VQAEval(vqa, vqaRes, n=2)
     vqaEval.evaluate() 

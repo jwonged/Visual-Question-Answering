@@ -295,8 +295,9 @@ class BaseModel(object):
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
-        if mini:
-            return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        
+        #    return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        #else:
         return results, valAcc
     
     def runTest(self, testReader, jsonOutputFile):
