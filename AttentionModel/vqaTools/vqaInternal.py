@@ -187,8 +187,6 @@ class VQA:
         'Results do not correspond to current VQA set. Either the results do not have predictions for all question ids in annotation file or there is atleast one question id that does not belong to the question ids in the annotation file.'
         for ann in anns:
             quesId                  = ann['question_id']
-            if res.dataset['task_type'] == 'Multiple Choice':
-                assert ann['answer'] in self.qqa[quesId]['multiple_choices'], 'predicted answer is not one of the multiple choices'
             qaAnn                = self.qa[quesId]
             ann['image_id']      = qaAnn['image_id'] 
             ann['question_type'] = qaAnn['question_type']
