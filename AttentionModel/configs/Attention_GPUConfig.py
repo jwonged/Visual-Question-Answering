@@ -18,10 +18,11 @@ class Attention_GPUConfig(Config):
         
         self.csvResults = self.saveModelPath + 'Pred_att_{}.csv'.format(self.dateAppend)
         self.logFile = self.saveModelPath + 'Res_att_{}.csv'.format(self.dateAppend)
-        self.testOfficialResultFile = 'results/att{}Submission.json'.format(self.dateAppend)
         
         self.restoreModel = args.restorefile if args.restorefile else '.meta'
         self.restoreModelPath = args.restorepath if args.restorepath else './'
+        
+        self.testOfficialResultFile = self.restoreModelPath + 'att{}Submission.json'.format(self.dateAppend)
         
     trainImgFile = '../resources/vggTrainConv5_3Features_shelf'
     valImgFile = '../resources/vggValConv5_3Features_shelf' #also internal test
@@ -42,6 +43,9 @@ class Attention_GPUConfig(Config):
     #Qn_ID --> 'qn'
     rawQnTrain = '../resources/processedOpenEnded_trainQns.json' #
     rawQnValTestFile = '../resources/preprocessedValTestQnsOpenEnded.json' #
+    
+    #original qn files
+    originalValQns = '../resources/OpenEnded_mscoco_val2014_questions.json'
     
     '''
     Annotations file in list with resolved single answer
@@ -71,9 +75,9 @@ class Attention_GPUConfig(Config):
     valAnnotFile = '../resources/AllValAnnotResolvedList.json'
     testAnnotFile = '../resources/AllTestAnnotResolvedList.json'
     
-    #trainAnnotFile = '../resources/TrainAnnotList.json'
-    #valAnnotFile = '../resources/ValAnnotList.json'
-    #testAnnotFile = '../resources/TestAnnotList.json'
+    trainAnnotFileUnresolved = '../resources/TrainAnnotList.json'
+    valAnnotFileUnresolved = '../resources/ValAnnotList.json'
+    testAnnotFileUnresolved = '../resources/TestAnnotList.json'
     
     
     #raw image files

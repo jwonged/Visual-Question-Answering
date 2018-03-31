@@ -254,7 +254,9 @@ class BaseModel(object):
         
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+        if mini:
+            img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+        results = []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
             feed = {
@@ -278,6 +280,11 @@ class BaseModel(object):
                                lab=self.classToAnsMap[lab], 
                                predClass=labPred, labClass=lab, 
                                correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                
+                currentPred = {}
+                currentPred['question_id'] = qn_id
+                currentPred['answer'] = self.classToAnsMap[labPred]
+                results.append(currentPred)
             
             if mini and nBatch > 1:
                 ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
@@ -288,7 +295,9 @@ class BaseModel(object):
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
-        return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        if mini:
+            return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        return results, valAcc
     
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server

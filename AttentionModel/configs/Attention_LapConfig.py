@@ -51,7 +51,7 @@ class Attention_LapConfig(Config):
     rawQnTrain = '/media/jwong/Transcend/VQADataset/TrainSet/Questions_Train_mscoco/Preprocessed/processedOpenEnded_trainQns.json'
     rawQnValTestFile = '/media/jwong/Transcend/VQADataset/ValTestSet/Questions_Val_mscoco/preprocessedValTestQnsOpenEnded.json'
     
-    
+    originalValQns = '/media/jwong/Transcend/VQADataset/ValTestSet/Questions_Val_mscoco/OpenEnded_mscoco_val2014_questions.json'
     '''
     Annotations file in list with resolved single answer
     [

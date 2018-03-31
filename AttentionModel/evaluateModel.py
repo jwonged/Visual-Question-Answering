@@ -10,6 +10,7 @@ from configs.Attention_LapConfig import Attention_LapConfig
 from configs.Attention_GPUConfig import Attention_GPUConfig
 from utils.TrainProcessors import TestProcessor, AttModelInputProcessor
 import argparse
+import csv
 
 '''
 1) Do Official Test
@@ -36,6 +37,81 @@ def loadOfficialTest(args):
     model.runTest(testReader, config.testOfficialResultFile)
     model.destruct()
     testReader.destruct()
+
+def validateInternalTestSet(args):
+    from vqaTools.vqa import VQA
+    from vqaTools.vqaEval import VQAEval
+    
+    #config = Attention_LapConfig(load=True, args)
+    config = Attention_GPUConfig(load=True, args=args)
+    
+    restoreModel = config.restoreModel
+    restoreModelPath = config.restoreModelPath
+    
+    print('Running Validation Test on Model')
+    valTestReader = AttModelInputProcessor(config.testAnnotFile, 
+                                 config.rawQnValTestFile, 
+                                 config.valImgFile, 
+                                 config,
+                                 is_training=False)
+    
+    if args.att == 'qn':
+        print('Attention over question and image model')
+        model = QnAttentionModel(config)
+    elif args.att == 'im':
+        print('Attention over image model')
+        model = ImageAttentionModel(config)
+    
+    model.loadTrainedModel(restoreModel, restoreModelPath)
+    res, strictAcc = model.runPredict(
+        valTestReader, '{}PredsAtt{}.csv'.format(restoreModelPath, args.att))
+    model.destruct()
+    valTestReader.destruct()
+    
+    vqa = VQA(config.testAnnotFileUnresolved, config.valTestQns)
+    vqaRes = vqa.loadRes(res, config.originalValQns)
+    vqaEval = VQAEval(vqa, vqaRes, n=2)
+    vqaEval.evaluate() 
+    
+    writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
+        
+def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
+    outputFile = '{}resultbrkdwnAtt{}.csv'.format(restoreModelPath, args.att)
+    with open(outputFile, 'wb') as csvfile:
+        csvfile.writerow['StrictAcc: {}'.format(strictAcc)]
+        msg = "Overall Accuracy is: %.02f\n" %(vqaEval.accuracy['overall'])
+        csvfile.writerow([msg])
+        print(msg)
+        msg = "Per Question Type Accuracy is the following:"
+        csvfile.writerow([msg])
+        print(msg)
+        
+        for ansType in vqaEval.accuracy['perAnswerType']:
+            msg = "%s : %.02f" %(ansType, vqaEval.accuracy['perAnswerType'][ansType])
+            csvfile.writerow([msg])
+            print(msg)
+        
+        # demo how to use evalQA to retrieve low score result
+        evals = [quesId for quesId in vqaEval.evalQA if vqaEval.evalQA[quesId]<35]   #35 is per question percentage accuracy
+        if len(evals) > 0:
+            print 'ground truth answers'
+            randomEval = random.choice(evals)
+            randomAnn = vqa.loadQA(randomEval)
+            qns, answers = vqa.showQA(randomAnn)
+            img_ids = vqa.getImgIds(quesIds=[randomEval])
+            csvfile.writerow(['Retrieving low scoring qns'])
+            csvfile.writerow(['Img:']+img_ids)
+            csvfile.writerow(['qn:']+qns)
+            csvfile.writerow(['answers:']+answers)
+            msg = 'generated answer (accuracy %.02f)'%(vqaEval.evalQA[randomEval])
+            print(msg)
+            csvfile.writerow([msg])
+            ann = vqaRes.loadQA(randomEval)[0]
+            msg = "Answer:   %s\n" %(ann['answer'])
+            csvfile.writerow([msg])
+            
+    print('Written to {}'.format(outputFile))
+    
     
 def runValTest(args):
     #Val set's split -- test
@@ -64,11 +140,15 @@ def runValTest(args):
     model.destruct()
     valTestReader.destruct()
 
-    
+import matplotlib.pyplot as plt
+import skimage.io as io
+import json
+import random
+import os
 def internalValTest(args):
     import sys
-    sys.path.insert(0, '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering')
-    from vqaTools.vqa import VQA
+    #sys.path.insert(0, '/home/jwong/Documents/LinuxWorkspace/Visual-Question-Answering')
+    from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
     config = Attention_LapConfig(load=False, args=args)
@@ -93,6 +173,40 @@ def internalValTest(args):
     for ansType in vqaEval.accuracy['perAnswerType']:
         print "%s : %.02f" %(ansType, vqaEval.accuracy['perAnswerType'][ansType])
     print "\n"
+    
+    # demo how to use evalQA to retrieve low score result
+    evals = [quesId for quesId in vqaEval.evalQA if vqaEval.evalQA[quesId]<35]   #35 is per question percentage accuracy
+    if len(evals) > 0:
+        print('ground truth answers')
+        randomEval = random.choice(evals) #
+        print('RandomEval {}'.format(randomEval))
+        randomAnn = vqa.loadQA(randomEval) 
+        qns, answers = vqa.showQA(randomAnn) 
+        print(qns)
+        print(answers)
+        img_ids = vqa.getImgIds(quesIds=[randomEval])
+        print(img_ids)
+    
+        print '\n'
+        print 'generated answer (accuracy %.02f)'%(vqaEval.evalQA[randomEval])
+        ann = vqaRes.loadQA(randomEval)[0]
+        print "Answer:   %s\n" %(ann['answer'])
+    
+        #imgId = randomAnn[0]['image_id']
+        #imgFilename = 'COCO_' + dataSubType + '_'+ str(imgId).zfill(12) + '.jpg'
+        #if os.path.isfile(imgDir + imgFilename):
+        #    I = io.imread(imgDir + imgFilename)
+        #    plt.imshow(I)
+        #    plt.axis('off')
+        #    plt.show()
+    
+    # plot accuracy for various question types
+    plt.bar(range(len(vqaEval.accuracy['perQuestionType'])), vqaEval.accuracy['perQuestionType'].values(), align='center')
+    plt.xticks(range(len(vqaEval.accuracy['perQuestionType'])), vqaEval.accuracy['perQuestionType'].keys(), rotation='0',fontsize=10)
+    plt.title('Per Question Type Accuracy', fontsize=10)
+    plt.xlabel('Question Types', fontsize=10)
+    plt.ylabel('Accuracy', fontsize=10)
+    plt.show()
 
 
 def predAnalysis(args):
@@ -123,4 +237,9 @@ def parseArgs():
     return args
 
 if __name__ == '__main__':
-    pass
+    args = parseArgs()
+    if args.action == 'otest':
+        loadOfficialTest(args)
+    elif args.action == 'val':
+        validateInternalTestSet(args)
+        
