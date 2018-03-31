@@ -66,7 +66,7 @@ def validateInternalTestSet(args):
     
     model.loadTrainedModel(restoreModel, restoreModelPath)
     predFile = '{}PredsAtt{}.csv'.format(restoreModelPath, args.att)
-    results = model.runPredict(valTestReader, predFile)
+    results, strictAcc = model.runPredict(valTestReader, predFile)
     model.destruct()
     valTestReader.destruct()
     print('predictions made')
@@ -76,7 +76,7 @@ def validateInternalTestSet(args):
     vqaEval = VQAEval(vqa, vqaRes, n=2)
     vqaEval.evaluate() 
     print('Writing to file..')
-    writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, 5)
+    writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
         
 def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
     outputFile = '{}resultbrkdwnAtt{}.csv'.format(restoreModelPath, args.att)

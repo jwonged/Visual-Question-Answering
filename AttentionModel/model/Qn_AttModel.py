@@ -329,6 +329,7 @@ class QnAttentionModel(BaseModel):
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
         img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+        results = []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
             feed = {
@@ -348,6 +349,11 @@ class QnAttentionModel(BaseModel):
                 total_predictions += 1
                 accuracies.append(lab==labPred)
                 
+                currentPred = {}
+                currentPred['question_id'] = qn_id
+                currentPred['answer'] = self.classToAnsMap[labPred]
+                results.append(currentPred)
+                
                 if not mini:
                     self._logToCSV(nEpoch='', qn=qn, 
                                    pred=self.classToAnsMap[labPred], 
@@ -364,5 +370,7 @@ class QnAttentionModel(BaseModel):
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
-        return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        if mini:
+            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        return results, valAcc
     

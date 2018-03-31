@@ -235,7 +235,8 @@ class BaseModel(object):
         self.saver = tf.train.Saver()
         
         return graph 
-        
+    
+    #overriden in QnAttModel
     def runPredict(self, valReader, predfile, batch_size=None, mini=False):
         """Evaluates performance on internal valtest set
         Args:
@@ -292,18 +293,13 @@ class BaseModel(object):
                 qns_to_return = rawQns
                 break
         
-        print('Results below')
-        print(results)
-        print(type(results))
-        print('Results above')
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
         
-        return results
         #return valAcc, correct_predictions, total_predictions
-        
-        #    return alphas, img_ids_toreturn, qns_to_return, ans_to_return
-        #else:
+        if mini:
+            return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+        return results, valAcc
         
     
     def runTest(self, testReader, jsonOutputFile):
