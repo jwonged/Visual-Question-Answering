@@ -81,17 +81,18 @@ def validateInternalTestSet(args):
 def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
     outputFile = '{}resultbrkdwnAtt{}.csv'.format(restoreModelPath, args.att)
     with open(outputFile, 'wb') as csvfile:
-        csvfile.writerow['StrictAcc: {}'.format(strictAcc)]
+        logWriter = csv.writer(csvfile)
+        logWriter.writerow(['StrictAcc: {}'.format(strictAcc)])
         msg = "Overall Accuracy is: %.02f\n" %(vqaEval.accuracy['overall'])
-        csvfile.writerow([msg])
+        logWriter.writerow([msg])
         print(msg)
         msg = "Per Question Type Accuracy is the following:"
-        csvfile.writerow([msg])
+        logWriter.writerow([msg])
         print(msg)
         
         for ansType in vqaEval.accuracy['perAnswerType']:
             msg = "%s : %.02f" %(ansType, vqaEval.accuracy['perAnswerType'][ansType])
-            csvfile.writerow([msg])
+            logWriter.writerow([msg])
             print(msg)
         
         # demo how to use evalQA to retrieve low score result
@@ -102,16 +103,20 @@ def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
             randomAnn = vqa.loadQA(randomEval)
             qns, answers = vqa.showQA(randomAnn)
             img_ids = vqa.getImgIds(quesIds=[randomEval])
-            csvfile.writerow(['Retrieving low scoring qns'])
-            csvfile.writerow(['Img:']+img_ids)
-            csvfile.writerow(['qn:']+qns)
-            csvfile.writerow(['answers:']+answers)
+            logWriter.writerow(['Retrieving low scoring qns'])
+            logWriter.writerow(['Img:']+img_ids)
+            print(img_ids)
+            logWriter.writerow(['qn:']+qns)
+            print(qns)
+            logWriter.writerow(['answers:']+answers)
+            print(answers)
             msg = 'generated answer (accuracy %.02f)'%(vqaEval.evalQA[randomEval])
             print(msg)
-            csvfile.writerow([msg])
+            logWriter.writerow([msg])
             ann = vqaRes.loadQA(randomEval)[0]
             msg = "Answer:   %s\n" %(ann['answer'])
-            csvfile.writerow([msg])
+            logWriter.writerow([msg])
+            print(msg)
             
     print('Written to {}'.format(outputFile))
     
