@@ -45,6 +45,8 @@ class BOWIMG_GPUConfig(Config):
     rawQnTrain = '../resources/processedOpenEnded_trainQns.json' #
     rawQnValTestFile = '../resources/preprocessedValTestQnsOpenEnded.json' #
     
+    originalValQns = '../resources/OpenEnded_mscoco_val2014_questions.json'
+    
     '''
     Annotations file in list with resolved single answer
     [
