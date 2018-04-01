@@ -10,8 +10,9 @@ import pickle
 import numpy as np
 import random
 from model_utils import resolveAnswer
+from Input_Processor import InputProcessor
 
-class InputProcessor(object):
+class LSTMIMGProcessor(InputProcessor):
     '''
     Generator which processes and batches input
     args:
@@ -21,8 +22,9 @@ class InputProcessor(object):
         ansClassFile
         vocabFile
     '''
-
     def __init__(self, annotFile, qnFile, imgFile, config, is_training):
+        super(LSTMIMGProcessor, self).__init__(config)
+
         self.imgData = self._readJsonFile(imgFile)
         self.annots = self._readJsonFile(annotFile)
         self.rawQns = self._readJsonFile(qnFile)
@@ -49,14 +51,8 @@ class InputProcessor(object):
         self.singleCountWords = config.singleCountWords
         
         self.is_training = is_training
-        self.config = config
         if config.shuffle and is_training:
             random.shuffle(self.annots)
-        
-    def _readJsonFile(self, fileName):
-        print('Reading {}'.format(fileName))
-        with open(fileName) as jsonFile:
-            return json.load(jsonFile)
     
     def _loadAnsMap(self, ansClassFile):
         #only used when loading answers from csv
@@ -110,22 +106,16 @@ class InputProcessor(object):
         return idList
     
     def getNextBatch(self, batchSize):
-        batchOfQnsAsWordIDs, img_vecs, labels, ansLists  = [], [], [], []
-        rawQns, img_ids, qn_ids =  [], [], []
-        
+        batchOfQnsAsWordIDs, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], []
         for annot in self.annots:
             if (len(batchOfQnsAsWordIDs) == batchSize):
                 batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids, ansLists
-                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels = [], [], [], []
-                rawQns, img_ids, qn_ids = [], [], []
+                yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
+                batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids = [], [], [], [], [], [], []
             
-            ansList = [item['answer'] for item in annot['answers']]
-            resolvedAns = resolveAnswer(ansList)
             #Leave out answers not in AnsClass for training; map to special num for val
             if (not self.is_training) or (
-                self.is_training and resolvedAns in self.mapAnsToClass):
-                
+                self.is_training and annot['answers'] in self.mapAnsToClass):
                 #process question
                 rawQn = self.rawQns[str(annot['question_id'])]
                 qnAsWordIDs = self._mapQnToIDs(rawQn)
@@ -140,20 +130,19 @@ class InputProcessor(object):
                 img_ids.append(img_id)
                 
                 #process label
-                ansLists.append(ansList)
-                if resolvedAns not in self.mapAnsToClass:
+                if annot['answers'] not in self.mapAnsToClass:
                     if self.is_training:
                         raise ValueError('Inconsistent State in processing label')
                     labelClass = -1
                 else:
-                    labelClass = self.mapAnsToClass[resolvedAns]
+                    labelClass = self.mapAnsToClass[annot['answers']]
                 labels.append(labelClass)
         
         if self.config.shuffle and self.is_training:
             random.shuffle(self.annots)
         if len(batchOfQnsAsWordIDs) != 0:
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
-            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids, ansLists
+            yield batchOfQnsAsWordIDs, qnLengths, img_vecs, labels, rawQns, img_ids, qn_ids
     
     def getWholeBatch(self):
         batchOfQnsAsWordIDs, img_vecs, labels = [], [], []
@@ -177,36 +166,16 @@ class InputProcessor(object):
             batchOfQnsAsWordIDs, qnLengths = self._padQuestionIDs(batchOfQnsAsWordIDs, 0)
             return batchOfQnsAsWordIDs, qnLengths, img_vecs, labels
     
-    def _padQuestionIDs(self, questions, padding):
-        '''
-        Pads each list to be same as max length
-        args:
-            questions: list of list of word IDs (ie a batch of qns)
-            padding: symbol to pad with
-        '''
-        maxLength = max(map(lambda x : len(x), questions))
-        #Get length of longest qn
-        paddedQuestions, qnLengths = [], []
-        for qn in questions:
-            qn = list(qn) #ensure list format
-            if (len(qn) < maxLength):
-                paddedQn = qn + [padding]*(maxLength - len(qn))
-                paddedQuestions.append(paddedQn)
-            else:
-                paddedQuestions.append(qn)
-            qnLengths.append(len(qn))
-            
-        return paddedQuestions, qnLengths
 
 
-class TestProcessor(object):
+class TestProcessor(InputProcessor):
     '''
     For reading and processing Test dataset (without annotations)
     For submission to test server
     args:
     '''
-
     def __init__(self, qnFile, imgFile, config):
+        super(TestProcessor, self).__init__(config)
         print('Reading ' + imgFile)
         with open(imgFile) as jsonFile:
             self.imgData = json.load(jsonFile)
@@ -215,7 +184,6 @@ class TestProcessor(object):
         with open(qnFile) as jsonFile:
             self.qnData = json.load(jsonFile)['questions']
         
-        self.config  = config
         self.classToAnsMap = config.classToAnsMap
         self.classToAnsMap[-1] = -1
         self.mapWordToID = config.mapWordToID
@@ -278,5 +246,5 @@ class TestProcessor(object):
                 idList.append(self.mapWordToID[self.config.unkWord])
         return idList
         
-    
+
         

@@ -6,21 +6,20 @@ Created on 15 Jan 2018
 from LSTMIMGmodel import LSTMIMGmodel
 from LSTMIMG_LapConfig import LSTMIMG_LapConfig
 from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
-from InputProcessor import InputProcessor
-import pickle
-import csv
+from TrainProcessor import LSTMIMGProcessor
+import argparse
 
-def runtrain():
+def runtrain(args):
     #config = LSTMIMG_LapConfig(load=True)
-    config = LSTMIMG_GPUConfig(load=True)
+    config = LSTMIMG_GPUConfig(load=True, args=args)
     
-    trainReader = InputProcessor(config.trainAnnotFile, 
+    trainReader = LSTMIMGProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
                                  config.trainImgFile, 
                                  config,
                                  is_training=True)
     
-    valReader = InputProcessor(config.valAnnotFile, 
+    valReader = LSTMIMGProcessor(config.valAnnotFile, 
                                  config.rawQnValTestFile, 
                                  config.valImgFile, 
                                  config,
@@ -34,61 +33,14 @@ def runtrain():
     #model.train(dumReader, dumReader)
     model.destruct()
 
+def parseArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--seed', help='tf seed value', type=int)
+    parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
+    parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
+    args = parser.parse_args()
+    return args
 
-def makeSmallDummyData():
-    config = LSTMIMG_LapConfig()
-    trainReader = InputProcessor(config.trainAnnotFile, 
-                                 config.rawQnTrain, 
-                                 config.trainImgFile, 
-                                 config.ansClass1000File, 
-                                 config,
-                                 is_training=True)
-    
-    #dumReader = DummyReader()
-    dummyData = []
-    for i, (batch) in enumerate(
-            trainReader.getNextBatch(32)):
-        if i==100:
-            break
-        dummyData.append(batch)
-    
-    print('Completed producing dataset of size {}'.format(len(dummyData)))
-    file = '/media/jwong/Transcend/VQADataset/DummySets/dummyTupleBatchesLSTMIMG.pkl'
-    with open(file, 'wb') as f:
-            pickle.dump(dummyData, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print('Printed to file')
-    
-
-
-class DummyReader():
-    def __init__(self, config):
-        file = '/media/jwong/Transcend/VQADataset/DummySets/dummyTupleBatchesLSTMIMG.pkl'
-        with open(file, 'rb') as jFile:
-            print('Reading {}'.format(file))
-            self.tupList = pickle.load(jFile)
-        print('Reading ' + config.ansClass1000File)
-        self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(config.ansClass1000File)
-    
-    def getNextBatch(self, batch_size):
-        for tup in self.tupList:
-            yield tup
-    
-    def _loadAnsMap(self, ansClassFile):
-        #loads mapping: ans --> ans class index
-        with open(ansClassFile, 'rb') as ansFile:
-            reader = csv.reader(ansFile, delimiter=',')
-            ansVec = next(reader)
-        classToAnsMap = {}
-        ansClassMap = {}
-        for classIndex, word in enumerate(ansVec):
-            word = word.strip()
-            ansClassMap[word] = classIndex
-            classToAnsMap[classIndex] = word
-        print('Read in answer mapping with {} answers'.format(len(ansClassMap)))
-        return ansClassMap, classToAnsMap
-    
-    def getAnsMap(self):
-        return self.classToAnsMap
-        
 if __name__ == '__main__':
-    runtrain()
+    args = parseArgs()
+    runtrain(args)

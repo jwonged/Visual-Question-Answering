@@ -9,8 +9,8 @@ class LSTMIMG_GPUConfig(Config):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self, load):
-        super(LSTMIMG_GPUConfig, self).__init__(load)
+    def __init__(self, load, args):
+        super(LSTMIMG_GPUConfig, self).__init__(load, args)
         
         if self.imgModel == 'googlenet':
             print('Using GoogLeNet config')
@@ -22,10 +22,22 @@ class LSTMIMG_GPUConfig(Config):
             self.trainImgFile = '../resources/vggTrainImgFeatures.json'
             self.valImgFile = '../resources/vggValImgFeatures.json'
             self.testOfficialImgFile = '../resources/vggTestOfficialImgFeatures.json'
+            
+        self.saveModelPath = './results/LSTM{}/'.format(self.dateAppend) 
+        self.saveModelFile = self.saveModelPath + 'LSTM' + self.dateAppend
+        
+        self.csvResults = self.saveModelPath + 'Pred_LSTM_{}.csv'.format(self.dateAppend)
+        self.logFile = self.saveModelPath + 'Res_LSTM_{}.csv'.format(self.dateAppend)
+        
+        self.restoreModel = args.restorefile if args.restorefile else '.meta'
+        self.restoreModelPath = args.restorepath if args.restorepath else './'
+        
+        self.testOfficialResultFile = self.restoreModelPath + 'LSTM{}Submission.json'.format(self.dateAppend)
+        
     
-    csvResults = 'results/Pred_LSTMIMG_10Mar.csv'
-    logFile = 'results/Res_LSTMIMG_10Mar.csv'
-    saveModelFile = 'results/LSTMIMG1003'
+    #csvResults = 'results/Pred_LSTMIMG_10Mar.csv'
+    #logFile = 'results/Res_LSTMIMG_10Mar.csv'
+    #saveModelFile = 'results/LSTMIMG1003'
     
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
@@ -41,6 +53,7 @@ class LSTMIMG_GPUConfig(Config):
     rawQnTrain = '../resources/processedOpenEnded_trainQns.json' #
     rawQnValTestFile = '../resources/preprocessedValTestQnsOpenEnded.json' #
     
+    originalValQns = '../resources/OpenEnded_mscoco_val2014_questions.json'
     '''
     Annotations file in list with resolved single answer
     [
@@ -61,9 +74,13 @@ class LSTMIMG_GPUConfig(Config):
     60,753 val
     60,756 test
     '''
-    trainAnnotFile = '../resources/TrainAnnotList.json'
-    valAnnotFile = '../resources/ValAnnotList.json'
-    testAnnotFile = '../resources/TestAnnotList.json'
+    trainAnnotFile = '../resources/AllTrainAnnotResolvedList.json'
+    valAnnotFile = '../resources/AllValAnnotResolvedList.json'
+    testAnnotFile = '../resources/AllTestAnnotResolvedList.json'
+    
+    trainAnnotFileUnresolved = '../resources/TrainAnnotList.json'
+    valAnnotFileUnresolved = '../resources/ValAnnotList.json'
+    testAnnotFileUnresolved = '../resources/TestAnnotList.json'
     
     
     #raw image files

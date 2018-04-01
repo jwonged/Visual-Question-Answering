@@ -12,43 +12,18 @@ import pickle
 import os
 import csv
 
-from model_utils import getPretrainedw2v, AnswerProcessor
+from Base_Model import BaseModel
+from model_utils import getPretrainedw2v
 
-class LSTMIMGmodel(object):
+class LSTMIMGmodel(BaseModel):
     '''
     Uses Bi-LSTM to a fully connected layer
     '''
-
     def __init__(self, config):
-        self.config = config
+        super(LSTMIMGmodel, self).__init__(config)
         
-        f1 = open(config.logFile, 'wb')
-        self.logFile = csv.writer(f1)
-        self.logFile.writerow(['Initializing LSTMIMG\n'])
-        self.logFile.writerow([self._getDescription(config)])
-        
-        f2 =  open(config.csvResults , 'wb') 
-        self.predFile = csv.writer(f2)
-        self.predFile.writerow(
-            ['Epoch','Question', 'Prediction', 'Label', 'Pred Class',
-             'label class', 'Correct?', 'img id', 'qn_id'])
-        
-        self.ansProcessor = AnswerProcessor()
-        self.classToAnsMap = config.classToAnsMap
-        self.sess   = None
-        self.saver  = None
-        
-    def _getDescription(self, config):
-        info = 'model: {}, classes: {}, batchSize: {}, \
-            dropout: {}, optimizer: {}, lr: {}, decay: {}, \
-             clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
-             usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}'.format(
-                config.modelStruct, config.nOutClasses, config.batch_size,
-                config.dropoutVal, config.modelOptimizer, config.lossRate,
-                config.lossRateDecay, config.max_gradient_norm, config.shuffle,
-                config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
-                config.LSTMType, config.elMult, config.imgModel)
-        return info + 'fc: 2 layers (1000)'
+    def comment(self):
+        return 'Standard LSTMIMG model'
     
     def _addPlaceholders(self):
         #add network placeholders
@@ -181,9 +156,9 @@ class LSTMIMGmodel(object):
         #Handle output according to model structure
         with tf.variable_scope('Combine_modes'):
             if self.config.modelStruct == 'imagePerWord':
-                self.LSTMOutput = lstmOutput 
+                self.multimodalOutput = lstmOutput 
             elif self.config.modelStruct == 'imageAsFirstWord':
-                self.LSTMOutput = lstmOutput
+                self.multimodalOutput = lstmOutput
             else: #imageAfterLSTM
                 if self.config.elMult:
                     print('Using pointwise mult')
@@ -195,18 +170,18 @@ class LSTMIMGmodel(object):
                     #dropout after img mapping layer
                     img_vecs = tf.nn.dropout(img_vecs, self.dropout)
                         
-                    self.LSTMOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
+                    self.multimodalOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
                 else: #using concat
                     print('Using concat')
-                    self.LSTMOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+                    self.multimodalOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            #hidden_layer1 = tf.layers.dense(inputs=self.LSTMOutput,
+            #hidden_layer1 = tf.layers.dense(inputs=self.multimodalOutput,
             #                               units=LSTMOutputSize/2,
             #                               activation=tf.tanh,
             #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
-            hidden_layer2 = tf.layers.dense(inputs=self.LSTMOutput,
+            hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
                                            units=1000,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -222,6 +197,9 @@ class LSTMIMGmodel(object):
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
+        predProbs = tf.nn.softmax(y)
+        self.topK = tf.nn.top_k(predProbs, name='topK')
+        
         #define losses
         with tf.variable_scope('loss'):
             crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
@@ -236,194 +214,12 @@ class LSTMIMGmodel(object):
         #init vars and session
         self._initSession()
         
-    
-    def _addOptimizer(self):
-        #train optimizer
-        with tf.variable_scope("train_step"):
-            if self.config.modelOptimizer == 'adam': 
-                print('Using adam optimizer')
-                optimizer = tf.train.AdamOptimizer(self.lr)
-            elif self.config.modelOptimizer == 'adagrad':
-                print('Using adagrad optimizer')
-                optimizer = tf.train.AdagradOptimizer(self.lr)
-            else:
-                print('Using grad desc optimizer')
-                optimizer = tf.train.GradientDescentOptimizer(self.lr)
-                
-            if self.config.max_gradient_norm > 0: # gradient clipping if clip is positive
-                grads, vs     = zip(*optimizer.compute_gradients(self.loss))
-                grads, gnorm  = tf.clip_by_global_norm(grads, self.config.max_gradient_norm)
-                self.train_op = optimizer.apply_gradients(zip(grads, vs), name='trainModel')
-            else:
-                self.train_op = optimizer.minimize(self.loss, name='trainModel')
-    
-    def _initSession(self):
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver()
-        self.merged = tf.summary.merge_all()
-        self.tb_writer = tf.summary.FileWriter('./tensorboard', self.sess.graph)
-        
-        self.logFile.writerow(['Model constructed.'])
-        print('Complete Model Construction')
-        
-    def train(self, trainReader, valReader):
-        print('Starting model training')
-        self.logFile.writerow([
-            'Epoch', 'Val score', 'Train score', 'Train correct', 
-            'Train predictions', 'Val correct', 'Val predictions'])
-        #self.add_summary()
-        highestScore = 0
-        nEpochWithoutImprovement = 0
-        
-        for nEpoch in range(self.config.nTrainEpochs):
-            msg = 'Epoch {} \n'.format(nEpoch)
-            print(msg)
-            #self.logFile.write(msg)
-
-            score = self._run_epoch(trainReader, valReader, nEpoch)
-            self.config.lossRate *= self.config.lossRateDecay
-
-            # early stopping and saving best parameters
-            if score >= highestScore:
-                nEpochWithoutImprovement = 0
-                self.saver.save(self.sess, self.config.saveModelFile)
-                highestScore = score
-                #self.logFile.writerow('New score\n')
-            else:
-                nEpochWithoutImprovement += 1
-                if nEpochWithoutImprovement >= self.config.nEpochsWithoutImprov:
-                    self.logFile.writerow([
-                        'Early stopping at epoch {} with {} epochs without improvement'.format(
-                            nEpoch+1, nEpochWithoutImprovement)])
-                    break
-    
-    
-    def _run_epoch(self, trainReader, valReader, nEpoch):
-        '''
-        Runs 1 epoch and returns val score
-        '''
-        # Potentially add progbar here
-        batch_size = self.config.batch_size
-        correct_predictions, total_predictions = 0., 0.
-        qnAccs = []
-        
-        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _, ansList) in enumerate(
-            trainReader.getNextBatch(batch_size)):
-            
-            feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.labels : labels,
-                self.lr : self.config.lossRate,
-                self.dropout : self.config.dropoutVal
-            }
-            _, _, labels_pred = self.sess.run(
-                [self.train_op, self.loss, self.labels_pred], feed_dict=feed)
-            
-            for label, label_pred, ansList in zip(labels, labels_pred, ansList):
-                #VQA evaluation metric
-                pred_ans = self.config.classToAnsMap[label_pred]
-                pred_ans = self.ansProcessor.processAnswer(pred_ans)
-                matchedAns = 0
-                for ans in ansList:
-                    ans = self.ansProcessor.processAnswer(ans)
-                    if ans == pred_ans:
-                        matchedAns += 1
-                qnAcc = min(1, float(matchedAns)/3)
-                qnAccs.append(qnAcc)
-                
-                #single strict accuracy eval
-                if label == label_pred:
-                    correct_predictions += 1
-                total_predictions += 1
-                
-            '''
-            if (i%4000==0):
-                valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
-                resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
-                    nEpoch, i, valAcc, correct_predictions/total_predictions if correct_predictions > 0 else 0 )
-                self.logFile.write(resMsg)
-                print(resMsg)'''
-            
-        epochScore, valCorrect, valTotalPreds, vqaEvalValScore = self.runVal(valReader, nEpoch)
-        vqaEvalTrainScore = round(100*float(sum(qnAccs)/len(qnAccs)), 2)
-        trainScore = correct_predictions/total_predictions if correct_predictions > 0 else 0
-        epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, \
-                total train predictions={3}\n'.format(
-                    nEpoch, epochScore, trainScore, total_predictions)
-        epMsg2 = 'vqaEvalMetrics: train score = {0}\%, val score = {1}\%\n'.format(
-                vqaEvalTrainScore, vqaEvalValScore)
-        print(epMsg + epMsg2)
-        self.logFile.writerow([
-            nEpoch, epochScore, trainScore, correct_predictions, total_predictions, 
-            valCorrect, valTotalPreds, vqaEvalValScore])
-        return epochScore
-    
-    def runVal(self, valReader, nEpoch, is_training=True):
-        """Evaluates performance on val set
-        Args:
-            valReader:
-        Returns:
-            result:
-        """
-        accuracies = []
-        qnAccs = []
-        correct_predictions, total_predictions = 0., 0.
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids,_, ansLists in \
-            valReader.getNextBatch(self.config.batch_size):
-            feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.labels : labels,
-                self.dropout : 1.0
-            }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            
-            for label, label_pred, ansList, qn, img_id in zip(
-                labels, labels_pred, ansLists, rawQns, img_ids):
-                
-                #VQA evaluation metric
-                pred_ans = self.config.classToAnsMap[label_pred]
-                pred_ans = self.ansProcessor.processAnswer(pred_ans)
-                matchedAns = 0
-                for ans in ansList:
-                    ans = self.ansProcessor.processAnswer(ans)
-                    if ans == pred_ans:
-                        matchedAns += 1
-                qnAcc = min(1, float(matchedAns)/3)
-                qnAccs.append(qnAcc)
-                
-                #single strict accuracy eval
-                if label == label_pred:
-                    correct_predictions += 1
-                total_predictions += 1
-                accuracies.append(label==label_pred)
-                
-                #log predictions for non-training val
-                if not is_training:
-                    self._logToCSV(nEpoch, qn, self.classToAnsMap[label_pred], 
-                                self.classToAnsMap[label], 
-                                label_pred, label, label==label_pred, img_id)
-                
-        vqaEvalValScore = round(100*float(sum(qnAccs)/len(qnAccs)), 2)
-        valAcc = np.mean(accuracies)
-        return valAcc, correct_predictions, total_predictions, vqaEvalValScore
-    
-    def _logToCSV(self, nEpoch, qn, prediction, label, 
-                  predClass, labelClass, correct, img_id):
-        self.predFile.writerow(
-                    [nEpoch, qn, prediction, label, predClass, 
-                     labelClass, correct, img_id])
-        
     def loadTrainedModel(self):
         restoreModel = self.config.restoreModel
         print('Restoring model from: {}'.format(restoreModel))
         self.sess = tf.Session()
         self.saver = saver = tf.train.import_meta_graph(restoreModel)
-        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.restoreModelPath))
+        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.saveModelPath))
         
         graph = tf.get_default_graph()
         self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
@@ -433,80 +229,9 @@ class LSTMIMGmodel(object):
         self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
+        self.topK = graph.get_tensor_by_name('topK:0')
         
         self.saver = tf.train.Saver()
-        
-    def runPredict(self, valReader):
-        
-        ###########Needs fixing to update vqa eval metric
-        '''For internal val/test set with labels'''
-        accuracies = []
-        correct_predictions, total_predictions = 0., 0.
-        for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids \
-            in valReader.getNextBatch(self.config.batch_size):
-            feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.dropout : 1.0
-            }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            
-            for lab, labPred, qn, img_id, qn_id in zip(
-                labels, labels_pred, rawQns, img_ids, qn_ids):
-                if (lab==labPred):
-                    correct_predictions += 1
-                total_predictions += 1
-                accuracies.append(lab==labPred)
-                self._logToCSV(
-                    '', qn, 
-                    self.classToAnsMap[labPred],
-                    self.classToAnsMap[lab], 
-                    labPred, lab, lab==labPred, img_id)
-                
-        valAcc = np.mean(accuracies)
-        print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
-        return valAcc, correct_predictions, total_predictions
-        
-    
-    def runTest(self, testReader, jsonOutputFile):
-        '''For producing official test results for submission to server
-        '''
-        print('Starting test run...')
-        allQnIds, allPreds = [], []
-        for qnAsWordIDsBatch, seqLens, img_vecs, rawQns, img_ids, qn_ids \
-            in testReader.getNextBatch(self.config.batch_size):
-            feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.dropout : 1.0
-            }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            
-            for labPred, qn_id in zip(labels_pred, qn_ids):
-                allQnIds.append(qn_id)
-                allPreds.append(self.classToAnsMap[labPred])
-        
-        print('Total predictions: {}'.format(len(allPreds)))
-        self._generateResultOutput(allQnIds, allPreds, jsonOutputFile)
-        
-    def _generateResultOutput(self, qn_ids, preds, jsonFile):
-        '''
-        result{
-            "question_id": int,
-            "answer": str
-        }'''
-        results = []
-        for qn_id, pred in zip(qn_ids, preds):
-            singleResult = {}
-            singleResult["question_id"] = int(qn_id)
-            singleResult["answer"] = str(pred)
-            results.append(singleResult)
-        
-        with open(jsonFile, 'w') as jsonOut:
-            print('Writing to {}'.format(jsonFile))
-            json.dump(results, jsonOut)
         
     def destruct(self):
         pass

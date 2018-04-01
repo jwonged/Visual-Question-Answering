@@ -4,12 +4,14 @@ Created on 9 Feb 2018
 @author: jwong
 '''
 import pickle
+import datetime
+import calendar
 
 class Config(object):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self, load):
+    def __init__(self, load, args):
         if load:
             print('Reading ' + self.preprocessedVQAMapsFile)
             with open(self.preprocessedVQAMapsFile, 'rb') as f:
@@ -24,6 +26,16 @@ class Config(object):
             self.mapWordToID = data['wordToIDmap']
             self.singleCountWords = data['singleCountWords']
             self.vocabSize = len(self.mapWordToID)
+        
+        self.randomSeed = args.seed if args.seed else 42
+        self.elMult = True #False = concat; True = Mult
+        self.LSTMType = 'bi' #'bi' or 'single'
+        
+        self.debugMode = False
+        
+        now = datetime.datetime.now()
+        self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
+                                            now.hour, now.minute)
     
     #'imagePerWord' or 'imageAsFirstWord' or 'imageAfterLSTM'
     modelStruct = 'imageAfterLSTM'
@@ -35,17 +47,17 @@ class Config(object):
     
     LSTM_num_units = 512
     fclayerAfterLSTM = 1024
-    elMult = True #False = concat; True = Mult
-    LSTMType = 'bi' #'bi' or 'single'
+    
     LSTMCellSizes = [512] #for single only
     
     nTrainEpochs = 50
     nEpochsWithoutImprov = 5
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
-    lossRateDecay = 1 #noDecay = 1; usually ~0.9
-    max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
+    decayAfterEpoch = 15
+    learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    learningRateDecay = 1 #noDecay = 1; usually ~0.9
+    max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
@@ -95,8 +107,8 @@ class Config_46GoogLeNet(object):
     nEpochsWithoutImprov = 5
     dropoutVal = 0.5 #standard 0.5, 1.0 for none
     modelOptimizer = 'adam'
-    lossRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
-    lossRateDecay = 1 #noDecay = 1; usually ~0.9
+    learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
+    learningRateDecay = 1 #noDecay = 1; usually ~0.9
     max_gradient_norm = -1 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'
