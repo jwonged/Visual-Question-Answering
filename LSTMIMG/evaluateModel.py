@@ -45,7 +45,7 @@ def validateInternalTestSet(args):
     model = LSTMIMGmodel(config)
     
     model.loadTrainedModel(restoreModel, restoreModelPath)
-    predFile = '{}PredsAtt{}.csv'.format(restoreModelPath, args.att)
+    predFile = '{}PredsLSTMEverything.csv'.format(restoreModelPath)
     results, strictAcc = model.runPredict(valTestReader, predFile)
     model.destruct()
     valTestReader.destruct()
@@ -56,10 +56,10 @@ def validateInternalTestSet(args):
     vqaEval = VQAEval(vqa, vqaRes, n=2)
     vqaEval.evaluate() 
     print('Writing to file..')
-    writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
+    writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, strictAcc)
         
-def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
-    outputFile = '{}resultbrkdwnAtt{}.csv'.format(restoreModelPath, args.att)
+def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, strictAcc):
+    outputFile = '{}resultbrkdwnLSTM.csv'.format(restoreModelPath)
     with open(outputFile, 'wb') as csvfile:
         logWriter = csv.writer(csvfile)
         logWriter.writerow(['StrictAcc: {}'.format(strictAcc)])
