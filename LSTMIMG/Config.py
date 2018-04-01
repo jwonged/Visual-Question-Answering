@@ -56,7 +56,7 @@ class Config(object):
     modelOptimizer = 'adam'
     decayAfterEpoch = 15
     learningRate = 0.0001 #0.001 for adam, 0.01 for gradDesc
-    learningRateDecay = 1 #noDecay = 1; usually ~0.9
+    learningRateDecay = 0.95 #noDecay = 1; usually ~0.9
     max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     
     unkWord = '<UNK>'
