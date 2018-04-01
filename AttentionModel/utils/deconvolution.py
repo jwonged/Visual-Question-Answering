@@ -73,7 +73,7 @@ def reVGGNet19():
     returns a 14x14 key dictionary
     element[i][j] is a set of all initial pixel coordinates that it was created from
     """
-    im = mkIm(224)
+    im = mkIm(448)
     conv1 = convdic(im)
     conv2 = convdic(conv1)
     pool1 = pooling(conv2)
