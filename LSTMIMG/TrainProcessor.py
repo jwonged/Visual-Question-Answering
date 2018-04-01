@@ -26,6 +26,7 @@ class LSTMIMGProcessor(InputProcessor):
         self.imgData = self._readJsonFile(imgFile)
         self.annots = self._readJsonFile(annotFile)
         self.rawQns = self._readJsonFile(qnFile)
+        self.datasetSize = len(self.annots)
         
         #print('Reading ' + ansClassFile)
         #self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(ansClassFile)
