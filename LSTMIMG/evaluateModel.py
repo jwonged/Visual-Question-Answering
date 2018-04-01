@@ -38,7 +38,7 @@ def validateInternalTestSet(args):
     print('Running Validation Test on Model')
     valTestReader = LSTMIMGProcessor(config.testAnnotFile, 
                                  config.rawQnValTestFile, 
-                                 config.valImgFile, 
+                                 config.testImgFile, 
                                  config,
                                  is_training=False)
     

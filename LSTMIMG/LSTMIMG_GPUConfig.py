@@ -39,6 +39,9 @@ class LSTMIMG_GPUConfig(Config):
     #logFile = 'results/Res_LSTMIMG_10Mar.csv'
     #saveModelFile = 'results/LSTMIMG1003'
     
+    testOfficialDevQns = '../resources/OpenEnded_mscoco_test-dev2015_questions.json'
+    testOfficialImgFeatures = '../resources/OfficialTestGoogLeNetImgFeats.json'
+    
     '''Pickle file Contains:
             singleCountWords , wordToIDmap, 
             classToAnsMap, ansToClassMap
