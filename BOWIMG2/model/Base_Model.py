@@ -217,6 +217,7 @@ class BaseModel(object):
         self.accuracy = graph.get_tensor_by_name('accuracy:0')
         self.word_ids = graph.get_tensor_by_name('word_ids:0')
         self.img_vecs = graph.get_tensor_by_name('img_vecs:0')
+        self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
         self.topK = graph.get_tensor_by_name('topK:0')
