@@ -11,8 +11,8 @@ import time
 import os
 
 from model_utils import generateForSubmission
-from ...vqaTools.vqaInternal import VQA
-from ...vqaTools.vqaEval import VQAEval
+from ..vqaTools.vqaInternal import VQA
+from ..vqaTools.vqaEval import VQAEval
 import numpy as np
 import tensorflow as tf 
 
