@@ -29,7 +29,7 @@ def runtrain(args):
     
     model = LSTMIMGmodel(config)
     model.construct()
-    model.train(trainReader, valReader)
+    model.train(trainReader, valReader, config.logFile)
     #model.train(dumReader, dumReader)
     model.destruct()
 
