@@ -213,12 +213,11 @@ class LSTMIMGmodel(BaseModel):
         #init vars and session
         self._initSession()
         
-    def loadTrainedModel(self):
-        restoreModel = self.config.restoreModel
+    def loadTrainedModel(self, restoreModel, restoreModelPath):
         print('Restoring model from: {}'.format(restoreModel))
         self.sess = tf.Session()
         self.saver = saver = tf.train.import_meta_graph(restoreModel)
-        saver.restore(self.sess, tf.train.latest_checkpoint(self.config.saveModelPath))
+        saver.restore(self.sess, tf.train.latest_checkpoint(restoreModelPath))
         
         graph = tf.get_default_graph()
         self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
