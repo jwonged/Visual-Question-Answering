@@ -73,9 +73,9 @@ class BOWIMG_GPUConfig(Config):
     valAnnotFile = '../resources/AllValAnnotResolvedList.json'
     testAnnotFile = '../resources/AllTestAnnotResolvedList.json'
     
-    #trainAnnotFile = '../resources/TrainAnnotList.json'
-    #valAnnotFile = '../resources/ValAnnotList.json'
-    #testAnnotFile = '../resources/TestAnnotList.json'
+    trainAnnotFileUnresolved = '../resources/TrainAnnotList.json'
+    valAnnotFileUnresolved = '../resources/ValAnnotList.json'
+    testAnnotFileUnresolved = '../resources/TestAnnotList.json'
     
     
     #raw image files
