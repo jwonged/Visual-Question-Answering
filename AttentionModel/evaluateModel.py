@@ -75,6 +75,7 @@ def validateInternalTestSet(args):
     vqaRes = vqa.loadRes(results, config.originalValQns)
     vqaEval = VQAEval(vqa, vqaRes, n=2)
     vqaEval.evaluate() 
+    
     print('Writing to file..')
     writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
         
@@ -86,16 +87,26 @@ def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
         msg = "Overall Accuracy is: %.02f\n" %(vqaEval.accuracy['overall'])
         logWriter.writerow([msg])
         print(msg)
+        
+        #qn type breakdown
         msg = "Per Question Type Accuracy is the following:"
         logWriter.writerow([msg])
         print(msg)
+        for quesType in vqaEval.accuracy['perQuestionType']:
+            msg = "%s : %.02f" %(quesType, vqaEval.accuracy['perQuestionType'][quesType])
+            print(msg)
+            logWriter.writerow([msg])
         
+        #answer type breakdown
+        msg = "Per Answer Type Accuracy is the following:"
+        print(msg)
+        logWriter.writerow([msg])
         for ansType in vqaEval.accuracy['perAnswerType']:
             msg = "%s : %.02f" %(ansType, vqaEval.accuracy['perAnswerType'][ansType])
             logWriter.writerow([msg])
             print(msg)
         
-        # demo how to use evalQA to retrieve low score result
+        #Retrieve random low score answer
         evals = [quesId for quesId in vqaEval.evalQA if vqaEval.evalQA[quesId]<35]   #35 is per question percentage accuracy
         if len(evals) > 0:
             print 'ground truth answers'
