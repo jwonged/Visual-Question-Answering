@@ -21,8 +21,10 @@ class Attention_LapConfig(Config):
     restoreModelPath = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/'
     testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/47LSTMIMG11MarSubmission.json'
     
-    restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/att22Mar0-12.meta'
-    restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/'
+    restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att29Mar22-27/att29Mar22-27.meta'
+    restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att29Mar22-27/'
+    #restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/att22Mar0-12.meta'
+    #restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/'
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
     

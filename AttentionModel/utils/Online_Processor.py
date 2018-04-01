@@ -6,7 +6,7 @@ Created on 30 Mar 2018
 import shelve
 import pickle
 from nltk import word_tokenize
-from AttentionModel.utils.Input_Processor import InputProcessor
+from utils.Input_Processor import InputProcessor
 
 class OnlineProcessor(InputProcessor):
     """

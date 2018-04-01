@@ -57,7 +57,7 @@ class OutputGenerator(object):
             plt.imshow(imgvec)
             plt.axis('off')
             plt.subplot(2,1,2)
-            #plt.xticks(np.arange(len(toks)), (toks))
+            plt.xticks(np.arange(len(toks)), (toks))
             plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
             plt.show()
         

@@ -7,6 +7,7 @@ from LSTMIMGmodel import LSTMIMGmodel
 from LSTMIMG_LapConfig import LSTMIMG_LapConfig
 from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
 from TrainProcessor import LSTMIMGProcessor
+from evaluateModel import loadOfficialTest, validateInternalTestSet
 import argparse
 
 def runtrain(args):
@@ -32,6 +33,8 @@ def runtrain(args):
     model.train(trainReader, valReader, config.logFile)
     #model.train(dumReader, dumReader)
     model.destruct()
+    
+    return config
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -48,4 +51,6 @@ def parseArgs():
 
 if __name__ == '__main__':
     args = parseArgs()
-    runtrain(args)
+    config = runtrain(args)
+    loadOfficialTest(args, config.saveModelPath, config.saveModelFile+'.meta')
+    validateInternalTestSet(args, config.saveModelPath, config.saveModelFile+'.meta')

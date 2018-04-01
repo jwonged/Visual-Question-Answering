@@ -13,7 +13,7 @@ import pickle
 import csv
 
 
-def loadOfficialTest(args):
+def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
     config = LSTMIMG_GPUConfig(load=True, args=args)
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
@@ -21,19 +21,23 @@ def loadOfficialTest(args):
                                config=config)
     
     model = LSTMIMGmodel(config)
-    model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
+    if restoreModel is None:
+        model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
+    else:
+        model.loadTrainedModel(restoreModel, restoreModelPath)
     model.runTest(testReader, config.testOfficialResultFile)
     model.destruct()
 
-def validateInternalTestSet(args):
+def validateInternalTestSet(args, restoreModel=None, restoreModelPath=None):
     from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
     #config = LSTMIMG_LapConfig(load=True, args)
     config = LSTMIMG_GPUConfig(load=True, args=args)
     
-    restoreModel = config.restoreModel
-    restoreModelPath = config.restoreModelPath
+    if restoreModel is None:
+        restoreModel = config.restoreModel
+        restoreModelPath = config.restoreModelPath
     
     print('Running Validation Test on Model')
     valTestReader = LSTMIMGProcessor(config.testAnnotFile, 
