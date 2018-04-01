@@ -47,6 +47,8 @@ def parseArgs():
     parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='softmax')
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
+    parser.add_argument('--notopk', help='No loading topk', action='store_true')
+    parser.add_argument('--noqnatt', help='No loading qnAtt', action='store_true')
     args = parser.parse_args()
     return args
     

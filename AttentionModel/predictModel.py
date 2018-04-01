@@ -134,6 +134,8 @@ def parseArgs():
     parser.add_argument('-a', '--action', choices=['vtest', 'vis', 'solve',
                                                     'qn', 'visval', 'solveqn', 'pred'], default='vis')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
+    parser.add_argument('--notopk', help='No loading topk', action='store_true')
+    parser.add_argument('--noqnatt', help='No loading qnAtt', action='store_true')
     args = parser.parse_args()
     return args
 

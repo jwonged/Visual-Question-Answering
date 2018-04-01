@@ -118,6 +118,11 @@ def parseArgs():
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('-a', '--action', choices=['otest', 'val'], default='val')
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
+    parser.add_argument('--lstmtype', choices=['bi', 'uni'], default='bi')
+    parser.add_argument('--useuntrainedembed', help='use untrained embeddings', action='store_false')
+    parser.add_argument('--donttrainembed', help='use untrained embeddings', action='store_false')
+    parser.add_argument('--useconcat', help='use concat instead of elmult', action='store_false')
+    parser.add_argument('--noshuffle', help='Do not shuffle dataset', action='store_false')
     args = parser.parse_args()
     return args
 

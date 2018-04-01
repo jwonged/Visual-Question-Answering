@@ -41,6 +41,8 @@ class Config(object):
         self.attentionFunc = args.attfunc if args.attfunc else 'softmax'
         
         self.debugMode = False
+        self.notopk = args.notopk
+        self.noqnatt = args.noqnatt
         
         now = datetime.datetime.now()
         self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],

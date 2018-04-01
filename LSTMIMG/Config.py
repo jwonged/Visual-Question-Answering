@@ -28,8 +28,11 @@ class Config(object):
             self.vocabSize = len(self.mapWordToID)
         
         self.randomSeed = args.seed if args.seed else 42
-        self.elMult = True #False = concat; True = Mult
-        self.LSTMType = 'bi' #'bi' or 'single'
+        self.elMult = args.useconcat #False = concat; True = Mult
+        self.LSTMType = args.lstmtype #'bi' or 'single'
+        self.usePretrainedEmbeddings = args.untrainedembed
+        self.trainEmbeddings = args.donttrainembed
+        self.shuffle = args.noshuffle
         
         self.debugMode = False
         
@@ -61,9 +64,7 @@ class Config(object):
     
     unkWord = '<UNK>'
     probSingleToUNK = 0.1
-    usePretrainedEmbeddings = True
-    shuffle = True
-    trainEmbeddings = True
+    
     
     if imgModel == 'googlenet':
         imgVecSize = 1024

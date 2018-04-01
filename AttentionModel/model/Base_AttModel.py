@@ -231,7 +231,10 @@ class BaseModel(object):
         self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
-        self.topK = graph.get_tensor_by_name('topK:0')
+        
+        if not self.config.notopk:
+            self.topK = graph.get_tensor_by_name('topK:0')
+            
         self.saver = tf.train.Saver()
         
         return graph 
