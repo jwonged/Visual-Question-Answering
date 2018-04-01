@@ -6,10 +6,8 @@ Created on 20 Jan 2018
 import json
 import csv
 from nltk import word_tokenize
-import pickle
 import numpy as np
 import random
-from model_utils import resolveAnswer
 from Input_Processor import InputProcessor
 
 class LSTMIMGProcessor(InputProcessor):
