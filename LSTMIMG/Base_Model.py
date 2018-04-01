@@ -254,7 +254,6 @@ class BaseModel(object):
         
         return graph 
     
-    #overriden in QnAttModel
     def runPredict(self, valReader, predfile):
         """Evaluates performance on internal valtest set
         Args:
@@ -281,7 +280,7 @@ class BaseModel(object):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run([self.labels_pred], feed_dict=feed)
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
             for lab, labPred, qn, img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
