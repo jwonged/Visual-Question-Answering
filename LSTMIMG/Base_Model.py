@@ -19,13 +19,10 @@ import tensorflow as tf
 
 class BaseModel(object):
     '''
-    Base Model for any of the attention models (ie uses conv5_3 features)
+    Base Model for LSTMIMG
     '''
     def __init__(self, config):
         self.config = config
-        
-        if not os.path.exists(self.config.saveModelPath):
-            os.makedirs(self.config.saveModelPath)
         
         tf.set_random_seed(self.config.randomSeed)
         self.classToAnsMap = config.classToAnsMap
@@ -89,6 +86,9 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
+        if not os.path.exists(self.config.saveModelPath):
+            os.makedirs(self.config.saveModelPath)
+            
         print('Starting model training')
         self.f1 = open(logFile, 'wb')
         self.logFile = csv.writer(self.f1)

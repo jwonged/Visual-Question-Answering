@@ -27,7 +27,6 @@ class LSTMIMGmodel(BaseModel):
     
     def _addPlaceholders(self):
         #add network placeholders
-        self.logFile.writerow(['Constructing model...\n'])
         
         # shape = (batch size, max length of sentence in batch)
         self.word_ids = tf.placeholder(tf.int32, shape=[None, None], name="word_ids")
