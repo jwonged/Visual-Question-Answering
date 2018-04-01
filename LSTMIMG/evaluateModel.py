@@ -13,7 +13,7 @@ import pickle
 import csv
 
 
-def loadOfficialTest():
+def loadOfficialTest(args):
     config = LSTMIMG_GPUConfig(load=True, args=args)
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
