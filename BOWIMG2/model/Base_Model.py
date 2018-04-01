@@ -22,9 +22,6 @@ class BaseModel(object):
     def __init__(self, config):
         self.config = config
         
-        if not os.path.exists(self.config.saveModelPath):
-            os.makedirs(self.config.saveModelPath)
-        
         tf.set_random_seed(self.config.randomSeed)
         self.classToAnsMap = config.classToAnsMap
         self.sess   = None
@@ -79,6 +76,9 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
+        if not os.path.exists(self.config.saveModelPath):
+            os.makedirs(self.config.saveModelPath)
+            
         print('Starting model training')
         self.f1 = open(logFile, 'wb')
         self.logFile = csv.writer(self.f1)
@@ -243,6 +243,7 @@ class BaseModel(object):
              'label class', 'Correct?', 'img id', 'qn_id')
         
         accuracies = []
+        results = []
         correct_predictions, total_predictions = 0., 0.
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
@@ -252,8 +253,7 @@ class BaseModel(object):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run(
-                [self.labels_pred], feed_dict=feed)
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
             for lab, labPred, qn, img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
@@ -267,10 +267,15 @@ class BaseModel(object):
                                lab=self.classToAnsMap[lab], 
                                predClass=labPred, labClass=lab, 
                                correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                
+                currentPred = {}
+                currentPred['question_id'] = qn_id
+                currentPred['answer'] = self.classToAnsMap[labPred]
+                results.append(currentPred)
             
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
-        return valAcc, correct_predictions, total_predictions
+        return results, valAcc
     
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server
