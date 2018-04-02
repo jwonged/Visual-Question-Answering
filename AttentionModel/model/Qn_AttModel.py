@@ -147,21 +147,23 @@ class QnAttentionModel(BaseModel):
             denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1) #[b, 1]
             self.qnAtt_alpha = tf.div(masked_expRegionWs, denominator, name='qn_alpha') #[b, maxLen]
             
+            #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
+            qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
+            qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, lstmOutput), axis=1)
+            #[b, 1024]
+            
             if self.config.debugMode:
                 self.qnAtt_regionWeights = qnAtt_regionWeights
                 self.exp_regionWs = exp_regionWs
                 self.mask = mask 
                 self.masked_expRegionWs = masked_expRegionWs
                 self.denominator = denominator
+                self.qnAtt_alpha = qnAtt_alpha
             
             print('mask shape: {}'.format(mask.get_shape()))
             print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
             print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
-            #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
-            qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
-            qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, lstmOutput), axis=1)
-            #[b, 1024]
         return qnContext
     
     def _addImageAttention(self, qnContext, flattenedImgVecs):

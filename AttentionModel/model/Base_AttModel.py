@@ -145,10 +145,11 @@ class BaseModel(object):
             }
             
             if (i==1 or i==20 or i == 50) and self.config.debugMode:
-                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we = self.sess.run(
+                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
-                 self.masked_expRegionWs, self.denominator, self.qnAtt_alpha, self.word_embeddings], feed_dict=feed)
+                 self.masked_expRegionWs, self.denominator, self.qnAtt_alpha, 
+                 self.word_embeddings, self.qnAtt_alpha], feed_dict=feed)
                 
                 print('RegionWs:\n {}'.format(regionWs))
                 #print('exp_regionWs:\n {}'.format(exp_regionWs))
@@ -156,6 +157,8 @@ class BaseModel(object):
                 #print('maskedRWs:\n {}'.format(maskedRWs))
                 print('denominators:\n {}'.format(denominator))
                 print('qnalp: {}\n'.format(qnalp))
+                print('qadim: {}\n'.format(qadim))
+                
                 print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n denominator:{}\n qnalp: {}'.format(
                     regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape, qnalp.shape))
                 print('we: {}\n'.format(we.shape))
