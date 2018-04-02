@@ -91,17 +91,17 @@ class AttModelInputProcessor(InputProcessor):
             if word in self.mapWordToID:
                 #prob chance of converting a single count word to UNK
                 if (self.is_training and word in self.singleCountWords and 
-                        np.random.uniform() < self.config.probSingleToUNK and word is not '?'):
+                        np.random.uniform() < self.config.probSingleToUNK and word != '?'):
                     idList.append(self.mapWordToID[self.config.unkWord])
                 else:
-                    if not self.config.removeQnMark or word is not '?':
+                    if not self.config.removeQnMark or word != '?':
                         print(word)
                         print('qn mark should not be here')
                         idList.append(self.mapWordToID[word]) 
             else:
                 if self.is_training:
                     raise ValueError('Error: all train words should be in map')
-                if not self.config.removeQnMark or word is not '?':
+                if not self.config.removeQnMark or word != '?':
                     idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
@@ -160,7 +160,7 @@ class TestProcessor(InputProcessor):
         idList = []
         for word in word_tokenize(qn):
             word = word.strip().lower()
-            if self.config.removeQnMark and word is '?':
+            if self.config.removeQnMark and word == '?':
                 continue
             if word in self.mapWordToID:
                     idList.append(self.mapWordToID[word]) 
