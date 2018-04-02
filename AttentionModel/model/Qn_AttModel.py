@@ -193,9 +193,11 @@ class QnAttentionModel(BaseModel):
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) #1536
             print('att_f = {}'.format(att_f.get_shape()))
             print('att_f = {}'.format(tf.shape(att_f)))
-            beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
+            #beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
+            #bias = tf.get_variable("bias", shape=[])
             att_flat = tf.reshape(att_f, shape=[-1, att_f.get_shape()[-1]]) #[b*196, 1536]
-            att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
+            #att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
+            att_flatWeights = tf.layers.dense(att_flat, 1, activation=None) #wx + b
             print('att_flatWeights = {}'.format(att_flatWeights.get_shape()))
             att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196])  #[b, 196]
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
