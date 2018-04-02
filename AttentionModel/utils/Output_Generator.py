@@ -45,7 +45,7 @@ class OutputGenerator(object):
             #img.show()
             imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
             
-            qn_2d = np.expand_dims(qnAl[:len(toks)], axis=0)
+            qn_2d = np.expand_dims(qnAl, axis=0)#[:len(toks)]
             print(qn_2d)
             plt.subplot(2,2,1)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
