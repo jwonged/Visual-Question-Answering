@@ -132,10 +132,10 @@ class QnAttentionModel(BaseModel):
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
             qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 1024]
-            #qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
+            qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
             
-            #qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
-            qnAtt_flatWeights = tf.layers.dense(qnAtt_flat, units=1, activation=None)
+            qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
+            #qnAtt_flatWeights = tf.layers.dense(qnAtt_flat, units=1, activation=None)
             qnAtt_regionWeights = tf.reshape(
                 qnAtt_flatWeights, shape=[-1, tf.shape(lstmOutput)[1]])
             #[b, seqLen(==nRegions)]

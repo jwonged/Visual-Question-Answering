@@ -150,8 +150,12 @@ class BaseModel(object):
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
                  self.masked_expRegionWs, self.denominator, self.qnAtt_alpha], feed_dict=feed)
                 
-                print('RegionWs:\n {} \n exp_regionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}, \n qnalp: {}\n'.format(
-                    regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp))
+                print('RegionWs:\n {}'.format(regionWs))
+                print('exp_regionWs:\n {}'.format(exp_regionWs))
+                #print('mask:\n {}'.format(mask))
+                #print('maskedRWs:\n {}'.format(maskedRWs))
+                print('denominators:\n {}'.format(denominator))
+                print('qnalp: {}\n'.format(qnalp))
                 print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n denominator:{}\n qnalp: {}'.format(
                     regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape, qnalp.shape))
                 
