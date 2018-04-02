@@ -149,7 +149,7 @@ class BaseModel(object):
                 [self.train_op, self.loss, self.labels_pred, self.merged,
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
                  self.masked_expRegionWs, self.denominator, self.qnAtt_alpha, 
-                 self.word_embeddings, self.qnAtt_alpha], feed_dict=feed)
+                 self.word_embeddings, self.qadim], feed_dict=feed)
                 
                 print('RegionWs:\n {}'.format(regionWs))
                 #print('exp_regionWs:\n {}'.format(exp_regionWs))

@@ -158,7 +158,7 @@ class QnAttentionModel(BaseModel):
                 self.mask = mask 
                 self.masked_expRegionWs = masked_expRegionWs
                 self.denominator = denominator
-                self.qnAtt_alpha = qnAtt_alpha
+                self.qadim = qnAtt_alpha
             
             print('mask shape: {}'.format(mask.get_shape()))
             print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
