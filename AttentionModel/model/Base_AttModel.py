@@ -144,7 +144,7 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if i == 20 and self.config.debugMode:
+            if i == 50 and self.config.debugMode:
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
