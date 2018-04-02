@@ -128,8 +128,8 @@ class QnAttentionModel(BaseModel):
         with tf.variable_scope("qn_attention"):
             #qnAtt_f output: [b x seqLen x 1024]
             qnAtt_f =  tf.layers.dense(lstmOutput, units=lstmOutput.get_shape()[-1],
-                                activation=tf.tanh,
-                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
+                                activation=tf.tanh)
+                                #kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
             qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 1024]
             qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
