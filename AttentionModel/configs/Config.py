@@ -77,7 +77,7 @@ class Config(object):
     usePretrainedEmbeddings = True
     shuffle = True
     trainEmbeddings = True
-    removeQnMark = False
+    removeQnMark = True
     
     
         
