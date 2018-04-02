@@ -164,9 +164,9 @@ class QnAttentionModel(BaseModel):
             print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
             print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
-        return qnContext
+        return qnContext 
     
-    def _addImageAttention(self, qnContext, flattenedImgVecs):
+    def _addImageAttention(self, qnContext, flattenedImgVecs, attComb=None, name='alpha'):
         #########Image Attention layer##########
         with tf.variable_scope("image_attention"):
             qnContext_in = tf.layers.dense(inputs=qnContext,
@@ -183,7 +183,18 @@ class QnAttentionModel(BaseModel):
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(flattenedImgVecs)[1],1]) 
             print('Shape of qnAatt_in : {}'.format(qnAtt_in.get_shape()))
-            att_in = tf.concat([imgAtt_in, qnAtt_in], axis=-1) #[bx196x1536]
+            
+            if attComb is None:
+                attComb = self.config.attComb
+            if attComb == 'concat':
+                att_in = tf.concat([imgAtt_in, qnAtt_in], axis=-1) #[bx196x1536]
+            elif attComb == 'mult':
+                qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
+                                                    imgAtt_in.get_shape([-1]),
+                                                    activation=tf.tanh)
+                att_in = tf.multiply(imgAtt_in, qnAtt_in_reshaped) #bx196x512
+            elif attComb == 'add':
+                att_in = tf.add(imgAtt_in, qnContext_in)
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
             #compute attention weights
@@ -206,13 +217,13 @@ class QnAttentionModel(BaseModel):
             #attention function
             if self.config.attentionFunc == 'softmax':
                 print('Using softmax attention function')
-                self.alpha = tf.nn.softmax(att_regionWeights, name='alpha') # [b,196]
+                self.alpha = tf.nn.softmax(att_regionWeights, name=name) # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
                 print('Using sigmoid attention function')
                 unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #b, 196]
                 norm_denominator = tf.expand_dims(
                     tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
-                self.alpha = tf.div(unnorm_alpha, norm_denominator, name='alpha') #[b, 196]
+                self.alpha = tf.div(unnorm_alpha, norm_denominator, name=name) #[b, 196]
             else:
                 raise NotImplementedError
             
@@ -223,16 +234,34 @@ class QnAttentionModel(BaseModel):
             imgContext = tf.reduce_sum(tf.multiply(alpha, flattenedImgVecs), axis=1) 
             
             return imgContext
+    
+    def _combineModes(self, imgContext, qnContext):
+        #Combine modes
+        if self.config.elMult:
+            print('Using pointwise mult')
+            #1024 --> 512 or 1536 --> 1024
+            attended_img_vecs = tf.layers.dense(inputs=imgContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+            #dropout after img mapping layer
+            attended_img_vecs = tf.nn.dropout(attended_img_vecs, self.dropout)
+                
+            multimodalOutput = tf.multiply(qnContext, attended_img_vecs) #size=512
+        else: #using concat
+            print('Using concat')
+            multimodalOutput = tf.concat([qnContext, attended_img_vecs], axis=-1)
         
+        return multimodalOutput
     
     def construct(self):
         self._addPlaceholders()
         
-        self.LSTMinput = self._addEmbeddings()
+        LSTMinput = self._addEmbeddings()
         
-        self.lstmOutput = self._addLSTM(self.LSTMinput) #[batch_size, max_time, 1024]
+        lstmOutput = self._addLSTM(LSTMinput) #[batch_size, max_time, 1024]
         
-        self.qnContext = self._addQuestionAttention(self.lstmOutput)
+        qnContext = self._addQuestionAttention(lstmOutput) #bx1024
             
         self.batch_size = tf.shape(self.img_vecs)[0]
         print('Batch size = {}'.format(self.batch_size))
@@ -240,26 +269,19 @@ class QnAttentionModel(BaseModel):
         #reshape image features [bx512x14x14] --> [bx196x512]
         transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
-        self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
+        flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
-        #image attention layer 
-        self.imgContext = self._addImageAttention(self.qnContext, self.flattenedImgVecs)
+        #image attention layer --> [bx1536]
+        imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha1')
         
-        #Combine modes
-        if self.config.elMult:
-            print('Using pointwise mult')
-            #1024 --> 512 or 1536 --> 1024
-            attended_img_vecs = tf.layers.dense(inputs=self.imgContext,
-                                       units=self.qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-            #dropout after img mapping layer
-            attended_img_vecs = tf.nn.dropout(attended_img_vecs, self.dropout)
-                
-            self.multimodalOutput = tf.multiply(self.qnContext, attended_img_vecs) #size=512
-        else: #using concat
-            print('Using concat')
-            self.multimodalOutput = tf.concat([self.qnContext, attended_img_vecs], axis=-1)
+        #combine modes
+        self.multimodalOutput = self._combineModes(imgContext, qnContext)
+        
+        if self.config.stackAtt:
+            print('Using stacked attention')
+            imgContext2 = self._addImageAttention(
+                self.multimodalOutput, flattenedImgVecs, attComb='concat', name='alpha2')
+            self.multimodalOutput = self._combineModes(imgContext2, self.multimodalOutput)
     
         #fully connected layer
         with tf.variable_scope("proj"):
@@ -297,7 +319,11 @@ class QnAttentionModel(BaseModel):
         
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
-        self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
+        if self.config.stackAtt:
+            self.alpha = graph.get_tensor_by_name('image_attention/alpha1:0')
+            self.alpha2 = graph.get_tensor_by_name('image_attention/alpha2:0')
+        else:
+            self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
         if not self.config.noqnatt:
             self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
     
