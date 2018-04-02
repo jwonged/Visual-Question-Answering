@@ -86,8 +86,9 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
-        if not os.path.exists(self.config.saveModelPath):
-            os.makedirs(self.config.saveModelPath)
+        if not self.config.debugmode:
+            if not os.path.exists(self.config.saveModelPath):
+                os.makedirs(self.config.saveModelPath)
             
         print('Starting model training')
         self.f1 = open(logFile, 'wb')
