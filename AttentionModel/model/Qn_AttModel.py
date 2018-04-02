@@ -132,9 +132,10 @@ class QnAttentionModel(BaseModel):
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('qnAtt_f shape: {}'.format(qnAtt_f.get_shape()))
             qnAtt_flat = tf.reshape(qnAtt_f, shape=[-1, qnAtt_f.get_shape()[-1]]) #[b*seqlen, 1024]
-            qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
+            #qnAtt_beta = tf.get_variable("beta", shape=[qnAtt_f.get_shape()[-1], 1], dtype=tf.float32)
             
-            qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
+            #qnAtt_flatWeights = tf.matmul(qnAtt_flat, qnAtt_beta) #[b*seqLen, 1]
+            qnAtt_flatWeights = tf.layers.dense(qnAtt_flat, units=1, activation=None)
             qnAtt_regionWeights = tf.reshape(
                 qnAtt_flatWeights, shape=[-1, tf.shape(lstmOutput)[1]])
             #[b, seqLen(==nRegions)]
@@ -193,11 +194,9 @@ class QnAttentionModel(BaseModel):
                                 kernel_initializer=tf.contrib.layers.xavier_initializer()) #1536
             print('att_f = {}'.format(att_f.get_shape()))
             print('att_f = {}'.format(tf.shape(att_f)))
-            #beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
-            #bias = tf.get_variable("bias", shape=[])
+            beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
             att_flat = tf.reshape(att_f, shape=[-1, att_f.get_shape()[-1]]) #[b*196, 1536]
-            #att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
-            att_flatWeights = tf.layers.dense(att_flat, 1, activation=None) #wx + b
+            att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
             print('att_flatWeights = {}'.format(att_flatWeights.get_shape()))
             att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 196])  #[b, 196]
             print('Region weights = {}'.format(att_regionWeights.get_shape()))
