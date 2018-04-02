@@ -151,7 +151,7 @@ class BaseModel(object):
                  self.masked_expRegionWs, self.denominator, self.qnAtt_alpha], feed_dict=feed)
                 
                 print('RegionWs:\n {}'.format(regionWs))
-                print('exp_regionWs:\n {}'.format(exp_regionWs))
+                #print('exp_regionWs:\n {}'.format(exp_regionWs))
                 #print('mask:\n {}'.format(mask))
                 #print('maskedRWs:\n {}'.format(maskedRWs))
                 print('denominators:\n {}'.format(denominator))

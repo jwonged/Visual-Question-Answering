@@ -93,11 +93,13 @@ class AttModelInputProcessor(InputProcessor):
                         np.random.uniform() < self.config.probSingleToUNK and word is not '?'):
                     idList.append(self.mapWordToID[self.config.unkWord])
                 else:
-                    idList.append(self.mapWordToID[word]) 
+                    if not self.config.removeQnMark or word is not '?':
+                        idList.append(self.mapWordToID[word]) 
             else:
                 if self.is_training:
                     raise ValueError('Error: all train words should be in map')
-                idList.append(self.mapWordToID[self.config.unkWord])
+                if not self.config.removeQnMark or word is not '?':
+                    idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
     def destruct(self):
@@ -155,6 +157,8 @@ class TestProcessor(InputProcessor):
         idList = []
         for word in word_tokenize(qn):
             word = word.strip().lower()
+            if self.config.removeQnMark and word is '?':
+                continue
             if word in self.mapWordToID:
                     idList.append(self.mapWordToID[word]) 
             else:

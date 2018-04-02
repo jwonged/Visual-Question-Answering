@@ -61,6 +61,8 @@ class OnlineProcessor(InputProcessor):
         idList = []
         for word in word_tokenize(qn):
             word = word.strip().lower()
+            if self.config.removeQnMark and word is '?':
+                continue
             if word in self.mapWordToID:
                     idList.append(self.mapWordToID[word]) 
             else:
