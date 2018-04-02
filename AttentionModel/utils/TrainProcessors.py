@@ -91,7 +91,7 @@ class AttModelInputProcessor(InputProcessor):
                 #prob chance of converting a single count word to UNK
                 if (self.is_training and word in self.singleCountWords and 
                         np.random.uniform() < self.config.probSingleToUNK and word is not '?'):
-                    if self.config.debugmode:
+                    if self.config.debugMode:
                         print(word)
                     idList.append(self.mapWordToID[self.config.unkWord])
                 else:
