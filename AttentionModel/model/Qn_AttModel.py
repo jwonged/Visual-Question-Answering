@@ -166,9 +166,10 @@ class QnAttentionModel(BaseModel):
             
         return qnContext 
     
-    def _addImageAttention(self, qnContext, flattenedImgVecs, attComb=None, name='alpha'):
+    def _addImageAttention(self, qnContext, flattenedImgVecs, 
+                           attComb=None, name='alpha', var_scope='image_attention'):
         #########Image Attention layer##########
-        with tf.variable_scope("image_attention"):
+        with tf.variable_scope(var_scope):
             qnContext_in = tf.layers.dense(inputs=qnContext,
                                            units=qnContext.get_shape()[-1],
                                            activation=tf.tanh,
@@ -280,7 +281,8 @@ class QnAttentionModel(BaseModel):
         if self.config.stackAtt:
             print('Using stacked attention')
             imgContext2 = self._addImageAttention(
-                self.multimodalOutput, flattenedImgVecs, attComb='concat', name='alpha2')
+                self.multimodalOutput, flattenedImgVecs, 
+                attComb='concat', name='alpha2', var_scope='image_attention2')
             self.multimodalOutput = self._combineModes(imgContext2, self.multimodalOutput)
     
         #fully connected layer
