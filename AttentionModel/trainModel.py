@@ -8,6 +8,7 @@ from model.Qn_AttModel import QnAttentionModel
 from configs.Attention_LapConfig import Attention_LapConfig
 from configs.Attention_GPUConfig import Attention_GPUConfig
 from utils.TrainProcessors import AttModelInputProcessor
+from evaluateModel import loadOfficialTest, validateInternalTestSet
 import argparse
 
 def runtrain(args):
@@ -38,6 +39,8 @@ def runtrain(args):
     model.destruct()
     trainReader.destruct()
     valReader.destruct()
+    
+    return config
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -55,4 +58,6 @@ def parseArgs():
     
 if __name__ == '__main__':
     args = parseArgs()
-    runtrain(args)
+    config = runtrain(args)
+    loadOfficialTest(args, config.saveModelPath, config.saveModelFile+'.meta')
+    validateInternalTestSet(args, config.saveModelPath, config.saveModelFile+'.meta')

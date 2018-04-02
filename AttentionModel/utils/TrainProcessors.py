@@ -88,19 +88,15 @@ class AttModelInputProcessor(InputProcessor):
         for word in word_tokenize(qn):
             word = word.strip().lower()
             if word in self.mapWordToID:
-                print(qn)
                 #prob chance of converting a single count word to UNK
                 if (self.is_training and word in self.singleCountWords and 
                         np.random.uniform() < self.config.probSingleToUNK and word is not '?'):
-                    if self.config.debugMode:
-                        print('Unknown: {}'.format(word))
                     idList.append(self.mapWordToID[self.config.unkWord])
                 else:
-                    print('Known: {}'.format(word))
                     idList.append(self.mapWordToID[word]) 
             else:
                 if self.is_training:
-                    print('This should never be printed - all train words in map')
+                    raise ValueError('Error: all train words should be in map')
                 idList.append(self.mapWordToID[self.config.unkWord])
         return idList
     
