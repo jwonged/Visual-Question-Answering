@@ -33,7 +33,7 @@ class InputProcessor(object):
                 paddedQuestions.append(paddedQn)
             else:
                 paddedQuestions.append(qn)
-            qnLengths.append(len(qn)-1) #remove qn mark
+            qnLengths.append(len(qn)) 
             
         return paddedQuestions, qnLengths
     
