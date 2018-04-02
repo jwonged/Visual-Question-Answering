@@ -85,6 +85,7 @@ class AttModelInputProcessor(InputProcessor):
     def _mapQnToIDs(self, qn):
         #Convert str question to a list of word_ids
         idList = []
+        print(qn)
         for word in word_tokenize(qn):
             word = word.strip().lower()
             if word in self.mapWordToID:
@@ -94,6 +95,8 @@ class AttModelInputProcessor(InputProcessor):
                     idList.append(self.mapWordToID[self.config.unkWord])
                 else:
                     if not self.config.removeQnMark or word is not '?':
+                        print(word)
+                        print('qn mark should not be here')
                         idList.append(self.mapWordToID[word]) 
             else:
                 if self.is_training:
