@@ -86,7 +86,7 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
-        if not self.config.debugmode:
+        if not self.config.debugMode:
             if not os.path.exists(self.config.saveModelPath):
                 os.makedirs(self.config.saveModelPath)
             
