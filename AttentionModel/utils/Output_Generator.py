@@ -29,9 +29,9 @@ class OutputGenerator(object):
     def convertIDtoPath(self, img_id):
         return self.idToImgpathMap[img_id]
     
-    def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds):
-        for n, (qnAl, imAl, img_id, qn, pred) in enumerate(zip(
-            qnAlphas, imgAlphas, img_ids, qns, preds)):
+    def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds, topk):
+        for n, (qnAl, imAl, img_id, qn, pred, topk) in enumerate(zip(
+            qnAlphas, imgAlphas, img_ids, qns, preds, topk)):
             if n > 6:
                 break
             alp_img = self._processImgAlpha(imAl)
@@ -50,7 +50,7 @@ class OutputGenerator(object):
             plt.subplot(2,2,1)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
-            plt.imshow(alp_img, alpha=0.80)
+            plt.imshow(alp_img, alpha=0.80)#, cmap='gray')
             plt.axis('off')
             plt.subplot(2,2,2)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
@@ -63,7 +63,7 @@ class OutputGenerator(object):
         
     def _processImgAlpha(self, imgAlpha):
         alp_img = skimage.transform.pyramid_expand(
-            imgAlpha.reshape(14,14), upscale=32, sigma=20)
+            imgAlpha.reshape(14,14), upscale=32, sigma=40)
         #alp_img = skimage.transform.resize(
         #    imgAlpha.reshape(14,14), [448, 448])
         alp_img = np.transpose(alp_img, (1,0))

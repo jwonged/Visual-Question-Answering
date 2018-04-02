@@ -116,12 +116,12 @@ def visQnImgAtt():
     model = QnAttentionModel(config)
     model.loadTrainedModel(config.restoreQnImAttModel, 
                            config.restoreQnImAttModelPath)
-    qnAlphas, alphas, img_ids, qns, preds = model.runPredict(
-        reader, config.csvResults, 7, mini=True)
+    qnAlphas, alphas, img_ids, qns, preds, topk = model.runPredict(
+        reader, config.csvResults, 4, mini=True)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
-    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds)
+    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk)
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -136,6 +136,7 @@ def parseArgs():
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     parser.add_argument('--notopk', help='No loading topk', action='store_true')
     parser.add_argument('--noqnatt', help='No loading qnAtt', action='store_true')
+    parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     args = parser.parse_args()
     return args
 

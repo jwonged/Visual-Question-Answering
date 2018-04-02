@@ -40,7 +40,7 @@ class Config(object):
         self.attentionType = args.att if args.att else 'qn'
         self.attentionFunc = args.attfunc if args.attfunc else 'softmax'
         
-        self.debugMode = False
+        self.debugMode = args.debugmode
         self.notopk = args.notopk
         self.noqnatt = args.noqnatt
         

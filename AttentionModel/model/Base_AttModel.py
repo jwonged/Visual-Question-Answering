@@ -131,7 +131,7 @@ class BaseModel(object):
         correct_predictions, total_predictions = 0., 0.
         startTime = time.time()
         
-        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
             
             feed = {
@@ -144,14 +144,17 @@ class BaseModel(object):
             }
             
             if i == 1 and self.config.debugMode:
-                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator = self.sess.run(
+                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
-                 self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)
+                 self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
+                 self.masked_expRegionWs, self.denominator, self.qnAtt_alpha], feed_dict=feed)
                 
-                print('RegionWs:\n {} \n exp_regionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}'.format(
-                    regionWs, exp_regionWs, mask, maskedRWs, denominator))
-                print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
-                    regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
+                print('RegionWs:\n {} \n exp_regionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}, \n qnalp: {}\n'.format(
+                    regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp))
+                print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n denominator:{}\n qnalp: {}'.format(
+                    regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape, qnalp.shape))
+                
+                print('Word IDs: \n{}\n RawQns: {}'.format(qnAsWordIDsBatch, rawQns))
                 
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)

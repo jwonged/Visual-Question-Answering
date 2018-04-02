@@ -342,8 +342,8 @@ class QnAttentionModel(BaseModel):
             if self.config.noqnatt:
                 labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             else:
-                qnAlphas, alphas, labels_pred = self.sess.run(
-                    [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
+                topK, qnAlphas, alphas, labels_pred = self.sess.run(
+                    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
             
             for lab, labPred, qn, img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
@@ -374,6 +374,6 @@ class QnAttentionModel(BaseModel):
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
         if mini:
-            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return
+            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK
         return results, valAcc
     
