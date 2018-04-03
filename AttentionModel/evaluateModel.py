@@ -39,10 +39,11 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
         model.loadTrainedModel(restoreModel, restoreModelPath)
     model.runTest(testReader, config.testOfficialResultFile)
     testReader.destruct()
+    model.destruct()
     print('Official test complete')
     return model
 
-def validateInternalTestSet(args, model=None, restoreModelPath=None):
+def validateInternalTestSet(args, restoreModelFile=None, restoreModelPath=None):
     from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
@@ -55,18 +56,17 @@ def validateInternalTestSet(args, model=None, restoreModelPath=None):
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
-    if restoreModelPath is None:
+    if restoreModelFile is None:
         restoreModel = config.restoreModel
         restoreModelPath = config.restoreModelPath
         
-    if model is None:
-        if args.att == 'qn':
-            print('Attention over question and image model')
-            model = QnAttentionModel(config)
-        elif args.att == 'im':
-            print('Attention over image model')
-            model = ImageAttentionModel(config)
-        model.loadTrainedModel(restoreModel, restoreModelPath)
+    if args.att == 'qn':
+        print('Attention over question and image model')
+        model = QnAttentionModel(config)
+    elif args.att == 'im':
+        print('Attention over image model')
+        model = ImageAttentionModel(config)
+    model.loadTrainedModel(restoreModel, restoreModelPath)
         
     predFile = '{}PredsAtt{}.csv'.format(restoreModelPath, args.att)
     results, strictAcc = model.runPredict(valTestReader, predFile)

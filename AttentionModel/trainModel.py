@@ -65,8 +65,8 @@ if __name__ == '__main__':
     saveModelFile = 'results/Att2Apr16-36/att2Apr16-36.meta'
     saveModelPath = 'results/Att2Apr16-36/'
     
-    model = loadOfficialTest(args, saveModelFile, saveModelPath)
-    validateInternalTestSet(args, model, saveModelPath)
+    loadOfficialTest(args, saveModelFile, saveModelPath)
+    validateInternalTestSet(args, saveModelFile, saveModelPath)
     
     #model = loadOfficialTest(args, 
     #                 restoreModel=config.saveModelFile+'.meta', 
