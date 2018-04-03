@@ -180,12 +180,12 @@ class QnAttentionModel(BaseModel):
             if attComb == 'concat':
                 att_in = tf.concat([imgAtt_in, qnAtt_in], axis=-1) #[bx196x1536]
             elif attComb == 'mult':
-                qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
+                qnAtt_in = tf.layers.dense(qnAtt_in, 
                                                     imgAtt_in.get_shape()[-1],
                                                     activation=tf.tanh)
-                att_in = tf.multiply(imgAtt_in, qnAtt_in_reshaped) #bx196x512
+                att_in = tf.multiply(imgAtt_in, qnAtt_in) #bx196x512
             elif attComb == 'add':
-                qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
+                qnAtt_in = tf.layers.dense(qnAtt_in, 
                                                     imgAtt_in.get_shape()[-1],
                                                     activation=tf.tanh)
                 att_in = tf.add(imgAtt_in, qnAtt_in) #bx196x512
