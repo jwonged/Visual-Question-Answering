@@ -324,7 +324,7 @@ class QnAttentionModel(BaseModel):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         if self.config.stackAtt:
             self.alpha = graph.get_tensor_by_name('image_attention/alpha1:0')
-            self.alpha2 = graph.get_tensor_by_name('image_attention/alpha2:0')
+            self.alpha2 = graph.get_tensor_by_name('image_attention2/alpha2:0')
         else:
             self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
         if not self.config.noqnatt:
