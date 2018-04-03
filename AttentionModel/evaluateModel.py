@@ -38,19 +38,15 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
     else:
         model.loadTrainedModel(restoreModel, restoreModelPath)
     model.runTest(testReader, config.testOfficialResultFile)
-    model.destruct()
     testReader.destruct()
+    return model
 
-def validateInternalTestSet(args, restoreModel=None, restoreModelPath=None):
+def validateInternalTestSet(args, model=None, restoreModelPath=None):
     from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
     #config = Attention_LapConfig(load=True, args)
     config = Attention_GPUConfig(load=True, args=args)
-    
-    if restoreModel is None:
-        restoreModel = config.restoreModel
-        restoreModelPath = config.restoreModelPath
     
     print('Running Validation Test on Model')
     valTestReader = AttModelInputProcessor(config.testAnnotFile, 
@@ -58,15 +54,19 @@ def validateInternalTestSet(args, restoreModel=None, restoreModelPath=None):
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
-    
-    if args.att == 'qn':
-        print('Attention over question and image model')
-        model = QnAttentionModel(config)
-    elif args.att == 'im':
-        print('Attention over image model')
-        model = ImageAttentionModel(config)
-    
-    model.loadTrainedModel(restoreModel, restoreModelPath)
+    if restoreModelPath is None:
+        restoreModel = config.restoreModel
+        restoreModelPath = config.restoreModelPath
+        
+    if model is None:
+        if args.att == 'qn':
+            print('Attention over question and image model')
+            model = QnAttentionModel(config)
+        elif args.att == 'im':
+            print('Attention over image model')
+            model = ImageAttentionModel(config)
+        model.loadTrainedModel(restoreModel, restoreModelPath)
+        
     predFile = '{}PredsAtt{}.csv'.format(restoreModelPath, args.att)
     results, strictAcc = model.runPredict(valTestReader, predFile)
     model.destruct()

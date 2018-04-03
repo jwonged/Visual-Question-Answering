@@ -55,6 +55,7 @@ def parseArgs():
     parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
+    parser.add_argument('--qnAttf', choices=['concat', 'mult', 'add'], default='concat')
     args = parser.parse_args()
     return args
     
@@ -67,10 +68,10 @@ if __name__ == '__main__':
     loadOfficialTest(args, saveModelFile, saveModelPath)
     validateInternalTestSet(args, saveModelFile, saveModelPath)
     
-    #loadOfficialTest(args, 
+    #model = loadOfficialTest(args, 
     #                 restoreModel=config.saveModelFile+'.meta', 
     #                 restoreModelPath=config.saveModelPath)
-    #validateInternalTestSet(args, config.saveModelFile+'.meta', config.saveModelPath)
+    #validateInternalTestSet(args, model, config.saveModelPath)
     
     
     
