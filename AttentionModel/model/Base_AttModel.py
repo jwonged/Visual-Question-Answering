@@ -81,7 +81,8 @@ class BaseModel(object):
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
         self.merged = tf.summary.merge_all()
-        self.tb_writer = tf.summary.FileWriter(self.config.saveModelPath + 'tensorboard', self.sess.graph)
+        if not self.config.debugMode:
+            self.tb_writer = tf.summary.FileWriter(self.config.saveModelPath + 'tensorboard', self.sess.graph)
         
         print('Completed Model Construction')
     
@@ -90,13 +91,13 @@ class BaseModel(object):
             if not os.path.exists(self.config.saveModelPath):
                 os.makedirs(self.config.saveModelPath)
             
-        print('Starting model training')
-        self.f1 = open(logFile, 'wb')
-        self.logFile = csv.writer(self.f1)
-        self.logFile.writerow(['Attention model, ', self._getDescription(self.config)])
-        self.logFile.writerow([
-            'Epoch', 'Val score', 'Train score', 'Train correct', 
-            'Train predictions', 'Val correct', 'Val predictions'])
+            print('Starting model training')
+            self.f1 = open(logFile, 'wb')
+            self.logFile = csv.writer(self.f1)
+            self.logFile.writerow(['Attention model, ', self._getDescription(self.config)])
+            self.logFile.writerow([
+                'Epoch', 'Val score', 'Train score', 'Train correct', 
+                'Train predictions', 'Val correct', 'Val predictions'])
         #self.add_summary()
         highestScore = 0
         nEpochWithoutImprovement = 0
@@ -145,6 +146,8 @@ class BaseModel(object):
             }
             
             if (i==1 or i==20 or i == 50) and self.config.debugMode:
+                print('Batch {}'.format(i))
+                '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
                  self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, 
@@ -163,7 +166,7 @@ class BaseModel(object):
                     regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape, qnalp.shape))
                 print('we: {}\n'.format(we.shape))
                 print('Word IDs: \n{}\n RawQns: {}'.format(qnAsWordIDsBatch, rawQns))
-                
+                '''
             _, _, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
@@ -176,7 +179,7 @@ class BaseModel(object):
                 #self.predFile.writerow([qn, self.classToAnsMap[labPred], self.classToAnsMap[lab], labPred, lab, lab==labPred])
                 #self.predFile.write('Qn:{}, lab:{}, pred:{}\n'.format(qn, self.classToAnsMap[lab], self.classToAnsMap[labPred]))
                 
-            if (i%10==0):
+            if (i%10==0) and not self.config.debugMode:
                 self.tb_writer.add_summary(summary, global_step=nBatches*nEpoch + i)
                                            
             '''valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)

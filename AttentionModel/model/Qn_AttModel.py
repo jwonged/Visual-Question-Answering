@@ -25,7 +25,7 @@ class QnAttentionModel(BaseModel):
     
     def comment(self):
         return 'Better masking on QnAtt model with img att layer \
-                and qn boolean masking and stacked attention'
+                and qn boolean masking and option stacked attention'
     
     def _addPlaceholders(self):
         # add network placeholders
@@ -85,41 +85,20 @@ class QnAttentionModel(BaseModel):
                     cell_fw, cell_bw, 
                     LSTMinput, 
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
-                #print('Shape of state.c: {}'.format(fw_state.c.get_shape()))
                 print('Shape of output_fw: {}'.format(output_fw.get_shape()))
                 print('Shape of output_fw: {}'.format(tf.shape(output_fw)))
                 
                 #[batch_size, max_time, cell.output_size]
                 lstmOutput = tf.concat([output_fw, output_bw], axis=-1)
-                
-                '''
-                #lstmOutput shape = LSTM_num_units * 4
-                fw_out = tf.concat([fw_state.c, fw_state.h], axis=-1)
-                bw_out = tf.concat([bw_state.c, bw_state.h], axis=-1)
-                
-                lstmOutput = tf.concat([fw_out, bw_out], axis=-1)
-                print('Shape of LSTM output after concat: {}'.format(lstmOutput.get_shape()))
-                
-                #lstm output 2048 --> 1024
-                lstmOutput = tf.layers.dense(inputs=lstmOutput,
-                                           units=self.config.fclayerAfterLSTM,
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-                
-                #potentially add dropout here
-                '''
             else:
                 print('Using Uni-LSTM')
-                #rnn_layers = [tf.nn.rnn_cell.LSTMCell(size) for size in self.config.LSTMCellSizes]
-                #multi_rnn_cell = tf.nn.rnn_cell.MultiRNNCell(rnn_layers)
                 lstm_cell = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
-                _, lstmOutState = tf.nn.dynamic_rnn(cell=lstm_cell, 
+                lstmOut, _ = tf.nn.dynamic_rnn(cell=lstm_cell, 
                                                   inputs=self.word_embeddings, 
                                                   sequence_length=self.sequence_lengths, 
                                                   initial_state=None, 
                                                   dtype=tf.float32)
-                lstmOutput = lstmOutState.c #output state 512
-                #lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1) #1024
+                lstmOutput = lstmOut #[batch_size, max_time, cell.output_size]
         
         lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
         return lstmOutput
@@ -151,27 +130,28 @@ class QnAttentionModel(BaseModel):
                 self.qnAtt_alpha = tf.div(masked_expRegionWs, denominator, name='qn_alpha') #[b, maxLen]
             elif self.config.qnAttf == 'sigmoid':
                 print('Using sigmoid qn attention function')
-                unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #b, 196]
-                norm_denominator = tf.expand_dims(
-                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
-                self.qnAtt_alpha = tf.div(unnorm_alpha, norm_denominator, name=name) #[b, 196]
+                unnorm_Qnalpha = tf.nn.sigmoid(qnAtt_regionWeights) #[b, seqLen(nRegions)]
+                mask = tf.to_float(tf.sequence_mask(self.sequence_lengths)) #[b, maxLen]
+                masked_qnRegions = tf.multiply(unnorm_Qnalpha, mask) #[b, maxLen]
+                qnNorm_denominator = tf.expand_dims(
+                    tf.reduce_sum(masked_qnRegions, axis=-1), axis=-1) #[b, 1]
+                self.qnAtt_alpha = tf.div(masked_qnRegions, qnNorm_denominator, name='qn_alpha') #[b, maxLen]
                 
-            #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
             qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, lstmOutput), axis=1)
             #[b, 1024]
             
             if self.config.debugMode:
-                self.qnAtt_regionWeights = qnAtt_regionWeights
-                self.exp_regionWs = exp_regionWs
-                self.mask = mask 
-                self.masked_expRegionWs = masked_expRegionWs
-                self.denominator = denominator
-                self.qadim = qnAtt_alpha
-            
-            print('mask shape: {}'.format(mask.get_shape()))
-            print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
-            print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
+                if self.config.qnAttf == 'softmax':
+                    self.qnAtt_regionWeights = qnAtt_regionWeights
+                    self.exp_regionWs = exp_regionWs
+                    self.mask = mask 
+                    self.masked_expRegionWs = masked_expRegionWs
+                    self.denominator = denominator
+                    self.qadim = qnAtt_alpha
+                    print('mask shape: {}'.format(mask.get_shape()))
+                    print('masked_regionWeights shape: {}'.format(masked_expRegionWs.get_shape()))
+                    print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
         return qnContext 
     
@@ -183,16 +163,17 @@ class QnAttentionModel(BaseModel):
                                            units=qnContext.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
+            #[bx1024]
             imgAtt_in = tf.layers.dense(inputs=flattenedImgVecs,
                                            units=flattenedImgVecs.get_shape()[-1],
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
-            #[bx1024]
+            #[bx196x512]
             
             #duplicate qn vec to combine with each region to get [v_i, q]
             qnAtt_in = tf.expand_dims(qnContext_in, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(flattenedImgVecs)[1],1]) 
-            print('Shape of qnAatt_in : {}'.format(qnAtt_in.get_shape()))
+            print('Shape of qnAatt_in : {}'.format(qnAtt_in.get_shape())) #[bx196x1024]
             
             if attComb is None:
                 attComb = self.config.attComb
@@ -204,19 +185,16 @@ class QnAttentionModel(BaseModel):
                                                     activation=tf.tanh)
                 att_in = tf.multiply(imgAtt_in, qnAtt_in_reshaped) #bx196x512
             elif attComb == 'add':
-                att_in = tf.add(imgAtt_in, qnContext_in)
+                att_in = tf.add(imgAtt_in, qnContext_in) #bx196x1024
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
             #compute attention weights
             
             #beta * tanh(wx + b) -- get a scalar val for each region
-            print('att_in shape: {}'.format(att_in.get_shape()))
-            
             att_f = tf.layers.dense(att_in, units=att_in.get_shape()[-1],
                                 activation=tf.tanh,
-                                kernel_initializer=tf.contrib.layers.xavier_initializer()) #1536
+                                kernel_initializer=tf.contrib.layers.xavier_initializer()) 
             print('att_f = {}'.format(att_f.get_shape()))
-            print('att_f = {}'.format(tf.shape(att_f)))
             beta_w = tf.get_variable("beta", shape=[att_f.get_shape()[-1], 1], dtype=tf.float32) #1536,1
             att_flat = tf.reshape(att_f, shape=[-1, att_f.get_shape()[-1]]) #[b*196, 1536]
             att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*196]
@@ -237,17 +215,15 @@ class QnAttentionModel(BaseModel):
             else:
                 raise NotImplementedError
             
+            #compute context: c = sum(alpha * img)
             alpha = tf.expand_dims(self.alpha, axis=-1)
-            
-            #compute context: c = sum(alpha) * img
             #broadcast; output shape=[bx1024 or bx1536]
             imgContext = tf.reduce_sum(tf.multiply(alpha, flattenedImgVecs), axis=1) 
             
             return imgContext
     
     def _combineModes(self, imgContext, qnContext):
-        #Combine modes
-        if self.config.elMult:
+        if self.config.elMult: #element wise hadamard
             print('Using pointwise mult in combining modes')
             #1024 --> 512 or 1536 --> 1024
             attended_img_vecs = tf.layers.dense(inputs=imgContext,
@@ -305,14 +281,16 @@ class QnAttentionModel(BaseModel):
                                            activation=None,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
             print('Shape of y: {}'.format(y.get_shape()))
+            
         #predict & get accuracy
-        predProbs = tf.nn.softmax(y)
-        self.labels_pred = tf.cast(tf.argmax(predProbs, axis=1), tf.int32, name='labels_pred')
+        self.predProbs = tf.nn.softmax(y, name='softmax')
+        self.predscore = tf.reduce_max(self.predProbs, axis=1, name='predscore')
+        self.labels_pred = tf.cast(tf.argmax(self.predProbs, axis=1), tf.int32, name='labels_pred')
         
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
-        self.topK = tf.nn.top_k(predProbs, k=5, name='topK')
+        self.topK = tf.nn.top_k(self.predProbs, k=5, name='topK')
                                 
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
