@@ -185,9 +185,9 @@ class QnAttentionModel(BaseModel):
                                                     activation=tf.tanh)
                 att_in = tf.multiply(imgAtt_in, qnAtt_in_reshaped) #bx196x512
             elif attComb == 'add':
-                #qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
-                #                                    imgAtt_in.get_shape()[-1],
-                #                                    activation=tf.tanh)
+                qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
+                                                    imgAtt_in.get_shape()[-1],
+                                                    activation=tf.tanh)
                 att_in = tf.add(imgAtt_in, qnAtt_in) #bx196x512
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
