@@ -24,7 +24,8 @@ class QnAttentionModel(BaseModel):
         super(QnAttentionModel, self).__init__(config)
     
     def comment(self):
-        return 'Better masking on QnAtt model with img att layer and qn boolean masking'
+        return 'Better masking on QnAtt model with img att layer \
+                and qn boolean masking and stacked attention'
     
     def _addPlaceholders(self):
         # add network placeholders
@@ -239,7 +240,7 @@ class QnAttentionModel(BaseModel):
     def _combineModes(self, imgContext, qnContext):
         #Combine modes
         if self.config.elMult:
-            print('Using pointwise mult')
+            print('Using pointwise mult in combining modes')
             #1024 --> 512 or 1536 --> 1024
             attended_img_vecs = tf.layers.dense(inputs=imgContext,
                                        units=qnContext.get_shape()[-1],
@@ -250,7 +251,7 @@ class QnAttentionModel(BaseModel):
                 
             multimodalOutput = tf.multiply(qnContext, attended_img_vecs) #size=512
         else: #using concat
-            print('Using concat')
+            print('Using concat in combining modes')
             multimodalOutput = tf.concat([qnContext, attended_img_vecs], axis=-1)
         
         return multimodalOutput

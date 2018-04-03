@@ -60,6 +60,17 @@ def parseArgs():
     
 if __name__ == '__main__':
     args = parseArgs()
-    config = runtrain(args)
-    loadOfficialTest(args, config.saveModelPath, config.saveModelFile+'.meta')
-    validateInternalTestSet(args, config.saveModelPath, config.saveModelFile+'.meta')
+    #config = runtrain(args)
+    saveModelFile = 'results/Att2Apr16-36/att2Apr16-36.meta'
+    saveModelPath = 'results/Att2Apr16-36/'
+    
+    loadOfficialTest(args, saveModelFile, saveModelPath)
+    validateInternalTestSet(args, saveModelFile, saveModelPath)
+    
+    #loadOfficialTest(args, 
+    #                 restoreModel=config.saveModelFile+'.meta', 
+    #                 restoreModelPath=config.saveModelPath)
+    #validateInternalTestSet(args, config.saveModelFile+'.meta', config.saveModelPath)
+    
+    
+    

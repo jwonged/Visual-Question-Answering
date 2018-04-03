@@ -46,14 +46,14 @@ class BaseModel(object):
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
              usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}, \
              epochsWOimprov: {}, decayAfterEpoch: {}, seed: {}, attentionType: {}, \
-             attentionFunc: {}, removeQnMark: {}, '.format(
+             attentionFunc: {}, removeQnMark: {}, stackedAtt: {}, '.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.learningRate,
                 config.learningRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
                 config.LSTMType, config.elMult, config.imgModel, config.nEpochsWithoutImprov,
                 config.decayAfterEpoch, config.randomSeed, config.attentionType, 
-                config.attentionFunc, config.removeQnMark)
+                config.attentionFunc, config.removeQnMark, config.stackAtt)
         return info + 'fc: 2 layers (1000), ' + self.comment() 
     
     def _addOptimizer(self):
