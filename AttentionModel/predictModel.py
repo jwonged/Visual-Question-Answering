@@ -139,6 +139,7 @@ def parseArgs():
     parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
+    parser.add_argument('--qnAttf', choices=['softmax', 'sig'], default='sig')
     args = parser.parse_args()
     return args
 
