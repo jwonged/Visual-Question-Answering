@@ -42,7 +42,7 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
     model.destruct()
     print('Official test complete')
 
-def validateInternalTestSet(args, restoreModelFile=None, restoreModelPath=None):
+def validateInternalTestSet(args, restoreModel=None, restoreModelPath=None):
     from vqaTools.vqaInternal import VQA
     from vqaTools.vqaEval import VQAEval
     
@@ -55,7 +55,7 @@ def validateInternalTestSet(args, restoreModelFile=None, restoreModelPath=None):
                                  config.valImgFile, 
                                  config,
                                  is_training=False)
-    if restoreModelFile is None:
+    if restoreModel is None:
         restoreModel = config.restoreModel
         restoreModelPath = config.restoreModelPath
         

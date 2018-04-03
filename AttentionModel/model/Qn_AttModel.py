@@ -142,6 +142,7 @@ class QnAttentionModel(BaseModel):
             #[b, seqLen(==nRegions)]
             
             if self.config.qnAttf == 'softmax':
+                print('Using softmax qn attention function')
                 #Mask output padding for softmax -- Take exp; mask; normalize
                 exp_regionWs = tf.exp(qnAtt_regionWeights) #[b, maxLen]
                 mask = tf.to_float(tf.sequence_mask(self.sequence_lengths)) #[b, maxLen]
@@ -149,7 +150,11 @@ class QnAttentionModel(BaseModel):
                 denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1) #[b, 1]
                 self.qnAtt_alpha = tf.div(masked_expRegionWs, denominator, name='qn_alpha') #[b, maxLen]
             elif self.config.qnAttf == 'sigmoid':
-                pass
+                print('Using sigmoid qn attention function')
+                unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #b, 196]
+                norm_denominator = tf.expand_dims(
+                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+                self.qnAtt_alpha = tf.div(unnorm_alpha, norm_denominator, name=name) #[b, 196]
                 
             #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
@@ -221,10 +226,10 @@ class QnAttentionModel(BaseModel):
             
             #attention function
             if self.config.attentionFunc == 'softmax':
-                print('Using softmax attention function')
+                print('Using softmax image attention function')
                 self.alpha = tf.nn.softmax(att_regionWeights, name=name) # [b,196]
             elif self.config.attentionFunc == 'sigmoid':
-                print('Using sigmoid attention function')
+                print('Using sigmoid image attention function')
                 unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #b, 196]
                 norm_denominator = tf.expand_dims(
                     tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
