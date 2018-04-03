@@ -41,7 +41,6 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
     testReader.destruct()
     model.destruct()
     print('Official test complete')
-    return model
 
 def validateInternalTestSet(args, restoreModelFile=None, restoreModelPath=None):
     from vqaTools.vqaInternal import VQA

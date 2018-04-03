@@ -340,5 +340,5 @@ class BaseModel(object):
         generateForSubmission(allQnIds, allPreds, jsonOutputFile)
     
     def destruct(self):
-        tf.Session.close()
+        self.sess.close()
     
