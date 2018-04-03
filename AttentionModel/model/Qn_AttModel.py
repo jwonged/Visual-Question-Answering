@@ -185,10 +185,10 @@ class QnAttentionModel(BaseModel):
                                                     activation=tf.tanh)
                 att_in = tf.multiply(imgAtt_in, qnAtt_in_reshaped) #bx196x512
             elif attComb == 'add':
-                qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
-                                                    imgAtt_in.get_shape()[-1],
-                                                    activation=tf.tanh)
-                att_in = tf.add(imgAtt_in, qnContext_in) #bx196x512
+                #qnAtt_in_reshaped = tf.layers.dense(qnAtt_in, 
+                #                                    imgAtt_in.get_shape()[-1],
+                #                                    activation=tf.tanh)
+                att_in = tf.add(imgAtt_in, qnAtt_in) #bx196x512
             print('Shape of attention input : {}'.format(att_in.get_shape()))
             
             #compute attention weights
@@ -261,7 +261,7 @@ class QnAttentionModel(BaseModel):
         flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
         #image attention layer --> [bx1536]
-        imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha1')
+        imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha')
         
         #combine modes
         self.multimodalOutput = self._combineModes(imgContext, qnContext)
@@ -312,7 +312,7 @@ class QnAttentionModel(BaseModel):
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(QnAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         if self.config.stackAtt:
-            self.alpha = graph.get_tensor_by_name('image_attention/alpha1:0')
+            self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
             self.alpha2 = graph.get_tensor_by_name('image_attention2/alpha2:0')
         else:
             self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
