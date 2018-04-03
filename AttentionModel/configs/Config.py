@@ -40,7 +40,7 @@ class Config(object):
         self.attentionType = args.att if args.att else 'qn'
         self.attentionFunc = args.attfunc if args.attfunc else 'softmax'
         self.attComb = args.attComb if args.attComb else 'concat' #or add or mult
-        self.stackAtt = args.stackAtt if args.stackAtt else 'False'
+        self.stackAtt = args.stackAtt
         self.qnAttf = args.qnAttf if args.qnAttf else 'sigmoid'
         
         self.debugMode = args.debugmode
