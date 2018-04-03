@@ -39,6 +39,7 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
         model.loadTrainedModel(restoreModel, restoreModelPath)
     model.runTest(testReader, config.testOfficialResultFile)
     testReader.destruct()
+    print('Official test complete')
     return model
 
 def validateInternalTestSet(args, model=None, restoreModelPath=None):
@@ -80,6 +81,7 @@ def validateInternalTestSet(args, model=None, restoreModelPath=None):
     
     print('Writing to file..')
     writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc)
+    print('Internal test complete')
         
 def writeToFile(vqaEval, restoreModelPath, vqa, vqaRes, args, strictAcc):
     outputFile = '{}resultbrkdwnAtt{}.csv'.format(restoreModelPath, args.att)
@@ -260,7 +262,7 @@ def parseArgs():
     parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
-    parser.add_argument('--qnAttf', choices=['softmax', 'sig'], default='sig')
+    parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='sigmoid')
     args = parser.parse_args()
     return args
 

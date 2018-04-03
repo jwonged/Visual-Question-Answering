@@ -141,13 +141,16 @@ class QnAttentionModel(BaseModel):
                 qnAtt_flatWeights, shape=[-1, tf.shape(lstmOutput)[1]])
             #[b, seqLen(==nRegions)]
             
-            #Mask output padding for softmax -- Take exp; mask; normalize
-            exp_regionWs = tf.exp(qnAtt_regionWeights) #[b, maxLen]
-            mask = tf.to_float(tf.sequence_mask(self.sequence_lengths)) #[b, maxLen]
-            masked_expRegionWs = tf.multiply(exp_regionWs, mask) #[b, maxLen]
-            denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1) #[b, 1]
-            self.qnAtt_alpha = tf.div(masked_expRegionWs, denominator, name='qn_alpha') #[b, maxLen]
-            
+            if self.config.qnAttf == 'softmax':
+                #Mask output padding for softmax -- Take exp; mask; normalize
+                exp_regionWs = tf.exp(qnAtt_regionWeights) #[b, maxLen]
+                mask = tf.to_float(tf.sequence_mask(self.sequence_lengths)) #[b, maxLen]
+                masked_expRegionWs = tf.multiply(exp_regionWs, mask) #[b, maxLen]
+                denominator = tf.expand_dims(tf.reduce_sum(masked_expRegionWs, axis=-1), axis=-1) #[b, 1]
+                self.qnAtt_alpha = tf.div(masked_expRegionWs, denominator, name='qn_alpha') #[b, maxLen]
+            elif self.config.qnAttf == 'sigmoid':
+                pass
+                
             #self.qnAtt_alpha = tf.nn.softmax(qnAtt_regionWeights, name = 'qn_alpha')
             qnAtt_alpha = tf.expand_dims(self.qnAtt_alpha, axis=-1) #[b, seqLen, 1]
             qnContext = tf.reduce_sum(tf.multiply(qnAtt_alpha, lstmOutput), axis=1)

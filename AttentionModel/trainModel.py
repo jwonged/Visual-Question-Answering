@@ -55,7 +55,7 @@ def parseArgs():
     parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
-    parser.add_argument('--qnAttf', choices=['softmax', 'sig'], default='sig')
+    parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='sigmoid')
     args = parser.parse_args()
     return args
     
@@ -65,8 +65,8 @@ if __name__ == '__main__':
     saveModelFile = 'results/Att2Apr16-36/att2Apr16-36.meta'
     saveModelPath = 'results/Att2Apr16-36/'
     
-    loadOfficialTest(args, saveModelFile, saveModelPath)
-    validateInternalTestSet(args, saveModelFile, saveModelPath)
+    model = loadOfficialTest(args, saveModelFile, saveModelPath)
+    validateInternalTestSet(args, model, saveModelPath)
     
     #model = loadOfficialTest(args, 
     #                 restoreModel=config.saveModelFile+'.meta', 
