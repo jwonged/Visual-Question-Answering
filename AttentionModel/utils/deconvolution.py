@@ -128,10 +128,8 @@ def mapBack(reg):
     print(alphaMap[5][5])
     
     count = 0
-    for tuplet in alphaMap.items():
-        print(len(tuplet))
-        print(type(tuplet))
-        for setlet in tuplet.items():
+    for key, tuplet in alphaMap.items():
+        for keyz, setlet in tuplet.items():
             for itemlet in setlet:
                 count += 1
     print('{} items in alphamap'.format(count))
