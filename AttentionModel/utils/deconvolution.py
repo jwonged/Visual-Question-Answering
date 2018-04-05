@@ -145,10 +145,11 @@ def mapBack(reg):
     print('Reading ' +  preprocessedVQAMapsFile)
     with open(preprocessedVQAMapsFile, 'rb') as f:
         data = pickle.load(f)
-    with open('alphaMap', 'wb') as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print('Saved to {}'.format(self.config.preprocessedVQAMapsFile))
-'''
+        '''
+    with open('alphaMap.pkl', 'wb') as f:
+        pickle.dump(alphaMap, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print('Saved to {}'.format('alphaMap.pkl'))
+
     
 if __name__ == '__main__':
     reg = reVGGNet19()
