@@ -77,7 +77,6 @@ def reVGGNet19():
     conv1 = convdic(im)
     conv2 = convdic(conv1)
     pool1 = pooling(conv2)
-    print(pool1)
     
     conv3 = convdic(pool1)
     conv4 = convdic(conv3)
@@ -116,10 +115,10 @@ def mapBack(reg):
     for i in range(224):
         alphaMap[i] = {}
     
-    for i, (itemSet) in enumerate(reg):
-        for j, (oneTuple) in enumerate(itemSet):
-            alphaMap[oneTuple[0]][oneTuple[1]] = (i,j)
-    
+    for i in range(224):
+        for j in range(224):
+            for tupleSet in reg[i][j]:
+                alphaMap[tupleSet[0]][tupleSet[1]] = (i,j)
     print(len(alphaMap)) 
     print(len(alphaMap[5][5]))
     

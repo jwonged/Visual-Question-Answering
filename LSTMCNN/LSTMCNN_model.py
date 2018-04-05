@@ -194,6 +194,9 @@ class LSTMCNNModel(BaseModel):
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
+        self.predProbs = tf.nn.softmax(y, name='softmax')
+        self.topK = tf.nn.top_k(self.predProbs, k=5, name='topK')
+        
         #define losses
         crossEntropyLoss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=y, labels=self.labels)

@@ -52,5 +52,5 @@ def parseArgs():
 if __name__ == '__main__':
     args = parseArgs()
     config = runtrain(args)
-    loadOfficialTest(args, config.saveModelPath, config.saveModelFile+'.meta')
-    validateInternalTestSet(args, config.saveModelPath, config.saveModelFile+'.meta')
+    loadOfficialTest(args, config.saveModelFile+'.meta', config.saveModelPath)
+    validateInternalTestSet(args, config.saveModelFile+'.meta', config.saveModelPath)

@@ -17,7 +17,7 @@ class BOWIMG_GPUConfig(Config):
         
         self.csvResults = self.saveModelPath + 'Pred_bow_{}.csv'.format(self.dateAppend)
         self.logFile = self.saveModelPath + 'Res_bow_{}.csv'.format(self.dateAppend)
-        self.testOfficialResultFile = 'results/bow{}Submission.json'.format(self.dateAppend)
+        self.testOfficialResultFile = self.restoreModelPath + 'att{}Submission.json'.format(self.dateAppend)
         
         self.restoreModel = args.restorefile if args.restorefile else '.meta'
         self.restoreModelPath = args.restorepath if args.restorepath else './'

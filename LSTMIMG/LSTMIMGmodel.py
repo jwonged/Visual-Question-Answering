@@ -196,8 +196,9 @@ class LSTMIMGmodel(BaseModel):
         is_correct_prediction = tf.equal(self.labels_pred, self.labels)
         self.accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32), name='accuracy')
         
-        predProbs = tf.nn.softmax(y)
-        self.topK = tf.nn.top_k(predProbs, name='topK')
+        self.predProbs = tf.nn.softmax(y, name='softmax')
+        self.predscore = tf.reduce_max(self.predProbs, axis=1, name='predscore')
+        self.topK = tf.nn.top_k(self.predProbs, name='topK')
         
         #define losses
         with tf.variable_scope('loss'):
