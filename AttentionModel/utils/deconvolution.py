@@ -113,6 +113,13 @@ def reVGGNet19():
     #pool5 = pooling(conv16)
 
 def mapBack(reg):
+    count = 0
+    for key, tuplet in reg.items():
+        for keyz, setlet in tuplet.items():
+            for itemlet in setlet:
+                count += 1
+    print('{} items in reg'.format(count))
+    
     alphaMap = {}
     for i in range(224):
         alphaMap[i] = {}
