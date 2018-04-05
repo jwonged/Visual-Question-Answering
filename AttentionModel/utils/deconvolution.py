@@ -124,14 +124,17 @@ def mapBack(reg):
             for tupleSet in reg[i][j]:
                 alphaMap[tupleSet[0]][tupleSet[1]].add((i,j))
     print(len(alphaMap)) 
+    print(len(alphaMap[5][5]))
     print(alphaMap[5][5])
     
     count = 0
     for tuplet in alphaMap.items():
+        print(len(tuplet))
+        print(type(tuplet))
         for setlet in tuplet.items():
             for itemlet in setlet:
                 count += 1
-    print('{} items in alphamap'.forma(count))
+    print('{} items in alphamap'.format(count))
     '''
     
     print('Reading ' +  preprocessedVQAMapsFile)
