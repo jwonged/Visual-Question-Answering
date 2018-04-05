@@ -178,7 +178,8 @@ class BaseModel(object):
                 #log to csv
                 #self.predFile.writerow([qn, self.classToAnsMap[labPred], self.classToAnsMap[lab], labPred, lab, lab==labPred])
                 #self.predFile.write('Qn:{}, lab:{}, pred:{}\n'.format(qn, self.classToAnsMap[lab], self.classToAnsMap[labPred]))
-                
+            if (i == nBatches*2):
+                print('Half mark')
             if (i%10==0) and not self.config.debugMode:
                 self.tb_writer.add_summary(summary, global_step=nBatches*nEpoch + i)
                                            

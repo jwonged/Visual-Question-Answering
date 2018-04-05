@@ -73,10 +73,11 @@ def reVGGNet19():
     returns a 14x14 key dictionary
     element[i][j] is a set of all initial pixel coordinates that it was created from
     """
-    im = mkIm(448)
+    im = mkIm(224)
     conv1 = convdic(im)
     conv2 = convdic(conv1)
     pool1 = pooling(conv2)
+    print(pool1)
     
     conv3 = convdic(pool1)
     conv4 = convdic(conv3)
@@ -102,6 +103,8 @@ def reVGGNet19():
     
     print(len(conv5_3))
     print(len(conv5_3[5][5]))
+    print((80,80) in conv5_3[5][5])
+    print((40,40) in conv5_3[5][5])
     #Remaining layers which do not go through processing:
     #conv16 = convdic(conv15)
     #pool5 = pooling(conv16)
