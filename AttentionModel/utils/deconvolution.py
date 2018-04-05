@@ -4,6 +4,8 @@ Created on 1 Apr 2018
 @author: jwong
 '''
 
+import pickle
+
 def mkIm(dim=4):
     im = {}
     for i in range(dim):
@@ -114,16 +116,28 @@ def mapBack(reg):
     alphaMap = {}
     for i in range(224):
         alphaMap[i] = {}
-    check = True
+    
     for i in range(14):
         for j in range(14):
             for tupleSet in reg[i][j]:
-                if i == 0 and j == 0 and check:
-                    print(tupleSet)
                 alphaMap[tupleSet[0]][tupleSet[1]] = (i,j)
     print(len(alphaMap)) 
-    print(len(alphaMap[5][5]))
+    print(alphaMap[5][5])
     
+    count = 0
+    for tuplet in alphaMap.items():
+        for setlet in tuplet.items():
+            for itemlet in setlet:
+                count += 1
+    print('{} items in alphamap'.forma(count))
+    '''
+    print('Reading ' +  preprocessedVQAMapsFile)
+    with open(preprocessedVQAMapsFile, 'rb') as f:
+        data = pickle.load(f)
+    with open(self.config.preprocessedVQAMapsFile, 'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print('Saved to {}'.format(self.config.preprocessedVQAMapsFile))
+'''
     
 if __name__ == '__main__':
     reg = reVGGNet19()
