@@ -37,7 +37,12 @@ def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
         model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
     else:
         model.loadTrainedModel(restoreModel, restoreModelPath)
-    model.runTest(testReader, config.testOfficialResultFile)
+    
+    if restoreModelPath is None:
+        testOfficialResultFile =  config.testOfficialResultFile
+    else:
+        testOfficialResultFile = '{}AttSubmission.json'.format(restoreModelPath) 
+    model.runTest(testReader, testOfficialResultFile)
     testReader.destruct()
     print('Official test complete')
     return model

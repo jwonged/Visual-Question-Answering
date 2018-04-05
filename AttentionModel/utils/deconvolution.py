@@ -142,9 +142,7 @@ def mapBack(reg):
     print('{} items in alphamap'.format(count))
     '''
     
-    print('Reading ' +  preprocessedVQAMapsFile)
-    with open(preprocessedVQAMapsFile, 'rb') as f:
-        data = pickle.load(f)
+    
         '''
     with open('alphaMap.pkl', 'wb') as f:
         pickle.dump(alphaMap, f, protocol=pickle.HIGHEST_PROTOCOL)

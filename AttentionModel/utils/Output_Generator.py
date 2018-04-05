@@ -9,6 +9,8 @@ from scipy import ndimage
 import numpy as np
 from nltk import word_tokenize
 from textwrap import wrap
+import pickle
+
 class OutputGenerator(object):
     def __init__(self, imgPathsFile):
         self.idToImgpathMap = {}
@@ -17,6 +19,7 @@ class OutputGenerator(object):
             for image_path in reader:
                 image_path = image_path.strip()
                 self.idToImgpathMap[str(self.getImageID(image_path))] = image_path
+        self.alphaMap = None
     
     def getImageID(self,image_path):
         #Get image ID
@@ -34,7 +37,10 @@ class OutputGenerator(object):
             qnAlphas, imgAlphas, img_ids, qns, preds, topk)):
             if n > 6:
                 break
-            alp_img = self._processImgAlpha(imAl)
+            
+            self.alphaMap = self._getAlphaMap()
+            
+            alp_img, gaus = self._processImgAlpha(imAl)
             toks = word_tokenize(qn)
             for tok, att in zip(toks, qnAl):
                 print('{} ( {} )  '.format(tok,att))
@@ -55,17 +61,43 @@ class OutputGenerator(object):
             plt.subplot(2,2,2)
             plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
+            plt.imshow(gaus, alpha=0.80)
             plt.axis('off')
             plt.subplot(2,1,2)
             plt.xticks(np.arange(len(toks)), (toks))
             plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
             plt.show()
+    
+    def _getAlphaMap(self):
+        alphaMapFile = './utils/alphaMap.pkl'
+        print('Reading ' +  alphaMapFile)
+        with open(alphaMapFile, 'rb') as f:
+            data = pickle.load(f)
+        return data
         
     def _processImgAlpha(self, imgAlpha):
+        
         alp_img = skimage.transform.pyramid_expand(
-            imgAlpha.reshape(14,14), upscale=32, sigma=40)
+            imgAlpha.reshape(14,14), upscale=16, sigma=40)
         #alp_img = skimage.transform.resize(
         #    imgAlpha.reshape(14,14), [448, 448])
+        alp_img2 = np.transpose(alp_img, (1,0))
+        
+        alp_img = self._processImgAlphaDeconv(imgAlpha)
+        
+        return alp_img, alp_img2
+    
+    def _processImgAlphaDeconv(self, imgAlpha):
+        imgAlpha = np.asarray(imgAlpha.reshape(14,14))
+        alp_img = np.zeros((224,224))
+        for i in range(224):
+            for j in range(224):
+                count = 0
+                for tuplet in self.alphaMap[i][j]:
+                    yo = imgAlpha[tuplet[0]][tuplet[1]]
+                    alp_img[i,j] += yo
+                    count += 1
+                alp_img[i, j] = alp_img[i, j] / count
         alp_img = np.transpose(alp_img, (1,0))
         return alp_img
     
@@ -83,7 +115,7 @@ class OutputGenerator(object):
         '''
         from PIL import Image
         img = Image.open(path)
-        img = img.resize((448,448))
+        img = img.resize((224,224))
         imgvec = np.asarray(img)
         #plt.imread(path)
         return imgvec

@@ -147,6 +147,10 @@ class BaseModel(object):
             
             if (i==1 or i==20 or i == 50) and self.config.debugMode:
                 print('Batch {}'.format(i))
+                _, _, labels_pred, summary, qnAtt_alpha = self.sess.run(
+                [self.train_op, self.loss, self.labels_pred, self.merged,
+                 self.qnAtt_alpha] , feed_dict=feed)
+                print(qnAtt_alpha)
                 '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
@@ -167,7 +171,7 @@ class BaseModel(object):
                 print('we: {}\n'.format(we.shape))
                 print('Word IDs: \n{}\n RawQns: {}'.format(qnAsWordIDsBatch, rawQns))
                 '''
-            _, _, labels_pred, summary = self.sess.run(
+            _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
             for lab, labPred in zip(labels, labels_pred):
@@ -197,7 +201,7 @@ class BaseModel(object):
                     nEpoch, epochScore, trainScore, total_predictions)
         print(epMsg)
         self.logFile.writerow([nEpoch, epochScore, trainScore, correct_predictions, 
-                               total_predictions, valCorrect, valTotalPreds])
+                               total_predictions, valCorrect, valTotalPreds, loss])
         return epochScore
     
     def runVal(self, valReader, nEpoch, is_training=True):

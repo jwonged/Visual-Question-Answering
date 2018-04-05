@@ -117,7 +117,7 @@ def visQnImgAtt():
     model.loadTrainedModel(config.restoreQnImAttModel, 
                            config.restoreQnImAttModelPath)
     qnAlphas, alphas, img_ids, qns, preds, topk = model.runPredict(
-        reader, config.csvResults, 4, mini=True)
+        reader, config.csvResults, 5, mini=True)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
