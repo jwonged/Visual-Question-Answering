@@ -114,14 +114,12 @@ def mapBack(reg):
     alphaMap = {}
     for i in range(224):
         alphaMap[i] = {}
-    
+    check = True
     for i in range(14):
         for j in range(14):
-            if i == 0 and j == 0:
-                print(reg[i][j])
             for tupleSet in reg[i][j]:
-                if i == 0 and j == 0:
-                    print(reg)
+                if i == 0 and j == 0 and check:
+                    print(tupleSet)
                 alphaMap[tupleSet[0]][tupleSet[1]] = (i,j)
     print(len(alphaMap)) 
     print(len(alphaMap[5][5]))
