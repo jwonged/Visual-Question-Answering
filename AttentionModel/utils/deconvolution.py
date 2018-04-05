@@ -116,11 +116,13 @@ def mapBack(reg):
     alphaMap = {}
     for i in range(224):
         alphaMap[i] = {}
+        for j in range(224):
+            alphaMap[i][j] = set()
     
     for i in range(14):
         for j in range(14):
             for tupleSet in reg[i][j]:
-                alphaMap[tupleSet[0]][tupleSet[1]] = (i,j)
+                alphaMap[tupleSet[0]][tupleSet[1]].add((i,j))
     print(len(alphaMap)) 
     print(alphaMap[5][5])
     
@@ -131,10 +133,11 @@ def mapBack(reg):
                 count += 1
     print('{} items in alphamap'.forma(count))
     '''
+    
     print('Reading ' +  preprocessedVQAMapsFile)
     with open(preprocessedVQAMapsFile, 'rb') as f:
         data = pickle.load(f)
-    with open(self.config.preprocessedVQAMapsFile, 'wb') as f:
+    with open('alphaMap', 'wb') as f:
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
     print('Saved to {}'.format(self.config.preprocessedVQAMapsFile))
 '''
