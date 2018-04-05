@@ -105,9 +105,25 @@ def reVGGNet19():
     print(len(conv5_3[5][5]))
     print((80,80) in conv5_3[5][5])
     print((40,40) in conv5_3[5][5])
+    
+    return conv5_3
     #Remaining layers which do not go through processing:
     #conv16 = convdic(conv15)
     #pool5 = pooling(conv16)
 
+def mapBack(reg):
+    alphaMap = {}
+    for i in range(224):
+        alphaMap[i] = {}
+    
+    for i, (itemSet) in enumerate(reg):
+        for j, (oneTuple) in enumerate(itemSet):
+            alphaMap[oneTuple[0]][oneTuple[1]] = (i,j)
+    
+    print(len(alphaMap)) 
+    print(len(alphaMap[5][5]))
+    
+    
 if __name__ == '__main__':
-    reVGGNet19()
+    reg = reVGGNet19()
+    mapBack(reg)
