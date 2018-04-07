@@ -30,7 +30,7 @@ class Config(object):
         self.randomSeed = args.seed if args.seed else 42
         self.elMult = args.useconcat #False = concat; True = Mult
         self.LSTMType = args.lstmtype #'bi' or 'single'
-        self.usePretrainedEmbeddings = args.untrainedembed
+        self.usePretrainedEmbeddings = args.useuntrainedembed
         self.trainEmbeddings = args.donttrainembed
         self.shuffle = args.noshuffle
         

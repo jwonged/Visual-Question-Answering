@@ -160,7 +160,7 @@ class BaseModel(object):
                 print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
                     regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
                 
-            _, _, labels_pred, summary = self.sess.run(
+            _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
             for lab, labPred in zip(labels, labels_pred):
@@ -190,7 +190,7 @@ class BaseModel(object):
         print(epMsg)
         print('vqaAcc: {}'.format(vqaAcc))
         self.logFile.writerow([nEpoch, epochScore, trainScore, correct_predictions, 
-                               total_predictions, valCorrect, valTotalPreds, vqaAcc])
+                               total_predictions, valCorrect, valTotalPreds, vqaAcc, loss])
         return epochScore
     
     def runVal(self, valReader, nEpoch, is_training=True):
