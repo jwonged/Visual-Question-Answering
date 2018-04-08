@@ -9,6 +9,7 @@ import os
 import pickle
 import time
 import os
+import math
 
 from model_utils import generateForSubmission
 from vqaTools.vqaInternal import VQA
@@ -207,8 +208,9 @@ class BaseModel(object):
                 self.dropout : 1.0
             }
             val_loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
-            print('Val loss: {}'.format(val_loss))
-            val_losses.append(val_loss)
+            if not math.isnan(val_loss):
+                print('Val loss: {}'.format(val_loss))
+                val_losses.append(val_loss)
             for lab, labPred, qn ,img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
                 if (lab==labPred):
