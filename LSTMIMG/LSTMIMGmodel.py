@@ -214,25 +214,6 @@ class LSTMIMGmodel(BaseModel):
         #init vars and session
         self._initSession()
         
-    def loadTrainedModel(self, restoreModel, restoreModelPath):
-        print('Restoring model from: {}'.format(restoreModel))
-        self.sess = tf.Session()
-        self.saver = saver = tf.train.import_meta_graph(restoreModel)
-        saver.restore(self.sess, tf.train.latest_checkpoint(restoreModelPath))
-        tf.reset_default_graph()
-        
-        graph = tf.get_default_graph()
-        self.labels_pred = graph.get_tensor_by_name('labels_pred:0')
-        self.accuracy = graph.get_tensor_by_name('accuracy:0')
-        self.word_ids = graph.get_tensor_by_name('word_ids:0')
-        self.img_vecs = graph.get_tensor_by_name('img_vecs:0')
-        self.sequence_lengths = graph.get_tensor_by_name('sequence_lengths:0')
-        self.labels = graph.get_tensor_by_name('labels:0')
-        self.dropout = graph.get_tensor_by_name('dropout:0')
-        self.topK = graph.get_tensor_by_name('topK:0')
-        
-        self.saver = tf.train.Saver()
-        
     def destruct(self):
         pass
         
