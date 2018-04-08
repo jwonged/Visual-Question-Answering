@@ -87,18 +87,19 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
-        if not os.path.exists(self.config.saveModelPath):
-            os.makedirs(self.config.saveModelPath)
-            
-        print('Starting model training')
-        self.f1 = open(logFile, 'wb')
-        self.logFile = csv.writer(self.f1)
-        self.logFile.writerow(['Attention model, ', self._getDescription(self.config)])
-        self.logFile.writerow([
-            'Epoch', 'Val score', 'Train score', 'Train correct', 
-            'Train predictions', 'Val correct', 'Val predictions', 'vqaAcc'])
+        if not self.config.debugmode:
+            if not os.path.exists(self.config.saveModelPath):
+                os.makedirs(self.config.saveModelPath)
+                
+            print('Starting model training')
+            self.f1 = open(logFile, 'wb')
+            self.logFile = csv.writer(self.f1)
+            self.logFile.writerow(['Attention model, ', self._getDescription(self.config)])
+            self.logFile.writerow([
+                'Epoch', 'Val score', 'Train score', 'Train correct', 
+                'Train predictions', 'Val correct', 'Val predictions', 'vqaAcc'])
         
-        self.vqa = VQA(self.config.valAnnotFileUnresolved, self.config.originalValQns)
+            self.vqa = VQA(self.config.valAnnotFileUnresolved, self.config.originalValQns)
         startTime = time.time()
         #self.add_summary()
         highestScore = 0
@@ -137,6 +138,8 @@ class BaseModel(object):
         nBatches = trainReader.datasetSize / batch_size
         correct_predictions, total_predictions = 0., 0.
         train_losses = []
+        
+        self.runVal(valReader, nEpoch)
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
@@ -177,7 +180,7 @@ class BaseModel(object):
         train_loss = np.mean(train_losses)
         
         #logging
-        epMsg = 'Epoch {}: val Score={:>6.2%}, val Loss={:>6.2%}, train Score={:>6.2%}, train loss={:>6.2%}'.format(
+        epMsg = 'Epoch {}: val Score={:>6.2%}, val Loss={}, train Score={:>6.2%}, train loss={}'.format(
                     nEpoch, epochScore, val_loss, trainScore, train_loss)
         print(epMsg)
         print('vqaAcc: {}'.format(vqaAcc))
@@ -217,7 +220,7 @@ class BaseModel(object):
                 currentPred['question_id'] = qn_id
                 currentPred['answer'] = self.classToAnsMap[labPred]
                 res.append(currentPred)
-        
+        print(val_losses[0])
         epoch_valLoss = np.mean(val_losses)
         valAcc = np.mean(accuracies)
         vqaRes = self.vqa.loadRes(res, self.config.originalValQns)
