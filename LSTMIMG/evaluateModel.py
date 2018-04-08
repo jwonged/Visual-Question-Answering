@@ -132,7 +132,11 @@ def parseArgs():
 
 if __name__ == '__main__':
     args = parseArgs()
-    if args.action == 'otest':
-        loadOfficialTest(args)
-    elif args.action == 'val':
-        validateInternalTestSet(args)
+    loadOfficialTest(args)
+    validateInternalTestSet(args)
+    #if args.action == 'otest':
+    #    loadOfficialTest(args)
+    #elif args.action == 'val':
+    #    validateInternalTestSet(args)
+    #else:
+        
