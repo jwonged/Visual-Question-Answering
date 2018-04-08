@@ -136,7 +136,7 @@ class BaseModel(object):
         batch_size = self.config.batch_size
         nBatches = trainReader.datasetSize / batch_size
         correct_predictions, total_predictions = 0., 0.
-        
+        train_losses = []
         
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
@@ -150,19 +150,10 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if i == 1 and self.config.debugMode:
-                _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator = self.sess.run(
-                [self.train_op, self.loss, self.labels_pred, self.merged,
-                 self.qnAtt_regionWeights, self.exp_regionWs,  self.mask, self.masked_expRegionWs, self.denominator], feed_dict=feed)
-                
-                print('RegionWs:\n {} \n exp_regionWs:\n {} \n mask:\n {} \n maskedRWs: \n {} \n, denominator: \n {}'.format(
-                    regionWs, exp_regionWs, mask, maskedRWs, denominator))
-                print('RegionWs:{} \n exp_regionWs: {}\n mask: {} \n maskedRWs:{} \n, denominator:{}'.format(
-                    regionWs.shape, exp_regionWs.shape, mask.shape, maskedRWs.shape, denominator.shape))
-                
             _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
+            train_losses.append(loss)
             for lab, labPred in zip(labels, labels_pred):
                 if lab==labPred:
                     correct_predictions += 1
@@ -181,16 +172,17 @@ class BaseModel(object):
             self.logFile.write(resMsg)
             print(resMsg)'''
                 
-        epochScore, valCorrect, valTotalPreds, vqaAcc = self.runVal(valReader, nEpoch)
+        epochScore, valCorrect, valTotalPreds, vqaAcc, val_loss = self.runVal(valReader, nEpoch)
         trainScore = correct_predictions/total_predictions if correct_predictions > 0 else 0
+        train_loss = np.mean(train_losses)
         
         #logging
-        epMsg = 'Epoch {0}: val Score={1:>6.2%}, train Score={2:>6.2%}, total train predictions={3}\n'.format(
-                    nEpoch, epochScore, trainScore, total_predictions)
+        epMsg = 'Epoch {}: val Score={:>6.2%}, val Loss={:>6.2%}, train Score={:>6.2%}, train loss={:>6.2%}'.format(
+                    nEpoch, epochScore, val_loss, trainScore, train_loss)
         print(epMsg)
         print('vqaAcc: {}'.format(vqaAcc))
         self.logFile.writerow([nEpoch, epochScore, trainScore, correct_predictions, 
-                               total_predictions, valCorrect, valTotalPreds, vqaAcc, loss])
+                               total_predictions, valCorrect, valTotalPreds, vqaAcc, train_loss, val_loss])
         return epochScore
     
     def runVal(self, valReader, nEpoch, is_training=True):
@@ -200,8 +192,7 @@ class BaseModel(object):
         Returns:
             metrics:
         """
-        accuracies = []
-        res = []
+        accuracies, res, val_losses  = [], [], []
         correct_predictions, total_predictions = 0., 0.
         for qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids in \
             valReader.getNextBatch(self.config.batch_size):
@@ -212,8 +203,9 @@ class BaseModel(object):
                 self.labels : labels,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            val_loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
             
+            val_losses.append(val_loss)
             for lab, labPred, qn ,img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
                 if (lab==labPred):
@@ -225,12 +217,13 @@ class BaseModel(object):
                 currentPred['question_id'] = qn_id
                 currentPred['answer'] = self.classToAnsMap[labPred]
                 res.append(currentPred)
-            
+        
+        epoch_valLoss = np.mean(val_losses)
         valAcc = np.mean(accuracies)
         vqaRes = self.vqa.loadRes(res, self.config.originalValQns)
         vqaEval = VQAEval(self.vqa, vqaRes, n=2)
         vqaEval.evaluate()
-        return valAcc, correct_predictions, total_predictions, vqaEval.accuracy['overall']
+        return valAcc, correct_predictions, total_predictions, vqaEval.accuracy['overall'], epoch_valLoss
     
     def _saveModel(self):
         self.saver.save(self.sess, self.config.saveModelFile)
