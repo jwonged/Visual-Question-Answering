@@ -34,7 +34,7 @@ class Config(object):
         self.trainEmbeddings = args.donttrainembed
         self.shuffle = args.noshuffle
         
-        self.debugMode = False
+        self.debugMode = True
         
         now = datetime.datetime.now()
         self.dateAppend = '{}{}{}-{}'.format(now.day, calendar.month_name[now.month][:3],
