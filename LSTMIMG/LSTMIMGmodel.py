@@ -214,7 +214,5 @@ class LSTMIMGmodel(BaseModel):
         #init vars and session
         self._initSession()
         
-    def destruct(self):
-        pass
         
     
