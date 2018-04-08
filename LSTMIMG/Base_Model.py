@@ -87,7 +87,7 @@ class BaseModel(object):
         print('Completed Model Construction')
     
     def train(self, trainReader, valReader, logFile):
-        if not self.config.debugmode:
+        if not self.config.debugMode:
             if not os.path.exists(self.config.saveModelPath):
                 os.makedirs(self.config.saveModelPath)
                 
@@ -207,7 +207,7 @@ class BaseModel(object):
                 self.dropout : 1.0
             }
             val_loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
-            
+            print('Val loss: {}'.format(val_loss))
             val_losses.append(val_loss)
             for lab, labPred, qn ,img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
