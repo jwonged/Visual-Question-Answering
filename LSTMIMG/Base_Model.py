@@ -209,7 +209,6 @@ class BaseModel(object):
             }
             val_loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
             if not math.isnan(val_loss):
-                print('Val loss: {}'.format(val_loss))
                 val_losses.append(val_loss)
             for lab, labPred, qn ,img_id, qn_id in zip(
                 labels, labels_pred, rawQns, img_ids, qn_ids):
@@ -222,7 +221,7 @@ class BaseModel(object):
                 currentPred['question_id'] = qn_id
                 currentPred['answer'] = self.classToAnsMap[labPred]
                 res.append(currentPred)
-        print(val_losses[0])
+        
         epoch_valLoss = np.mean(val_losses)
         valAcc = np.mean(accuracies)
         vqaRes = self.vqa.loadRes(res, self.config.originalValQns)
