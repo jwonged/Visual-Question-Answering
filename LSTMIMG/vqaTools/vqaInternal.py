@@ -53,7 +53,7 @@ class VQA:
 
     def createIndex(self):
         # create index
-        print 'creating index...'
+        #print 'creating index...'
         imgToQA = {ann['image_id']: [] for ann in self.dataset}
         qa =  {ann['question_id']:       [] for ann in self.dataset}
         qqa = {ann['question_id']:       [] for ann in self.dataset}
@@ -173,7 +173,7 @@ class VQA:
         #res.dataset['data_subtype'] = copy.deepcopy(self.questions['data_subtype'])
         #res.dataset['license'] = copy.deepcopy(self.questions['license'])
 
-        print 'Loading and preparing results...     '
+        #print 'Loading and preparing results...     '
         time_t = datetime.datetime.utcnow()
         
         ######Follow this format
@@ -195,7 +195,7 @@ class VQA:
             ann['image_id']      = qaAnn['image_id'] 
             ann['question_type'] = qaAnn['question_type']
             ann['answer_type']   = qaAnn['answer_type']
-        print 'DONE (t=%0.2fs)'%((datetime.datetime.utcnow() - time_t).total_seconds())
+        #print 'DONE (t=%0.2fs)'%((datetime.datetime.utcnow() - time_t).total_seconds())
 
         res.dataset = anns
         res.createIndex()
