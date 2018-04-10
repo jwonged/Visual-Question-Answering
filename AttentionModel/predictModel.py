@@ -29,13 +29,13 @@ def runVisualiseVal():
     
     model = ImageAttentionModel(config)
     model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
-    alphas, img_ids, qns, preds = model.runPredict(
-        reader, config.csvResults, 9, mini=True)
+    alphas, img_ids, qns, preds, labels = model.runPredict(
+        reader, config.csvResults, 180, mini=True, chooseBatch=0)
     model.destruct()
     reader.destruct()
     
     out = OutputGenerator(config.valImgPaths)
-    out.displayOutput(alphas, img_ids, qns, preds)
+    out.displayEachSample(alphas, img_ids, qns, preds, labels, saveData=True)
 
 def runVisualise():
     print('Running Visuals')

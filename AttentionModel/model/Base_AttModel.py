@@ -207,9 +207,10 @@ class BaseModel(object):
     def runVal(self, valReader, nEpoch, is_training=True):
         """Evaluates performance on val set
         Args:
-            valReader: 
+            valReader: InputProcessor carrying val set
+            nEpoch: epoch number for logging
         Returns:
-            metrics:
+            valAcc: strict accuracy on validation set
         """
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
@@ -260,29 +261,37 @@ class BaseModel(object):
         return graph 
     
     #overriden in QnAttModel
-    def runPredict(self, valReader, predfile, batch_size=None, mini=False):
+    def runPredict(self, valReader, predfile, batch_size=None, mini=False, chooseBatch=0):
         """Evaluates performance on internal valtest set
         Args:
-            valReader: 
+            valReader: InputProcessor carrying val set
+            predfile: csv file to log prediction results
+            batch_size: specify size when retrieving mini example sets
+            mini: When retrieving small examples instead of printing entire val set
+            chooseBatch: Choose which batch to display for retrieving small examples
         Returns:
-            metrics:
+            results: dictionary of predictions in vqa test server format
+            valAcc: strict accuracy on validation set
         """
+        
         if batch_size is None:
             batch_size = self.config.batch_size
         
-        print('Predictions will be logged in {}'.format(predfile))
-        self.f2 =  open(predfile, 'wb') 
-        self.predFile = csv.writer(self.f2)
-        self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
-             'label class', 'Correct?', 'img id', 'qn_id')
+        if not mini:
+            print('Predictions will be logged in {}'.format(predfile))
+            self.f2 =  open(predfile, 'wb') 
+            self.predFile = csv.writer(self.f2)
+            self._logToCSV('Epoch','Question', 'Prediction', 'Label', 'Pred Class',
+                 'label class', 'Correct?', 'img id', 'qn_id')
         
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
         if mini:
-            img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+            img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return = [], [], [], []
         results = []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
+            
             feed = {
                 self.word_ids : qnAsWordIDsBatch,
                 self.sequence_lengths : seqLens,
@@ -299,21 +308,23 @@ class BaseModel(object):
                 total_predictions += 1
                 accuracies.append(lab==labPred)
                 
-                self._logToCSV(nEpoch='', qn=qn, 
-                               pred=self.classToAnsMap[labPred], 
-                               lab=self.classToAnsMap[lab], 
-                               predClass=labPred, labClass=lab, 
-                               correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                if not mini:
+                    self._logToCSV(nEpoch='', qn=qn, 
+                                   pred=self.classToAnsMap[labPred], 
+                                   lab=self.classToAnsMap[lab], 
+                                   predClass=labPred, labClass=lab, 
+                                   correct=lab==labPred, img_id=img_id, qn_id=qn_id)
                 
                 currentPred = {}
                 currentPred['question_id'] = qn_id
                 currentPred['answer'] = self.classToAnsMap[labPred]
                 results.append(currentPred)
-            
-            if mini and nBatch > 1:
+                
+            if mini and nBatch == chooseBatch:
                 ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
                 img_ids_toreturn = img_ids
                 qns_to_return = rawQns
+                lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
                 break
         
         valAcc = np.mean(accuracies)
@@ -321,7 +332,7 @@ class BaseModel(object):
         
         #return valAcc, correct_predictions, total_predictions
         if mini:
-            return alphas, img_ids_toreturn, qns_to_return, ans_to_return
+            return alphas, img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return
         return results, valAcc
         
     

@@ -277,4 +277,8 @@ if __name__ == '__main__':
         loadOfficialTest(args)
     elif args.action == 'val':
         validateInternalTestSet(args)
+    else:
+        model = loadOfficialTest(args)
+        model.destruct()
+        validateInternalTestSet(args)
         
