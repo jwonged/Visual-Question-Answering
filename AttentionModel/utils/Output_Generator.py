@@ -209,7 +209,7 @@ class OutputGenerator(object):
                 preds_to_save.append(pred)
                 qns_to_save.append(qn)
                 labs_to_save.append(lab)
-            '''
+            
             plt.subplot(1,2,1)
             #plt.xlabel('Qn: {} \nPred: {}'.format(qn, pred))
             #plt.title("\n".join(wrap(
@@ -225,7 +225,7 @@ class OutputGenerator(object):
             plt.imshow(imgvec)
             plt.imshow(alp_img, alpha=0.80) #plt.imshow(arr, cmap='gray')
             plt.axis('off')
-            plt.show()'''
+            plt.show()
         #plt.tight_layout()
         
         if saveData:

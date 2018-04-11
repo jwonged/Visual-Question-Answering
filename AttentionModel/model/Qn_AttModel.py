@@ -225,6 +225,49 @@ class QnAttentionModel(BaseModel):
             
             return imgContext
     
+    def _multimodalAttention(self, imgContext, qnContext):
+        #tanh layer mapping to same dims [b,1024]
+        att_im = tf.layers.dense(inputs=imgContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        
+        att_im = tf.expand_dims(att_im, axis=1) #[b,1,1024]
+        att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,1024]
+        
+        reg_in = tf.concat([att_im, att_qn], axis=1) #[b,2,1024]
+        print('mmreg_in = {}'.format(reg_in.get_shape()))
+        
+        #[b,2,1024]
+        att_a = tf.layers.dense(inputs=reg_in,
+                                       units=reg_in.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        beta_w = tf.get_variable("beta", shape=[att_a.get_shape()[-1], 1], dtype=tf.float32) #1024,1
+        att_flat = tf.reshape(att_a, shape=[-1, att_a.get_shape()[-1]]) #[b*2, 1024]
+        att_flatWeights = tf.matmul(att_flat, beta_w) #get scalar for each batch, region [b*2]
+        att_regionWeights = tf.reshape(att_flatWeights, shape=[-1, 2])  #[b, 2]
+        
+        
+        print('mmatt_flatWeights = {}'.format(att_flatWeights.get_shape()))
+        
+        print('mmRegion weights = {}'.format(att_regionWeights.get_shape()))
+        
+        print('Using sigmoid multimodal attention function')
+        unnorm_alpha = tf.nn.sigmoid(att_regionWeights) #[b, 2]
+        norm_denominator = tf.expand_dims(
+            tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+        self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
+        
+        
+        #Compute context
+        alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
+        mmContext = tf.reduce_sum(tf.multiply(alpha, reg_in),  axis=1) #[b,1024]
+        
+        return mmContext
+        
+        
+    
     def _combineModes(self, imgContext, qnContext):
         if self.config.elMult: #element wise hadamard
             print('Using pointwise mult in combining modes')
@@ -264,7 +307,10 @@ class QnAttentionModel(BaseModel):
         imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha')
         
         #combine modes
-        self.multimodalOutput = self._combineModes(imgContext, qnContext)
+        if self.config.mmAtt:
+            self.multimodalOutput = self._multimodalAttention(imgContext, qnContext)
+        else:
+            self.multimodalOutput = self._combineModes(imgContext, qnContext)
         
         if self.config.stackAtt:
             print('Using stacked attention')
@@ -318,6 +364,8 @@ class QnAttentionModel(BaseModel):
             self.alpha = graph.get_tensor_by_name('image_attention/alpha:0')
         if not self.config.noqnatt:
             self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
+        if self.config.mmAtt:
+            self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)

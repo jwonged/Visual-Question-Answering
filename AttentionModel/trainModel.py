@@ -47,7 +47,7 @@ def parseArgs():
     parser.add_argument('-s', '--seed', help='tf seed value', type=int)
     parser.add_argument('-v', '--verbose', help='Display all print statement', action='store_true')
     parser.add_argument('--att', choices=['qn', 'im'], default='qn')
-    parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='softmax')
+    parser.add_argument('--attfunc', choices=['sigmoid', 'softmax'], default='sigmoid')
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
     parser.add_argument('-p', '--restorepath', help='Name of path to file to restore')
     parser.add_argument('--notopk', help='No loading topk', action='store_true')
@@ -56,6 +56,7 @@ def parseArgs():
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
     parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='sigmoid')
+    parser.add_argument('--mmAtt', help='Use multimodal attention', action='store_true')
     args = parser.parse_args()
     return args
     

@@ -42,6 +42,7 @@ class Config(object):
         self.attComb = args.attComb if args.attComb else 'concat' #or add or mult
         self.stackAtt = args.stackAtt
         self.qnAttf = args.qnAttf if args.qnAttf else 'sigmoid'
+        self.mmAtt = args.mmAtt
         
         self.debugMode = args.debugmode
         self.notopk = args.notopk
