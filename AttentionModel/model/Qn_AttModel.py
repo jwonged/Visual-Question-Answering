@@ -226,12 +226,45 @@ class QnAttentionModel(BaseModel):
             return imgContext
     
     def _multimodalAttention(self, imgContext, qnContext):
+        """
+        args:
+            imgContext: [b, 1536]
+            qnContext: [b, 1024]
+        """
         #tanh layer mapping to same dims [b,1024]
+        imgContext = tf.layers.dense(inputs=imgContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
         att_im = tf.layers.dense(inputs=imgContext,
                                        units=qnContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
+        att_im_b = tf.layers.dense(inputs=att_im,
+                                       units=1,
+                                       activation=None,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
         
+        att_qn = tf.layers.dense(inputs=qnContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        att_qn = tf.layers.dense(inputs=att_qn,
+                                       units=1,
+                                       activation=None,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        
+        unnorm_qn = tf.nn.sigmoid(att_qn) #[b,1]
+        
+        denominator = tf.add(unnorm_im, unnorm_qn) #[b,1]
+        self.mmAlpha_im = tf.div(unnorm_im, denominator, name='mmAlphaIm')
+        self.mmAlpha_qn = tf.div(unnorm_qn, denominator, name='mmAlphaQn')
+        
+        mmContext = tf.add(tf.multiply(self.mmAlpha_im, imgContext), tf.multiply(self.mmAlpha_qn, qnContext))
+        
+        
+        '''
         att_im = tf.expand_dims(att_im, axis=1) #[b,1,1024]
         att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,1024]
         
@@ -262,7 +295,7 @@ class QnAttentionModel(BaseModel):
         
         #Compute context
         alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
-        mmContext = tf.reduce_sum(tf.multiply(alpha, reg_in),  axis=1) #[b,1024]
+        mmContext = tf.reduce_sum(tf.multiply(alpha, reg_in),  axis=1) #[b,1024]'''
         
         return mmContext
         
