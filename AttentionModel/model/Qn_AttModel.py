@@ -24,8 +24,7 @@ class QnAttentionModel(BaseModel):
         super(QnAttentionModel, self).__init__(config)
     
     def comment(self):
-        return 'Better masking on QnAtt model with img att layer \
-                and qn boolean masking and option stacked attention'
+        return 'Testing multimodal attention with separate dense layers'
     
     def _addPlaceholders(self):
         # add network placeholders
@@ -398,7 +397,9 @@ class QnAttentionModel(BaseModel):
         if not self.config.noqnatt:
             self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
         if self.config.mmAtt:
-            self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
+            #self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
+            self.mmAlpha_im = graph.get_tensor_by_name('mmAlphaIm:0')
+            self.mmAlpha_qn = graph.get_tensor_by_name('mmAlphaQn:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
@@ -441,30 +442,57 @@ class QnAttentionModel(BaseModel):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            if self.config.noqnatt:
-                labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            else:
-                topK, qnAlphas, alphas, labels_pred = self.sess.run(
-                    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
             
-            for lab, labPred, qn, img_id, qn_id in zip(
-                labels, labels_pred, rawQns, img_ids, qn_ids):
-                if (lab==labPred):
-                    correct_predictions += 1
-                total_predictions += 1
-                accuracies.append(lab==labPred)
+            if self.config.mmAtt:
+                topK, qnAlphas, alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
+                    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
+                     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
                 
-                currentPred = {}
-                currentPred['question_id'] = qn_id
-                currentPred['answer'] = self.classToAnsMap[labPred]
-                results.append(currentPred)
+                for lab, labPred, qn, img_id, qn_id, mm_im, mm_qn in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims, mm_qns):
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
+                    
+                    if not mini:
+                        self.predFile.writerow(['', qn, 
+                                       self.classToAnsMap[labPred], 
+                                       self.classToAnsMap[lab], 
+                                       labPred, lab, 
+                                       lab==labPred, img_id, qn_id,
+                                       mm_im, mm_qn])
+            else:
+                if self.config.noqnatt:
+                    labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+                else:
+                    topK, qnAlphas, alphas, labels_pred = self.sess.run(
+                        [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
                 
-                if not mini:
-                    self._logToCSV(nEpoch='', qn=qn, 
-                                   pred=self.classToAnsMap[labPred], 
-                                   lab=self.classToAnsMap[lab], 
-                                   predClass=labPred, labClass=lab, 
-                                   correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                
+                for lab, labPred, qn, img_id, qn_id in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids):
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
+                    
+                    if not mini:
+                        self._logToCSV(nEpoch='', qn=qn, 
+                                       pred=self.classToAnsMap[labPred], 
+                                       lab=self.classToAnsMap[lab], 
+                                       predClass=labPred, labClass=lab, 
+                                       correct=lab==labPred, img_id=img_id, qn_id=qn_id)
             
             if mini and nBatch > 1:
                 ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
