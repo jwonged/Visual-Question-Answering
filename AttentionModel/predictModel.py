@@ -113,15 +113,28 @@ def visQnImgAtt():
                                  config,
                                  is_training=False)
     
+    #reader = AttModelInputProcessor(config.trainAnnotFile, 
+    #                             config.rawQnTrain, 
+    #                             config.trainImgFile, 
+    #                             config,
+    #                             is_training=False)
+    
     model = QnAttentionModel(config)
-    model.loadTrainedModel(config.restoreQnImAttModel, 
-                           config.restoreQnImAttModelPath)
-    qnAlphas, alphas, img_ids, qns, preds, topk = model.runPredict(
-        reader, config.csvResults, 5, mini=True)
+    
+    
+    
+    model.loadTrainedModel(config.restoreQuAttSigmoidModel, 
+                           config.restoreQuAttSigmoidModelPath)
+    
+    #model.loadTrainedModel(config.restoreQnImAttModel, 
+    #                       config.restoreQnImAttModelPath)
+    qnAlphas, alphas, img_ids, qns, preds, topk, labs = model.runPredict(
+        reader, config.csvResults, 40, mini=True, chooseBatch=0)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
-    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk)
+    #out = OutputGenerator(config.trainImgPaths)
+    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk, labs,True)
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -140,6 +153,7 @@ def parseArgs():
     parser.add_argument('--stackAtt', help='Trace printing', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
     parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='sigmoid')
+    parser.add_argument('--mmAtt', help='Use multimodal attention', action='store_true')
     args = parser.parse_args()
     return args
 

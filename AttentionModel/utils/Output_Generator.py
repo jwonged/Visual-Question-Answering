@@ -32,15 +32,17 @@ class OutputGenerator(object):
     def convertIDtoPath(self, img_id):
         return self.idToImgpathMap[img_id]
     
-    def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds, topk):
-        for n, (qnAl, imAl, img_id, qn, pred, topk) in enumerate(zip(
-            qnAlphas, imgAlphas, img_ids, qns, preds, topk)):
-            if n > 6:
-                break
+    def displayQnImgAttention(self, qnAlphas, imgAlphas, img_ids, qns, preds, topk, labs, saveData=False):
+        if saveData:
+            data = {}
+            qn_alphas_to_save = []
+            alphas_to_save, images_to_save, preds_to_save, qns_to_save, labs_to_save = [], [], [], [], []
+        for n, (qnAl, imAl, img_id, qn, pred, topk, lab) in enumerate(zip(
+            qnAlphas, imgAlphas, img_ids, qns, preds, topk, labs)):
+            #if n > 6:
+            #    break
             
-            self.alphaMap = self._getAlphaMap()
-            
-            alp_img, gaus = self._processImgAlpha(imAl)
+            alp_img = self._processImgAlpha(imAl)
             toks = word_tokenize(qn)
             for tok, att in zip(toks, qnAl):
                 print('{} ( {} )  '.format(tok,att))
@@ -50,23 +52,49 @@ class OutputGenerator(object):
             #img = Image.open(self.idToImgpathMap[img_id])
             #img.show()
             imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
+            qn_2d = np.expand_dims(qnAl[:len(toks)], axis=0)
             
-            qn_2d = np.expand_dims(qnAl, axis=0)#[:len(toks)]
+            if saveData:
+                alphas_to_save.append(imAl)
+                qn_alphas_to_save.append(qn_2d)
+                images_to_save.append(imgvec)
+                preds_to_save.append(pred)
+                qns_to_save.append(qn)
+                labs_to_save.append(lab)
+            
+            
             print(qn_2d)
+            plt.suptitle('Qn: {}\n Prediction: {} \n Ground truth: {}'.format(qn, pred, lab))#, fontsize=16)
+            
+            #attended image
             plt.subplot(2,2,1)
-            plt.title('Qn: {}, pred: {}'.format(qn, pred))
+            #plt.title('')
             plt.imshow(imgvec)
             plt.imshow(alp_img, alpha=0.80)#, cmap='gray')
             plt.axis('off')
+            
+            #img
             plt.subplot(2,2,2)
-            plt.title('Qn: {}, pred: {}'.format(qn, pred))
+            #plt.title('Qn: {}, pred: {}'.format(qn, pred))
             plt.imshow(imgvec)
-            plt.imshow(gaus, alpha=0.80)
             plt.axis('off')
+            
+            #qn attention
             plt.subplot(2,1,2)
+            plt.yticks([])
             plt.xticks(np.arange(len(toks)), (toks))
             plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
-            plt.show()
+            #plt.show()
+        
+        if saveData:
+            data['qn_alphas'] = qn_alphas_to_save
+            data['im_alphas'] = alphas_to_save
+            data['images'] = images_to_save
+            data['preds'] = preds_to_save
+            data['qns'] = qns_to_save
+            data['labs'] = labs_to_save
+            self._saveToPickle(data, fileName='/media/jwong/Transcend/VQAresults/Samplespictures/QuAttsigmoidValFirst.pkl')
+            
     
     def _saveToPickle(self, data, fileName):
         with open(fileName, 'wb') as f:

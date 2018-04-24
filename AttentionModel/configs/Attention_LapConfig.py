@@ -21,12 +21,18 @@ class Attention_LapConfig(Config):
     restoreModelPath = '/media/jwong/Transcend/VQAresults/ImgAtt/20MarAtt/'
     testOfficialResultFile = '/media/jwong/Transcend/VQADataset/VQASubmissions/47LSTMIMG11MarSubmission.json'
     
+    #softmax
     restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att29Mar22-27/att29Mar22-27.meta'
     restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att29Mar22-27/'
     #restoreQnImAttModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/att22Mar0-12.meta'
     #restoreQnImAttModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/Att22Mar0-12/'
     #restoreModel = '/media/jwong/Transcend/VQADataset/DummySets/LSTMIMG-proto.meta'
     #saveModelPath = '/media/jwong/Transcend/VQADataset/DummySets/'
+    
+    #sigmoid
+    restoreQuAttSigmoidModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/sigmoid/Att11Apr19-7/att11Apr19-7.meta'
+    restoreQuAttSigmoidModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/sigmoid/Att11Apr19-7/'
+    
     
     trainImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggTrainConv5_3Features_shelf'
     valImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggValConv5_3Features_shelf'

@@ -14,6 +14,9 @@ from utils.model_utils import getPretrainedw2v
 from model.Base_AttModel import BaseModel
 import numpy as np
 import tensorflow as tf 
+from scipy.stats import ttest_ind
+from scipy.special import stdtr
+from sklearn.metrics import confusion_matrix, recall_score, precision_score, f1_score, roc_curve
 
 
 class QnAttentionModel(BaseModel):
@@ -24,7 +27,7 @@ class QnAttentionModel(BaseModel):
         super(QnAttentionModel, self).__init__(config)
     
     def comment(self):
-        return 'Testing multimodal attention with separate dense layers'
+        return 'Crossmodal Attention with tanh restriction'
     
     def _addPlaceholders(self):
         # add network placeholders
@@ -245,6 +248,10 @@ class QnAttentionModel(BaseModel):
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
         
+        qnContext = tf.layers.dense(inputs=qnContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
         att_qn = tf.layers.dense(inputs=qnContext,
                                        units=qnContext.get_shape()[-1],
                                        activation=tf.tanh,
@@ -413,7 +420,40 @@ class QnAttentionModel(BaseModel):
             [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
         return qnAlphas[0], imgAlphas[0], self.classToAnsMap[labels_pred[0]]
     
-    def runPredict(self, valReader, predfile, batch_size=None, mini=False):
+    def runEvaluationMetrics(self, valReader, metricsResultsFile):
+        print('Results will be logged to {}'.format(metricsResultsFile))
+        batch_size = self.config.batch_size
+        
+        allPredictions = []
+        allLabels = []
+        for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
+            in enumerate(valReader.getNextBatch(batch_size)):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+            }
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            
+            allPredictions.append(labels_pred)
+            allLabels.append(labels)
+        
+        print('Completed {} predictions'.format(len(allPredictions)))
+        
+        lab = allLabels
+        pred = allPredictions
+        classes = np.arange(0,len(self.classToAnsMap))
+        
+        print(recall_score(lab, pred, labels=classes, average='micro'))
+        print(recall_score(lab, pred, labels=classes, average='macro'))
+        print(precision_score(lab, pred, labels=classes, average='micro'))
+        print(precision_score(lab, pred, labels=classes, average='macro'))
+        print(f1_score(lab, pred, labels=classes, average='micro'))
+        print(f1_score(lab, pred, labels=classes, average='macro'))
+                
+    
+    def runPredict(self, valReader, predfile, batch_size=None, mini=False, chooseBatch=0):
         """Evaluates performance on internal valtest set
         Args:
             valReader: 
@@ -432,7 +472,7 @@ class QnAttentionModel(BaseModel):
         
         accuracies = []
         correct_predictions, total_predictions = 0., 0.
-        img_ids_toreturn, qns_to_return, ans_to_return = [], [], []
+        img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return = [], [], [], []
         results = []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
@@ -467,6 +507,13 @@ class QnAttentionModel(BaseModel):
                                        labPred, lab, 
                                        lab==labPred, img_id, qn_id,
                                        mm_im, mm_qn])
+                        
+                if mini and nBatch == chooseBatch:
+                    ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
+                    img_ids_toreturn = img_ids
+                    qns_to_return = rawQns
+                    lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
+                    break
             else:
                 if self.config.noqnatt:
                     labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
@@ -493,17 +540,20 @@ class QnAttentionModel(BaseModel):
                                        lab=self.classToAnsMap[lab], 
                                        predClass=labPred, labClass=lab, 
                                        correct=lab==labPred, img_id=img_id, qn_id=qn_id)
-            
-            if mini and nBatch > 1:
-                ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
-                img_ids_toreturn = img_ids
-                qns_to_return = rawQns
-                break
+                    
+                if mini and nBatch == chooseBatch:
+                    ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
+                    img_ids_toreturn = img_ids
+                    qns_to_return = rawQns
+                    lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
+                    break
         
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
+        if mini and self.config.mmAtt:
+            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK, lab_to_return, mm_ims, mm_qns
         if mini:
-            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK
+            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK, lab_to_return
         return results, valAcc
     
