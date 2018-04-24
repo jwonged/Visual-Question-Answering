@@ -58,64 +58,73 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     data['labels'] = lab
     data['preds'] = pred
     data['classToAnsMap'] = classToAnsMap
-    saveToPickle(data, restoreModelPath+'labpreds.pkl')
+    dateID = restoreModelPath.split('/')[-1]
+    saveToPickle(data, 'labpreds{}.pkl'.format(dateID))
     
     print('Metrics Completed.')
     
 def runMetrics(lab, pred, classToAnsMap, pathToModel):
-    createConfusionMatrix(lab, pred, classToAnsMap, pathToModel)
-    metricsFileStats = '{}MetricStats.csv'.format(pathToModel)
+    createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 1000)
+    createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 20)
+    createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 15)
     
-    print('Results will be logged to {}'.format(metricsFileStats))
-    fstats = open(metricsFileStats, 'wb')
-    logStats = csv.writer(fstats)
     classes = np.arange(0,len(classToAnsMap)-1)
     classesAsStrings = [classToAnsMap[i] for i in classes]
     logStats.writerow([pathToModel])
     
+    listOfStats = []
+    listOfStats.append(pathToModel)
     msg = 'micro recall: {}'.format(
         recall_score(lab, pred, labels=classes, average='micro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'macro recall: {}'.format(
         recall_score(lab, pred, labels=classes, average='macro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'micro precision: {}'.format(
         precision_score(lab, pred, labels=classes, average='micro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'macro precision: {}'.format(
         precision_score(lab, pred, labels=classes, average='macro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'micro f1 score: {}'.format(
         f1_score(lab, pred, labels=classes, average='micro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'macro f1 score: {}'.format(
         f1_score(lab, pred, labels=classes, average='macro'))
-    logStats.writerow([msg])
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     msg = 'mcc: {}'.format(
         matthews_corrcoef(lab, pred) )
-    logStats.writerow([msg])
-    
-    fstats.close()
+    #logStats.writerow([msg])
+    listOfStats.append(msg)
     
     print('stats logging complete.')
+    return listOfStats
     
 
-def createConfusionMatrix(lab, pred, classToAnsMap, pathToModel):
-    metricsFileCF = '{}MetricConfMatrix.csv'.format(pathToModel)
+def createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, num):
+    dateID = pathToModel.split('/')[-1]
+    metricsFileCF = 'MetricConfMatrix{}_{}.csv'.format(num,dateID)
     print('Preparing confusion matrix for {}'.format(metricsFileCF))
     fconf = open(metricsFileCF, 'wb')
     logConf = csv.writer(fconf)
     
-    ansTups = Counter(lab).most_common(1000)
+    ansTups = Counter(lab).most_common(num+1)
     classes = []
     for tup in ansTups:
-        classes.append(tup[0])
+        if tup[0] != -1 and tup[0] != '-1':
+            classes.append(tup[0])
     
     print('classes: {}'.format(len(classes)))
     
@@ -159,17 +168,30 @@ def parseArgs():
 if __name__ == '__main__':
     args = parseArgs()
     
+    metricsFileStats = 'MetricStats.csv'
+    print('Results will be logged to {}'.format(metricsFileStats))
+    fstats = open(metricsFileStats, 'wb')
+    logStats = csv.writer(fstats)
+    
     #QuAtt
     modelFile = 'results/Att29Mar22-27/att29Mar22-27.meta'
     modelPath = 'results/Att29Mar22-27/'
-    runMetricsForInternalTestSet(args, modelFile, modelPath)
+    stats1 = runMetricsForInternalTestSet(args, modelFile, modelPath)
     modelFile = 'results/Att22Mar0-12/att22Mar0-12.meta'
     modelPath = 'results/Att22Mar0-12/'
-    runMetricsForInternalTestSet(args, modelFile, modelPath)
+    stats2 = runMetricsForInternalTestSet(args, modelFile, modelPath)
     modelFile = 'results/Att27Mar19-42/att27Mar19-42.meta'
     modelPath = 'results/Att27Mar19-42/'
-    runMetricsForInternalTestSet(args, modelFile, modelPath)
+    stats3 = runMetricsForInternalTestSet(args, modelFile, modelPath)
     
+    for msg in stats1:
+        logStats.writerow([msg])
+    for msg in stats2:
+        logStats.writerow([msg])
+    for msg in stats3:
+        logStats.writerow([msg])
+    
+    fstats.close()
     #ImAtt
     
     
