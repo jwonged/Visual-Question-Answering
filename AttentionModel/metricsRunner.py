@@ -53,7 +53,7 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     print(len(classToAnsMap))
     print(classToAnsMap[0])
     
-    runMetrics(lab, pred, classToAnsMap,restoreModelPath)
+    listOfStats = runMetrics(lab, pred, classToAnsMap,restoreModelPath)
     data = {}
     data['labels'] = lab
     data['preds'] = pred
@@ -62,6 +62,7 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     saveToPickle(data, 'labpreds{}.pkl'.format(dateID))
     
     print('Metrics Completed.')
+    return listOfStats
     
 def runMetrics(lab, pred, classToAnsMap, pathToModel):
     createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 1000)
@@ -192,6 +193,7 @@ if __name__ == '__main__':
         logStats.writerow([msg])
     
     fstats.close()
+    print('Main Complete.')
     #ImAtt
     
     
