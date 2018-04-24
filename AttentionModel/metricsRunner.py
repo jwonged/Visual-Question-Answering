@@ -51,8 +51,7 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     valTestReader.destruct()
     print(len(classToAnsMap))
     print(classToAnsMap[0])
-    #runMetrics(lab, pred, classToAnsMap,restoreModelPath)
-    print()
+    runMetrics(lab, pred, classToAnsMap,restoreModelPath)
     data = {}
     data['labels'] = lab
     data['preds'] = pred
@@ -156,12 +155,12 @@ if __name__ == '__main__':
     modelFile = 'results/Att29Mar22-27/att29Mar22-27.meta'
     modelPath = 'results/Att29Mar22-27/'
     runMetricsForInternalTestSet(args, modelFile, modelPath)
-    modelFile = 'results/Att22Mar0-12/att22Mar0-12.meta.meta'
+    modelFile = 'results/Att22Mar0-12/att22Mar0-12.meta'
     modelPath = 'results/Att22Mar0-12/'
-    runMetricsForInternalTestSet(args, modelFile, modelPath)
+    #runMetricsForInternalTestSet(args, modelFile, modelPath)
     modelFile = 'results/Att27Mar19-42/att27Mar19-42.meta'
     modelPath = 'results/Att27Mar19-42/'
-    runMetricsForInternalTestSet(args, modelFile, modelPath)
+    #runMetricsForInternalTestSet(args, modelFile, modelPath)
     
     #ImAtt
     

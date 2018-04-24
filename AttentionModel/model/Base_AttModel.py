@@ -356,6 +356,7 @@ class BaseModel(object):
             allLabels.append(labels)
         
         print('Completed {} predictions'.format(len(allPredictions)))
+        print('Completed {} predictions'.format(len(allLabels)))
         
         return allLabels, allPredictions, self.classToAnsMap
         
