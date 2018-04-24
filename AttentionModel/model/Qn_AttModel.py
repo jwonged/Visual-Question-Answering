@@ -420,38 +420,6 @@ class QnAttentionModel(BaseModel):
         qnAlphas, imgAlphas, labels_pred = self.sess.run(
             [self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
         return qnAlphas[0], imgAlphas[0], self.classToAnsMap[labels_pred[0]]
-    
-    def runEvaluationMetrics(self, valReader, metricsResultsFile):
-        print('Results will be logged to {}'.format(metricsResultsFile))
-        batch_size = self.config.batch_size
-        
-        allPredictions = []
-        allLabels = []
-        for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
-            in enumerate(valReader.getNextBatch(batch_size)):
-            feed = {
-                self.word_ids : qnAsWordIDsBatch,
-                self.sequence_lengths : seqLens,
-                self.img_vecs : img_vecs,
-                self.dropout : 1.0
-            }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            
-            allPredictions.append(labels_pred)
-            allLabels.append(labels)
-        
-        print('Completed {} predictions'.format(len(allPredictions)))
-        
-        lab = allLabels
-        pred = allPredictions
-        classes = np.arange(0,len(self.classToAnsMap))
-        
-        print(recall_score(lab, pred, labels=classes, average='micro'))
-        print(recall_score(lab, pred, labels=classes, average='macro'))
-        print(precision_score(lab, pred, labels=classes, average='micro'))
-        print(precision_score(lab, pred, labels=classes, average='macro'))
-        print(f1_score(lab, pred, labels=classes, average='micro'))
-        print(f1_score(lab, pred, labels=classes, average='macro'))
                 
     
     def runPredict(self, valReader, predfile, batch_size=None, mini=False, chooseBatch=0):

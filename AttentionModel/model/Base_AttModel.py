@@ -337,7 +337,28 @@ class BaseModel(object):
             return alphas, img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return
         return results, valAcc
         
-    
+    def runEvaluationMetrics(self, valReader):
+        batch_size = self.config.batch_size
+        
+        allPredictions = []
+        allLabels = []
+        for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
+            in enumerate(valReader.getNextBatch(batch_size)):
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.dropout : 1.0
+            }
+            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+            
+            allPredictions.append(labels_pred)
+            allLabels.append(labels)
+        
+        print('Completed {} predictions'.format(len(allPredictions)))
+        
+        return allLabels, allPredictions, self.classToAnsMap
+        
     def runTest(self, testReader, jsonOutputFile):
         '''For producing official test results for submission to server
         '''

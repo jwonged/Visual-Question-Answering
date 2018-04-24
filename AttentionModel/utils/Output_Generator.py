@@ -95,7 +95,6 @@ class OutputGenerator(object):
             data['labs'] = labs_to_save
             self._saveToPickle(data, fileName='/media/jwong/Transcend/VQAresults/Samplespictures/QuAttsigmoidValFirst.pkl')
             
-    
     def _saveToPickle(self, data, fileName):
         with open(fileName, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
