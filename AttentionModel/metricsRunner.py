@@ -111,7 +111,7 @@ def createConfusionMatrix(lab, pred, classToAnsMap, pathToModel):
     print('Preparing confusion matrix for {}'.format(metricsFileCF))
     fconf = open(metricsFileCF, 'wb')
     logConf = csv.writer(fconf)
-    classesAsNums = np.arange(0,len(classToAnsMap))
+    classesAsNums = np.arange(0,len(classToAnsMap)-1)
     classesAsStrings = [classToAnsMap[i] for i in classesAsNums]
     
     #logging
