@@ -69,7 +69,7 @@ def runMetrics(lab, pred, classToAnsMap, pathToModel):
     createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 20)
     createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 15)
     
-    classes = np.arange(0,len(classToAnsMap)-1)
+    classes = classToAnsMap.keys()
     
     listOfStats = []
     listOfStats.append(pathToModel)
@@ -147,6 +147,76 @@ def saveToPickle(data, fileName):
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
     print('Saved to {}'.format(fileName))
     
+def getROCCurveMetrics():
+    import matplotlib.pyplot as plt
+    lab = [7, 2, 4,0,3,3]
+    pred = [4,4,4,0,5,3]
+    classes = np.arange(0,8)
+    n_classes = len(classes)
+    print(recall_score(lab, pred, labels=classes, average='micro'))
+    print(recall_score(lab, pred, labels=classes, average='macro'))
+    print(precision_score(lab, pred, labels=classes, average='micro'))
+    print(precision_score(lab, pred, labels=classes, average='macro'))
+    print(f1_score(lab, pred, labels=classes, average='micro'))
+    print(f1_score(lab, pred, labels=classes, average='macro'))
+    print(roc_curve(lab, pred, pos_label=0))
+    
+    y_truth = label_binarize(lab, classes=classes)
+    y_score = label_binarize(pred, classes=classes)
+    
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(len(classes)):
+        fpr[i], tpr[i], _ = roc_curve(y_truth[:, i], y_score[:,i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+        
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_truth.ravel(), y_score.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+    
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+    
+    # Finally average it and compute AUC
+    mean_tpr /= n_classes
+    
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    
+    # Plot all ROC curves
+    plt.figure()
+    plt.plot(fpr["micro"], tpr["micro"],
+             label='micro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["micro"]),
+             color='deeppink', linestyle=':', linewidth=4)
+    
+    plt.plot(fpr["macro"], tpr["macro"],
+             label='macro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["macro"]),
+             color='navy', linestyle=':', linewidth=4)
+    
+    lw=2
+    #colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+    #for i, color in zip(range(n_classes), colors):
+    #    plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+    #             label='ROC curve of class {0} (area = {1:0.2f})'
+    #             ''.format(i, roc_auc[i]))
+    
+    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Some extension of Receiver operating characteristic to multi-class')
+    plt.legend(loc="lower right")
+    plt.show()
+    
 def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--restorefile', help='Name of file to restore (.meta)')
@@ -168,7 +238,7 @@ def parseArgs():
 if __name__ == '__main__':
     args = parseArgs()
     
-    metricsFileStats = 'MetricStats.csv'
+    metricsFileStats = 'MetricStatsQuAtt.csv'
     print('Results will be logged to {}'.format(metricsFileStats))
     fstats = open(metricsFileStats, 'wb')
     logStats = csv.writer(fstats)
@@ -193,6 +263,7 @@ if __name__ == '__main__':
     
     fstats.close()
     print('Main Complete.')
+    
     #ImAtt
     
     
