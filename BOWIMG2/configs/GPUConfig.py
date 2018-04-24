@@ -15,12 +15,12 @@ class BOWIMG_GPUConfig(Config):
         self.saveModelPath = './results/BOW{}/'.format(self.dateAppend) 
         self.saveModelFile = self.saveModelPath + 'BOW' + self.dateAppend
         
+        self.restoreModel = args.restorefile if args.restorefile else '.meta'
+        self.restoreModelPath = args.restorepath if args.restorepath else './'
+        
         self.csvResults = self.saveModelPath + 'Pred_bow_{}.csv'.format(self.dateAppend)
         self.logFile = self.saveModelPath + 'Res_bow_{}.csv'.format(self.dateAppend)
         self.testOfficialResultFile = self.restoreModelPath + 'att{}Submission.json'.format(self.dateAppend)
-        
-        self.restoreModel = args.restorefile if args.restorefile else '.meta'
-        self.restoreModelPath = args.restorepath if args.restorepath else './'
         
         print('Using GoogLeNet config')
         self.trainImgFile = '../resources/VQAImgFeatures_Train.json' 
