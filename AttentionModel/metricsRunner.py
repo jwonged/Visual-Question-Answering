@@ -51,6 +51,7 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     valTestReader.destruct()
     print(len(classToAnsMap))
     print(classToAnsMap[0])
+    
     runMetrics(lab, pred, classToAnsMap,restoreModelPath)
     data = {}
     data['labels'] = lab
@@ -98,8 +99,6 @@ def runMetrics(lab, pred, classToAnsMap, pathToModel):
     msg = 'mcc: {}'.format(
         matthews_corrcoef(lab, pred) )
     logStats.writerow([msg])
-    
-    logStats.writerow()
     
     fstats.close()
     
