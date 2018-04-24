@@ -20,7 +20,6 @@ from itertools import cycle
 import argparse
 import pickle
 import csv
-from AttentionModel.evaluateModel import predAnalysis
 
 def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     print('Running metrics for model: {}'.format(restoreModel))
