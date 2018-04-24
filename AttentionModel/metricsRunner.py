@@ -46,12 +46,13 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     model.loadTrainedModel(restoreModel, restoreModelPath)
     
     lab, pred, classToAnsMap = model.runEvaluationMetrics(valTestReader)
-    print(0 in classToAnsMap)
+    
     model.destruct()
     valTestReader.destruct()
-    
-    runMetrics(lab, pred, classToAnsMap,restoreModelPath)
-    
+    print(len(classToAnsMap))
+    print(classToAnsMap[0])
+    #runMetrics(lab, pred, classToAnsMap,restoreModelPath)
+    print()
     data = {}
     data['labels'] = lab
     data['preds'] = pred
