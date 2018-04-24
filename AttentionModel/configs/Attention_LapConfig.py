@@ -33,6 +33,10 @@ class Attention_LapConfig(Config):
     restoreQuAttSigmoidModel = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/sigmoid/Att11Apr19-7/att11Apr19-7.meta'
     restoreQuAttSigmoidModelPath = '/media/jwong/Transcend/VQAresults/QnAndImgAtt/sigmoid/Att11Apr19-7/'
     
+    #crossmodal model
+    restoreCMmodel = '/media/jwong/Transcend/VQAresults/mmAtt/Att16Apr23-5/att16Apr23-5.meta'
+    restoreCMmodelPath = '/media/jwong/Transcend/VQAresults/mmAtt/Att16Apr23-5'
+    
     
     trainImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggTrainConv5_3Features_shelf'
     valImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggValConv5_3Features_shelf'

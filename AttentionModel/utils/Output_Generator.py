@@ -84,7 +84,7 @@ class OutputGenerator(object):
             plt.yticks([])
             plt.xticks(np.arange(len(toks)), (toks))
             plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
-            #plt.show()
+            plt.show()
         
         if saveData:
             data['qn_alphas'] = qn_alphas_to_save
@@ -111,7 +111,7 @@ class OutputGenerator(object):
     def _processImgAlpha(self, imgAlpha):
         
         alp_img = skimage.transform.pyramid_expand(
-            imgAlpha.reshape(14,14), upscale=16, sigma=40)
+            imgAlpha.reshape(14,14), upscale=16, sigma=20)
         #alp_img = skimage.transform.resize(
         #    imgAlpha.reshape(14,14), [448, 448])
         alp_img = np.transpose(alp_img, (1,0))
