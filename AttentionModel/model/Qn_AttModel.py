@@ -233,6 +233,7 @@ class QnAttentionModel(BaseModel):
             imgContext: [b, 1536]
             qnContext: [b, 1024]
         """
+        print('Using Crossmodal Attention')
         #tanh layer mapping to same dims [b,1024]
         imgContext = tf.layers.dense(inputs=imgContext,
                                        units=qnContext.get_shape()[-1],
