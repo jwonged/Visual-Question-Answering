@@ -8,11 +8,13 @@ from LSTMIMG_LapConfig import LSTMIMG_LapConfig
 from LSTMIMG_GPUConfig import LSTMIMG_GPUConfig
 from TrainProcessor import LSTMIMGProcessor
 from evaluateModel import loadOfficialTest, validateInternalTestSet
+from model_utils import DummyReader
 import argparse
 
 def runtrain(args):
-    #config = LSTMIMG_LapConfig(load=True)
-    config = LSTMIMG_GPUConfig(load=True, args=args)
+    config = LSTMIMG_LapConfig(load=True, args=args)
+    '''
+    #config = LSTMIMG_GPUConfig(load=True, args=args)
     
     trainReader = LSTMIMGProcessor(config.trainAnnotFile, 
                                  config.rawQnTrain, 
@@ -24,14 +26,14 @@ def runtrain(args):
                                  config.rawQnValTestFile, 
                                  config.valImgFile, 
                                  config,
-                                 is_training=False)
+                                 is_training=False)'''
     
-    #dumReader = DummyReader(config)
+    dumReader = DummyReader(config)
     
     model = LSTMIMGmodel(config)
     model.construct()
-    model.train(trainReader, valReader, config.logFile)
-    #model.train(dumReader, dumReader)
+    #model.train(trainReader, valReader, config.logFile)
+    model.train(dumReader, dumReader,'dumlog.csv')
     model.destruct()
     
     return config
@@ -52,5 +54,5 @@ def parseArgs():
 if __name__ == '__main__':
     args = parseArgs()
     config = runtrain(args)
-    loadOfficialTest(args, config.saveModelFile+'.meta', config.saveModelPath)
-    validateInternalTestSet(args, config.saveModelFile+'.meta', config.saveModelPath)
+    #loadOfficialTest(args, config.saveModelFile+'.meta', config.saveModelPath)
+    #validateInternalTestSet(args, config.saveModelFile+'.meta', config.saveModelPath)

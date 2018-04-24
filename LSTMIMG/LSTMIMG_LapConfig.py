@@ -9,8 +9,8 @@ class LSTMIMG_LapConfig(Config):
     '''
     Config file for LSTMIMG
     '''
-    def __init__(self, load):
-        super(LSTMIMG_LapConfig, self).__init__(load)
+    def __init__(self, load, args):
+        super(LSTMIMG_LapConfig, self).__init__(load, args)
         
         if self.imgModel == 'googlenet':
             print('Using GoogLeNet config')

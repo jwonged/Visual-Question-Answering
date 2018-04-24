@@ -77,7 +77,9 @@ class DummyReader():
         file = '/media/jwong/Transcend/VQADataset/DummySets/dummyTupleBatchesLSTMIMG.pkl'
         with open(file, 'rb') as jFile:
             print('Reading {}'.format(file))
-            self.tupList = pickle.load(jFile)
+            self.tupList = pickle.load(jFile)[:30]
+            
+            
         print('Reading ' + config.ansClass1000File)
         self.mapAnsToClass, self.classToAnsMap = self._loadAnsMap(config.ansClass1000File)
     
