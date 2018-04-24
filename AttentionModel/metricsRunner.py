@@ -44,37 +44,36 @@ def runMetricsForInternalTestSet(args, restoreModel, restoreModelPath):
     elif args.att == 'im':
         print('Attention over image model')
         model = ImageAttentionModel(config)
+        
     model.loadTrainedModel(restoreModel, restoreModelPath)
-    
     lab, pred, classToAnsMap = model.runEvaluationMetrics(valTestReader)
-    
     model.destruct()
     valTestReader.destruct()
-    print(len(classToAnsMap))
-    print(classToAnsMap[0])
     
+    #run metrics & get stats
     listOfStats = runMetrics(lab, pred, classToAnsMap,restoreModelPath)
+    
+    #save to pickle
     data = {}
     data['labels'] = lab
     data['preds'] = pred
     data['classToAnsMap'] = classToAnsMap
-    dateID = restoreModelPath.split('/')[-1]
+    dateID = restoreModelPath.split('/')[-2]
     saveToPickle(data, 'labpreds{}.pkl'.format(dateID))
-    
     print('Metrics Completed.')
+    
     return listOfStats
     
 def runMetrics(lab, pred, classToAnsMap, pathToModel):
-    createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 1000)
+    #createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 1000)
     createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 20)
     createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, 15)
     
     classes = np.arange(0,len(classToAnsMap)-1)
-    classesAsStrings = [classToAnsMap[i] for i in classes]
-    logStats.writerow([pathToModel])
     
     listOfStats = []
     listOfStats.append(pathToModel)
+    
     msg = 'micro recall: {}'.format(
         recall_score(lab, pred, labels=classes, average='micro'))
     #logStats.writerow([msg])
@@ -115,7 +114,7 @@ def runMetrics(lab, pred, classToAnsMap, pathToModel):
     
 
 def createConfusionMatrix(lab, pred, classToAnsMap, pathToModel, num):
-    dateID = pathToModel.split('/')[-1]
+    dateID = pathToModel.split('/')[-2]
     metricsFileCF = 'MetricConfMatrix{}_{}.csv'.format(num,dateID)
     print('Preparing confusion matrix for {}'.format(metricsFileCF))
     fconf = open(metricsFileCF, 'wb')

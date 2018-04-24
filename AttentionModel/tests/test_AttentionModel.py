@@ -15,6 +15,8 @@ class Test(unittest.TestCase):
         pass
     
     def test_QnAttentionModel_construct(self):
+        modelPath = 'results/Att29Mar22-27/'
+        print(modelPath.split('/')[-2])
         #args = mockArgs()
         #config = Attention_LapConfig(load=True, args=args)
         #model = QnAttentionModel(config)
