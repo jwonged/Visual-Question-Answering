@@ -67,7 +67,7 @@ def runMetrics(lab, pred, classToAnsMap, pathToModel):
     print('Results will be logged to {}'.format(metricsFileStats))
     fstats = open(metricsFileStats, 'wb')
     logStats = csv.writer(fstats)
-    classes = np.arange(0,len(classToAnsMap))
+    classes = np.arange(0,len(classToAnsMap)-1)
     classesAsStrings = [classToAnsMap[i] for i in classes]
     logStats.writerow([pathToModel])
     
@@ -157,10 +157,10 @@ if __name__ == '__main__':
     runMetricsForInternalTestSet(args, modelFile, modelPath)
     modelFile = 'results/Att22Mar0-12/att22Mar0-12.meta'
     modelPath = 'results/Att22Mar0-12/'
-    #runMetricsForInternalTestSet(args, modelFile, modelPath)
+    runMetricsForInternalTestSet(args, modelFile, modelPath)
     modelFile = 'results/Att27Mar19-42/att27Mar19-42.meta'
     modelPath = 'results/Att27Mar19-42/'
-    #runMetricsForInternalTestSet(args, modelFile, modelPath)
+    runMetricsForInternalTestSet(args, modelFile, modelPath)
     
     #ImAtt
     

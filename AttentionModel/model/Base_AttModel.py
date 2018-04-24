@@ -352,11 +352,11 @@ class BaseModel(object):
             }
             labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
-            allPredictions.append(labels_pred)
-            allLabels.append(labels)
+            allPredictions += labels_pred
+            allLabels += labels
         
         print('Completed {} predictions'.format(len(allPredictions)))
-        print('Completed {} predictions'.format(len(allLabels)))
+        print('{} labels'.format(len(allLabels)))
         
         return allLabels, allPredictions, self.classToAnsMap
         
