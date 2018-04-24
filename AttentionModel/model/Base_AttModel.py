@@ -352,8 +352,8 @@ class BaseModel(object):
             }
             labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
             
-            allPredictions += labels_pred
-            allLabels += labels
+            allPredictions += labels_pred.tolist()
+            allLabels += labels.tolist()
         
         print('Completed {} predictions'.format(len(allPredictions)))
         print('{} labels'.format(len(allLabels)))
