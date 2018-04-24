@@ -17,6 +17,7 @@ from sklearn.metrics import roc_curve, auc, matthews_corrcoef
 from sklearn.preprocessing import label_binarize
 from scipy import interp
 from itertools import cycle
+from collections import Counter
 import argparse
 import pickle
 import csv
@@ -110,7 +111,15 @@ def createConfusionMatrix(lab, pred, classToAnsMap, pathToModel):
     print('Preparing confusion matrix for {}'.format(metricsFileCF))
     fconf = open(metricsFileCF, 'wb')
     logConf = csv.writer(fconf)
-    classesAsNums = np.arange(0,len(classToAnsMap)-1)
+    
+    ansTups = Counter(lab).most_common(1000)
+    classes = []
+    for tup in ansTups:
+        classes.append(tup[0])
+    
+    print('classes: {}'.format(len(classes)))
+    
+    classesAsNums = classes
     classesAsStrings = [classToAnsMap[i] for i in classesAsNums]
     
     #logging
