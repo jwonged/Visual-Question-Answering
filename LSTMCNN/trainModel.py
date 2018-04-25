@@ -34,6 +34,23 @@ def runtrain(args):
     model.construct()
     model.train(trainReader, valReader, config.logFile)
     model.destruct()
+    return config
+    
+def loadOfficialTest(args, restoreModel=None, restoreModelPath=None):
+    if args.config == 'CPU':
+        config = CNNLapConfig(load=True, args=args)
+    elif args.config == 'GPU':
+        config = CNNGPUConfig(load=True, args=args)
+    
+    testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
+                               imgFile=config.testOfficialImgPaths, 
+                               config=config)
+    
+    model = LSTMCNNModel(config)
+    model.loadTrainedModel(restoreModel, restoreModelPath)
+    model.runTest(testReader, '25AprLSTMCNNSubmission.json')
+    model.destruct()
+    testReader.destruct()
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -48,4 +65,7 @@ def parseArgs():
     
 if __name__ == '__main__':
     args = parseArgs()
-    runtrain(args)
+    config = runtrain(args)
+    loadOfficialTest(args, 
+                     restoreModel=config.saveModelFile+'.meta', 
+                     restoreModelPath=config.saveModelPath)
