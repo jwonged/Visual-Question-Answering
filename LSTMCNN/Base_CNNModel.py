@@ -201,6 +201,7 @@ class BaseModel(object):
         
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         print('Restoring model from: {}'.format(restoreModel))
+        tf.reset_default_graph()
         self.sess = tf.Session()
         self.saver = saver = tf.train.import_meta_graph(restoreModel)
         saver.restore(self.sess, tf.train.latest_checkpoint(restoreModelPath))
@@ -294,5 +295,5 @@ class BaseModel(object):
         generateForSubmission(allQnIds, allPreds, jsonOutputFile)
     
     def destruct(self):
-        pass
+        self.sess.close()
     
