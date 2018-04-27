@@ -172,8 +172,16 @@ class TestProcessor(object):
         with open(imgPathsFile, 'r') as reader:
             for image_path in reader:
                 image_path = image_path.strip()
-                idToImgpathMap[str(self.getImageID(image_path))] = image_path
+                idToImgpathMap[str(self._getImageIDfromPath(image_path))] = image_path
         return idToImgpathMap
+    
+    def _getImageIDfromPath(self, image_path):
+        #Get image ID
+        splitPath = image_path.split('/')
+        imgNameParts = splitPath[len(splitPath)-1].split('_') #COCO, train, XXX.jpg
+        suffix =  imgNameParts[len(imgNameParts)-1] #XXX.jpg
+        img_id = int(suffix.split('.')[0])
+        return img_id
     
     def getNextBatch(self, batchSize):
         batchOfQnsAsWordIDs, img_vecs, rawQns, img_ids, qn_ids = [], [], [], [], []
