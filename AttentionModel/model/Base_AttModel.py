@@ -147,22 +147,21 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if (i==1 or i==20 or i == 50) and self.config.debugMode:
+            if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
                 
-                
-                
-                
-                mm_im, mm_qn, qn_alpha, lmOut, un_im, un_qn, den = self.sess.run(
+                mm_im, mm_qn, qn_alpha, lmOut, un_im, un_qn, den, im_c = self.sess.run(
                 [self.mmAlpha_im, self.mmAlpha_qn, self.qnAtt_alpha, 
-                 self.lstmOutput, self.unnorm_im, self.unnorm_qn, self.denominator] , feed_dict=feed)
+                 self.lstmOutput, self.unnorm_im, self.unnorm_qn, self.denominator,
+                 self.imgContext] , feed_dict=feed)
                 
                 print('mm_im: {}'.format(mm_im))
                 print('mm_qn: {}'.format(mm_qn))
                 print('lmOut: {}'.format(lmOut.shape))
                 print('un_im: {}'.format(un_im))
                 print('un_qn: {}'.format(un_qn))
-                print('un_qns: {}'.format(un_qn))
+                print('den: {}'.format(den))
+                print('im_c: {}'.format(im_c.shape))
                 '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
