@@ -102,7 +102,7 @@ class QnAttentionModel(BaseModel):
                                                   dtype=tf.float32)
                 lstmOutput = lstmOut #[batch_size, max_time, cell.output_size]
         
-        lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+        self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
         return lstmOutput
     
     def _addQuestionAttention(self, lstmOutput):
@@ -247,7 +247,7 @@ class QnAttentionModel(BaseModel):
                                        units=1,
                                        activation=None,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
-        unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
+        self.unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
         
         qnContext = tf.layers.dense(inputs=qnContext,
                                        units=qnContext.get_shape()[-1],
@@ -262,11 +262,11 @@ class QnAttentionModel(BaseModel):
                                        activation=None,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         
-        unnorm_qn = tf.nn.sigmoid(att_qn) #[b,1]
+        self.unnorm_qn = tf.nn.sigmoid(att_qn) #[b,1]
         
-        denominator = tf.add(unnorm_im, unnorm_qn) #[b,1]
-        self.mmAlpha_im = tf.div(unnorm_im, denominator, name='mmAlphaIm')
-        self.mmAlpha_qn = tf.div(unnorm_qn, denominator, name='mmAlphaQn')
+        self.denominator = tf.add(self.unnorm_im, self.unnorm_qn) #[b,1]
+        self.mmAlpha_im = tf.div(self.unnorm_im, self.denominator, name='mmAlphaIm')
+        self.mmAlpha_qn = tf.div(self.unnorm_qn, self.denominator, name='mmAlphaQn')
         
         mmContext = tf.add(tf.multiply(self.mmAlpha_im, imgContext), tf.multiply(self.mmAlpha_qn, qnContext))
         
