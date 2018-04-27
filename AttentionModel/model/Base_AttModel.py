@@ -149,10 +149,16 @@ class BaseModel(object):
             
             if (i==1 or i==20 or i == 50) and self.config.debugMode:
                 print('Batch {}'.format(i))
-                _, _, labels_pred, summary, qnAtt_alpha = self.sess.run(
-                [self.train_op, self.loss, self.labels_pred, self.merged,
-                 self.qnAtt_alpha] , feed_dict=feed)
-                print(qnAtt_alpha)
+                
+                
+                
+                
+                mm_im, mm_qn, qn_alpha, lmOut = self.sess.run(
+                [self.mmAlpha_im, self.mmAlpha_qn, self.qnAtt_alpha, self.lstmOutput] , feed_dict=feed)
+                
+                print('mm_im: {}'.format(mm_im))
+                print('mm_qn: {}'.format(mm_qn))
+                print('lmOut: {}'.format(lmOut.shape))
                 '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,

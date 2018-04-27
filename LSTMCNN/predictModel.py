@@ -42,7 +42,6 @@ def loadOfficialTestSpecs(args, restoreModel, restoreModelPath, config=None):
     filename = 'toSubmit{}.json'.format(restoreModelPath.split('/')[-2])
     model.runTest(testReader, filename)
     model.destruct()
-    testReader.destruct()
     return config
 
 def runValTest(args):

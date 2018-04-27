@@ -67,11 +67,10 @@ class QnAttentionModel(BaseModel):
                         dtype=tf.float32)
                 
         #embedding matrix, word_ids
-        self.word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
+        word_embeddings = tf.nn.embedding_lookup(wordEmbedsVar,
                 self.word_ids, name="word_embeddings")
         
-        self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
-        word_embeddings = self.word_embeddings
+        word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
         return word_embeddings
     
     def _addLSTM(self, LSTMinput):
@@ -92,11 +91,12 @@ class QnAttentionModel(BaseModel):
                 
                 #[batch_size, max_time, cell.output_size]
                 lstmOutput = tf.concat([output_fw, output_bw], axis=-1)
+                print('Shape of concat output_fw _bw: {}'.format(tf.shape(lstmOutput)))
             else:
                 print('Using Uni-LSTM')
                 lstm_cell = tf.contrib.rnn.LSTMCell(self.config.LSTM_num_units)
                 lstmOut, _ = tf.nn.dynamic_rnn(cell=lstm_cell, 
-                                                  inputs=self.word_embeddings, 
+                                                  inputs=LSTMinput, 
                                                   sequence_length=self.sequence_lengths, 
                                                   initial_state=None, 
                                                   dtype=tf.float32)
@@ -329,7 +329,7 @@ class QnAttentionModel(BaseModel):
     def construct(self):
         self._addPlaceholders()
         
-        LSTMinput = self._addEmbeddings()
+        LSTMinput = self._addEmbeddings() #[b, seqlen, 300]
         
         lstmOutput = self._addLSTM(LSTMinput) #[batch_size, max_time, 1024]
         
