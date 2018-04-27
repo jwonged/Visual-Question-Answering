@@ -33,7 +33,7 @@ def loadOfficialTestSpecs(args, restoreModel, restoreModelPath, config=None):
         config = CNNGPUConfig(load=True, args=args)
     
     testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
-                               imgFile=config.testOfficialImgPaths, 
+                               imgPathsFile=config.testOfficialImgPaths, 
                                config=config)
     
     model = LSTMCNNModel(config)
