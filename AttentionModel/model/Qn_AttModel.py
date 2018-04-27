@@ -230,19 +230,15 @@ class QnAttentionModel(BaseModel):
     def _multimodalAttention(self, imgContext, qnContext):
         """
         args:
-            imgContext: [b, 1536]
+            imgContext: [b, 512]
             qnContext: [b, 1024]
         """
         print('Using Crossmodal Attention')
         self.imgContext = imgContext
         self.qnContext = qnContext
-        #tanh layer mapping to same dims [b,1024]
-        imgContext = tf.layers.dense(inputs=imgContext,
-                                       units=qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        
         att_im = tf.layers.dense(inputs=imgContext,
-                                       units=qnContext.get_shape()[-1],
+                                       units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         att_im_b = tf.layers.dense(inputs=att_im,
@@ -251,8 +247,9 @@ class QnAttentionModel(BaseModel):
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         self.unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
         
+        #shape qn down to 512
         qnContext = tf.layers.dense(inputs=qnContext,
-                                       units=qnContext.get_shape()[-1],
+                                       units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         att_qn = tf.layers.dense(inputs=qnContext,
@@ -345,13 +342,21 @@ class QnAttentionModel(BaseModel):
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
         flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
-        #image attention layer --> [bx1536]
+        #make img tanh activated
+        flattenedImgVecs = tf.layers.dense(inputs=flattenedImgVecs,
+                                       units=flattenedImgVecs.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        
+        #image attention layer --> [bx1536] --> [bx512]
         imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha')
         
         #combine modes
         if self.config.mmAtt:
+            print('Using crossmodal attention')
             self.multimodalOutput = self._multimodalAttention(imgContext, qnContext)
         else:
+            print('Combining modes through normal hadamard')
             self.multimodalOutput = self._combineModes(imgContext, qnContext)
         
         if self.config.stackAtt:
@@ -367,6 +372,7 @@ class QnAttentionModel(BaseModel):
                                            units=1000,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
+            hidden_layer2 = tf.nn.dropout(hidden_layer2, self.dropout)
             y = tf.layers.dense(inputs=hidden_layer2,
                                            units=self.config.nOutClasses,
                                            activation=None,
