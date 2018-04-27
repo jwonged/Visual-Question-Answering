@@ -28,6 +28,23 @@ def loadOfficialTest(args):
     model.destruct()
     testReader.destruct()
 
+def loadOfficialTestSpecs(args, restoreModel, restoreModelPath, config=None):
+    if config is None:
+        config = CNNGPUConfig(load=True, args=args)
+    
+    testReader = TestProcessor(qnFile=config.testOfficialDevQns, 
+                               imgFile=config.testOfficialImgPaths, 
+                               config=config)
+    
+    model = LSTMCNNModel(config)
+    model.loadTrainedModel(restoreModel, restoreModelPath)
+    
+    filename = 'toSubmit{}.json'.format(restoreModelPath.split('/')[-2])
+    model.runTest(testReader, filename)
+    model.destruct()
+    testReader.destruct()
+    return config
+
 def runValTest(args):
     #Val set's split -- test
     print('Running Val Test')
@@ -62,5 +79,11 @@ def parseArgs():
 
 if __name__ == '__main__':
     args = parseArgs()
-    loadOfficialTest(args)
+    restoreModel = 'results/CNN26Apr23-41/att26Apr23-41.meta'
+    restoreModelPath = 'results/CNN26Apr23-41/'
+    config = loadOfficialTestSpecs(args, restoreModel, restoreModelPath)
+    
+    restoreModel = 'results/CNN26Mar1-37/att26Mar1-37.meta'
+    restoreModelPath = 'results/CNN26Mar1-37/'
+    loadOfficialTestSpecs(args, restoreModel, restoreModelPath, config)
     
