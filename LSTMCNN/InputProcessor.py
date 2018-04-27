@@ -172,7 +172,7 @@ class TestProcessor(object):
         with open(imgPathsFile, 'r') as reader:
             for image_path in reader:
                 image_path = image_path.strip()
-                self.idToImgpathMap[str(self.getImageID(image_path))] = image_path
+                idToImgpathMap[str(self.getImageID(image_path))] = image_path
         return idToImgpathMap
     
     def getNextBatch(self, batchSize):
