@@ -150,10 +150,10 @@ class BaseModel(object):
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
                 
-                mm_im, mm_qn, qn_alpha, lmOut, un_im, un_qn, den, im_c = self.sess.run(
+                mm_im, mm_qn, qn_alpha, lmOut, un_im, un_qn, den, im_c, qn_c = self.sess.run(
                 [self.mmAlpha_im, self.mmAlpha_qn, self.qnAtt_alpha, 
                  self.lstmOutput, self.unnorm_im, self.unnorm_qn, self.denominator,
-                 self.imgContext] , feed_dict=feed)
+                 self.imgContext, self.qnContext] , feed_dict=feed)
                 
                 print('mm_im: {}'.format(mm_im))
                 print('mm_qn: {}'.format(mm_qn))
@@ -162,6 +162,7 @@ class BaseModel(object):
                 print('un_qn: {}'.format(un_qn))
                 print('den: {}'.format(den))
                 print('im_c: {}'.format(im_c.shape))
+                print('qn_c: {}'.format(qn_c.shape))
                 '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
