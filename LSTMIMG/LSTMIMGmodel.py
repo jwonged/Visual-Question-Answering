@@ -93,13 +93,13 @@ class LSTMIMGmodel(BaseModel):
                                                units=mm_in.get_shape()[-1],
                                                activation=tf.tanh,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-                mm_in_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 1024]
-                mm_a = tf.layers.dense(inputs=mm_in_flat,
-                                               units=mm_in_flat.get_shape()[-1],
+                mm_a = tf.layers.dense(inputs=mm_a,
+                                               units=mm_a.get_shape()[-1],
                                                activation=tf.tanh,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-                mm_beta_w = tf.get_variable("beta", shape=[mm_a.get_shape()[-1], 1], dtype=tf.float32) #1024,1
-                mm_att_flatWeights = tf.matmul(mm_a, mm_beta_w) #get scalar for each batch, region [b*2]
+                mm_in_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 1024]
+                mm_beta_w = tf.get_variable("beta", shape=[mm_in_flat.get_shape()[-1], 1], dtype=tf.float32) #1024,1
+                mm_att_flatWeights = tf.matmul(mm_in_flat, mm_beta_w) #get scalar for each batch, region [b*2]
                 mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
                 
                 unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
