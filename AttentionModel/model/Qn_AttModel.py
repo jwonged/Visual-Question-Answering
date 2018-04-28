@@ -297,8 +297,8 @@ class QnAttentionModel(BaseModel):
             tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
         self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
         
-        alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
-        mmContext = tf.reduce_sum(tf.multiply(alpha, mm_in),  axis=1) #[b,512]
+        self.alpha_mm = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
+        mmContext = tf.reduce_sum(tf.multiply(self.alpha_mm, mm_in),  axis=1) #[b,512]
         
         '''
         att_im = tf.expand_dims(att_im, axis=1) #[b,1,1024]

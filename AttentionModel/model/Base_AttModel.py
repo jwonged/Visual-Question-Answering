@@ -148,9 +148,11 @@ class BaseModel(object):
             }
             
             if (i==1 or i==20 or i == 50 or i==100):
-                mmalpha = self.sess.run(
-                self.mmAlpha, feed_dict=feed)
-                print(mmalpha)
+                mmalpha, mmalpha_expanded = self.sess.run(
+                [self.mmAlpha,self.alpha_mm], feed_dict=feed)
+                
+                print('mmalpha: {}'.format(mmalpha))
+                print('mmalpha_expanded: {}'.format(mmalpha_expanded))
                 
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
@@ -160,11 +162,6 @@ class BaseModel(object):
                 # self.unnorm_im, self.unnorm_qn, self.denominator,
                 # self.imgContext, self.qnContext] , feed_dict=feed)
                 
-                qnattflat, fimv = self.sess.run(
-                [self.qnAtt_flat, self.flattenedImgVecs] , feed_dict=feed)
-                
-                print('qnattflat: {}'.format(qnattflat))
-                print('qnattflat: {}'.format(qnattflat.shape))
                 '''
                 print('mm_im: {}'.format(mm_im))
                 print('mm_qn: {}'.format(mm_qn))
