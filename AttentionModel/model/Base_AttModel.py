@@ -148,6 +148,7 @@ class BaseModel(object):
             }
             
             if (i==1 or i==20 or i == 50 or i==100):
+                print('Batch {}'.format(i))
                 mmalpha, mmalpha_expanded = self.sess.run(
                 [self.mmAlpha,self.alpha_mm], feed_dict=feed)
                 

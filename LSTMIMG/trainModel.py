@@ -48,6 +48,7 @@ def parseArgs():
     parser.add_argument('--donttrainembed', help='use untrained embeddings', action='store_false')
     parser.add_argument('--useconcat', help='use concat instead of elmult', action='store_false')
     parser.add_argument('--noshuffle', help='Do not shuffle dataset', action='store_false')
+    parser.add_argument('--mmAtt', help='Use multimodal attention', action='store_true')
     args = parser.parse_args()
     return args
 

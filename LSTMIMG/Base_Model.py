@@ -50,12 +50,12 @@ class BaseModel(object):
             dropout: {}, optimizer: {}, lr: {}, decay: {}, \
              clip: {}, shuffle: {}, trainEmbeddings: {}, LSTM_units: {}, \
              usePretrainedEmbeddings: {}, LSTMType: {}, elMult: {}, imgModel: {}, \
-             seed:{}, '.format(
+             seed:{}, mmAtt: {}, '.format(
                 config.modelStruct, config.nOutClasses, config.batch_size,
                 config.dropoutVal, config.modelOptimizer, config.learningRate,
                 config.learningRateDecay, config.max_gradient_norm, config.shuffle,
                 config.trainEmbeddings, config.LSTM_num_units, config.usePretrainedEmbeddings,
-                config.LSTMType, config.elMult, config.imgModel, config.randomSeed)
+                config.LSTMType, config.elMult, config.imgModel, config.randomSeed, config.mmAtt)
         return info + 'fc: 2 layers (1000)' + self.comment()
     
     def _addOptimizer(self):
@@ -154,6 +154,12 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
+            if (i==1 or i==20 or i == 50 or i==100):
+                print('Batch {}'.format(i))
+                mmalpha = self.sess.run(self.mmAlpha, feed_dict=feed)
+                
+                print('mmalpha: {}'.format(mmalpha))
+            
             _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
             
@@ -250,6 +256,9 @@ class BaseModel(object):
         self.labels = graph.get_tensor_by_name('labels:0')
         self.dropout = graph.get_tensor_by_name('dropout:0')
         self.topK = graph.get_tensor_by_name('topK:0')
+        if self.config.mmAtt:
+            self.mmAlpha = graph.get_tensor_by_name('Combine_modes/mmAlpha:0')
+        
         self.saver = tf.train.Saver()
         
         return graph 
@@ -280,25 +289,50 @@ class BaseModel(object):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
-            
-            for lab, labPred, qn, img_id, qn_id in zip(
-                labels, labels_pred, rawQns, img_ids, qn_ids):
-                if (lab==labPred):
-                    correct_predictions += 1
-                total_predictions += 1
-                accuracies.append(lab==labPred)
+            if self.config.mmAtt:
+                labels_pred, mmAlphas = self.sess.run(
+                    [self.labels_pred, self.mmAlpha], feed_dict=feed)
                 
-                self._logToCSV(nEpoch='', qn=qn, 
-                               pred=self.classToAnsMap[labPred], 
-                               lab=self.classToAnsMap[lab], 
-                               predClass=labPred, labClass=lab, 
-                               correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
+                    
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    self.predFile.writerow(['', qn, 
+                                       self.classToAnsMap[labPred], 
+                                       self.classToAnsMap[lab], 
+                                       labPred, lab, 
+                                       lab==labPred, img_id, qn_id,
+                                       mm_alpha])
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
                 
-                currentPred = {}
-                currentPred['question_id'] = qn_id
-                currentPred['answer'] = self.classToAnsMap[labPred]
-                results.append(currentPred)
+            else:
+                labels_pred = self.sess.run(self.labels_pred, feed_dict=feed)
+                
+                for lab, labPred, qn, img_id, qn_id in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids):
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    self._logToCSV(nEpoch='', qn=qn, 
+                                   pred=self.classToAnsMap[labPred], 
+                                   lab=self.classToAnsMap[lab], 
+                                   predClass=labPred, labClass=lab, 
+                                   correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
         
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))

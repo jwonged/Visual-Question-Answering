@@ -33,6 +33,7 @@ class Config(object):
         self.usePretrainedEmbeddings = args.useuntrainedembed
         self.trainEmbeddings = args.donttrainembed
         self.shuffle = args.noshuffle
+        self.mmAtt = args.mmAtt
         
         self.debugMode = False
         

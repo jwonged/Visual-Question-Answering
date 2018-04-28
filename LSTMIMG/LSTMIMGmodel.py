@@ -69,6 +69,64 @@ class LSTMIMGmodel(BaseModel):
         
         self.word_embeddings = tf.nn.dropout(self.word_embeddings, self.dropout)
         
+    def _combineModes(self, lstmOutput):
+        """
+            args:
+                lstmOutput: shape=[b,1024] 
+                imgvec: [b,1024]
+        """
+        with tf.variable_scope('Combine_modes'):
+            if self.config.mmAtt:
+                print('Using crossmodal attention')
+                img_vecs = tf.layers.dense(inputs=self.img_vecs,
+                                                   units=self.img_vecs.get_shape()[-1],
+                                                   activation=tf.tanh,
+                                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
+                #use the same attention weights for across modes
+                att_im = tf.expand_dims(img_vecs, axis=1) #[b,1,1024]
+                att_qn = tf.expand_dims(lstmOutput, axis=1) #[b,1,1024]
+                mm_in = tf.concat([att_im, att_qn], axis=1) #[b,2,1024]
+                
+                #beta * tanh(Wx+b)
+                mm_a = tf.layers.dense(inputs=mm_in,
+                                               units=mm_in.get_shape()[-1],
+                                               activation=tf.tanh,
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                mm_beta_w = tf.get_variable("beta", shape=[mm_a.get_shape()[-1], 1], dtype=tf.float32) #1024,1
+                mm_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 1024]
+                mm_att_flatWeights = tf.matmul(mm_flat, mm_beta_w) #get scalar for each batch, region [b*2]
+                mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
+                
+                unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
+                norm_denominator = tf.expand_dims(
+                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+                self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
+                
+                alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
+                mmContext = tf.reduce_sum(tf.multiply(alpha, mm_in),  axis=1) #[b,512]
+                self.multimodalOutput = mmContext
+            else:
+                if self.config.modelStruct == 'imagePerWord':
+                    self.multimodalOutput = lstmOutput 
+                elif self.config.modelStruct == 'imageAsFirstWord':
+                    self.multimodalOutput = lstmOutput
+                else: #imageAfterLSTM
+                    if self.config.elMult:
+                        print('Using pointwise mult')
+                        #img vecs 4096 --> 2048 (for vgg)
+                        img_vecs = tf.layers.dense(inputs=self.img_vecs,
+                                                   units=self.config.fclayerAfterLSTM,
+                                                   activation=tf.tanh,
+                                                   kernel_initializer=tf.contrib.layers.xavier_initializer())
+                        #dropout after img mapping layer
+                        img_vecs = tf.nn.dropout(img_vecs, self.dropout)
+                            
+                        self.multimodalOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
+                    else: #using concat
+                        print('Using concat')
+                        self.multimodalOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+        
+        
     def construct(self):
         self._addPlaceholders()
         
@@ -153,26 +211,8 @@ class LSTMIMGmodel(BaseModel):
         lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
             
         #Handle output according to model structure
-        with tf.variable_scope('Combine_modes'):
-            if self.config.modelStruct == 'imagePerWord':
-                self.multimodalOutput = lstmOutput 
-            elif self.config.modelStruct == 'imageAsFirstWord':
-                self.multimodalOutput = lstmOutput
-            else: #imageAfterLSTM
-                if self.config.elMult:
-                    print('Using pointwise mult')
-                    #img vecs 4096 --> 2048 (for vgg)
-                    img_vecs = tf.layers.dense(inputs=self.img_vecs,
-                                               units=self.config.fclayerAfterLSTM,
-                                               activation=tf.tanh,
-                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
-                    #dropout after img mapping layer
-                    img_vecs = tf.nn.dropout(img_vecs, self.dropout)
-                        
-                    self.multimodalOutput = tf.multiply(lstmOutput, img_vecs) #size=1024
-                else: #using concat
-                    print('Using concat')
-                    self.multimodalOutput = tf.concat([lstmOutput, self.img_vecs], axis=-1)
+        
+        self._combineModes(lstmOutput)
         
         #fully connected layer
         with tf.variable_scope("proj"):
