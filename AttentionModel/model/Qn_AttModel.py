@@ -343,13 +343,13 @@ class QnAttentionModel(BaseModel):
         flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
         #make img tanh activated
-        flattenedImgVecs = tf.layers.dense(inputs=flattenedImgVecs,
+        self.flattenedImgVecs = tf.layers.dense(inputs=flattenedImgVecs,
                                        units=flattenedImgVecs.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         
         #image attention layer --> [bx1536] --> [bx512]
-        imgContext = self._addImageAttention(qnContext, flattenedImgVecs, name='alpha')
+        imgContext = self._addImageAttention(qnContext, self.flattenedImgVecs, name='alpha')
         
         #combine modes
         if self.config.mmAtt:
