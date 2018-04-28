@@ -83,33 +83,34 @@ class LSTMIMGmodel(BaseModel):
                                                    activation=tf.tanh,
                                                    kernel_initializer=tf.contrib.layers.xavier_initializer())
                 #use the same attention weights for across modes
-                att_im = tf.expand_dims(img_vecs, axis=1) #[b,1,1024]
-                att_qn = tf.expand_dims(lstmOutput, axis=1) #[b,1,1024]
-                mm_in = tf.concat([att_im, att_qn], axis=1) #[b,2,1024]
+                att_im = tf.layers.dense(inputs=img_vecs,
+                                       units=img_vecs.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+                att_im_b = tf.layers.dense(inputs=att_im,
+                                               units=1,
+                                               activation=None,
+                                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+                self.unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
                 
-                #beta * tanh(Wx+b)
-                
-                mm_a = tf.layers.dense(inputs=mm_in,
-                                               units=mm_in.get_shape()[-1],
+                #shape qn down to 512
+                att_qn = tf.layers.dense(inputs=lstmOutput,
+                                               units=lstmOutput.get_shape()[-1],
                                                activation=tf.tanh,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-                mm_a = tf.layers.dense(inputs=mm_a,
-                                               units=mm_a.get_shape()[-1],
-                                               activation=tf.tanh,
+                att_qn = tf.layers.dense(inputs=att_qn,
+                                               units=1,
+                                               activation=None,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-                mm_in_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 1024]
-                mm_beta_w = tf.get_variable("beta", shape=[mm_in_flat.get_shape()[-1], 1], dtype=tf.float32) #1024,1
-                mm_att_flatWeights = tf.matmul(mm_in_flat, mm_beta_w) #get scalar for each batch, region [b*2]
-                mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
                 
-                unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
-                norm_denominator = tf.expand_dims(
-                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
-                self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
-                #self.mmAlpha = tf.nn.softmax(mm_a_shaped, name='mmAlpha')
+                self.unnorm_qn = tf.nn.sigmoid(att_qn) #[b,1]
                 
-                alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
-                mmContext = tf.reduce_sum(tf.multiply(alpha, mm_in),  axis=1) #[b,512]
+                self.denominator = tf.add(self.unnorm_im, self.unnorm_qn) #[b,1]
+                self.mmAlpha_im = tf.div(self.unnorm_im, self.denominator, name='mmAlphaIm')
+                self.mmAlpha_qn = tf.div(self.unnorm_qn, self.denominator, name='mmAlphaQn')
+                self.mmAlpha = tf.concat([self.mmAlpha_im, self.mmAlpha_qn], axis=-1)
+                mmContext = tf.add(tf.multiply(self.mmAlpha_im, img_vecs), 
+                                   tf.multiply(self.mmAlpha_qn, lstmOutput))
                 self.multimodalOutput = mmContext
             else:
                 if self.config.modelStruct == 'imagePerWord':
