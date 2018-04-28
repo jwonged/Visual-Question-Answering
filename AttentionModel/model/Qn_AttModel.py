@@ -102,7 +102,7 @@ class QnAttentionModel(BaseModel):
                                                   dtype=tf.float32)
                 lstmOutput = lstmOut #[batch_size, max_time, cell.output_size]
         
-        self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
+        lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
         return lstmOutput
     
     def _addQuestionAttention(self, lstmOutput):
@@ -179,6 +179,8 @@ class QnAttentionModel(BaseModel):
             
             if attComb is None:
                 attComb = self.config.attComb
+            
+            #options for combining attention input modes
             if attComb == 'concat':
                 att_in = tf.concat([imgAtt_in, qnAtt_in], axis=-1) #[bx196x1536]
             elif attComb == 'mult':
@@ -236,7 +238,8 @@ class QnAttentionModel(BaseModel):
         print('Using Crossmodal Attention')
         self.imgContext = imgContext
         self.qnContext = qnContext
-        
+        '''
+        #separate attention weights
         att_im = tf.layers.dense(inputs=imgContext,
                                        units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
@@ -268,7 +271,34 @@ class QnAttentionModel(BaseModel):
         self.mmAlpha_qn = tf.div(self.unnorm_qn, self.denominator, name='mmAlphaQn')
         
         mmContext = tf.add(tf.multiply(self.mmAlpha_im, imgContext), tf.multiply(self.mmAlpha_qn, qnContext))
+        '''
         
+        #use the same attention weights for across modes
+        qnContext = tf.layers.dense(inputs=qnContext,
+                                       units=imgContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,512]
+        att_im = tf.expand_dims(imgContext, axis=1) #[b,1,512]
+        att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,512]
+        mm_in = tf.concat([att_im, att_qn], axis=1) #[b,2,512]
+        
+        #beta * tanh(Wx+b)
+        mm_a = tf.layers.dense(inputs=mm_in,
+                                       units=mm_in.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        mm_beta_w = tf.get_variable("beta", shape=[mm_a.get_shape()[-1], 1], dtype=tf.float32) #512,1
+        mm_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 512]
+        mm_att_flatWeights = tf.matmul(mm_flat, mm_beta_w) #get scalar for each batch, region [b*2]
+        mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
+        
+        unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
+        norm_denominator = tf.expand_dims(
+            tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+        self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
+        
+        alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
+        mmContext = tf.reduce_sum(tf.multiply(alpha, mm_in),  axis=1) #[b,512]
         
         '''
         att_im = tf.expand_dims(att_im, axis=1) #[b,1,1024]
@@ -334,12 +364,11 @@ class QnAttentionModel(BaseModel):
         
         qnContext = self._addQuestionAttention(lstmOutput) #bx1024
             
-        self.batch_size = tf.shape(self.img_vecs)[0]
-        print('Batch size = {}'.format(self.batch_size))
-        
         #reshape image features [bx512x14x14] --> [bx196x512]
         transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
+        self.batch_size = tf.shape(self.img_vecs)[0]
+        print('Batch size = {}'.format(self.batch_size))
         flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
         #make img tanh activated
@@ -413,9 +442,9 @@ class QnAttentionModel(BaseModel):
         if not self.config.noqnatt:
             self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
         if self.config.mmAtt:
-            #self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
-            self.mmAlpha_im = graph.get_tensor_by_name('mmAlphaIm:0')
-            self.mmAlpha_qn = graph.get_tensor_by_name('mmAlphaQn:0')
+            self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
+            #self.mmAlpha_im = graph.get_tensor_by_name('mmAlphaIm:0')
+            #self.mmAlpha_qn = graph.get_tensor_by_name('mmAlphaQn:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
@@ -461,12 +490,12 @@ class QnAttentionModel(BaseModel):
             }
             
             if self.config.mmAtt:
-                topK, qnAlphas, alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
+                topK, qnAlphas, alphas, labels_pred, mmAlphas = self.sess.run(
                     [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
-                     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
+                     self.mmAlpha], feed_dict=feed)
                 
-                for lab, labPred, qn, img_id, qn_id, mm_im, mm_qn in zip(
-                    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims, mm_qns):
+                for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
                     if (lab==labPred):
                         correct_predictions += 1
                     total_predictions += 1
@@ -483,7 +512,7 @@ class QnAttentionModel(BaseModel):
                                        self.classToAnsMap[lab], 
                                        labPred, lab, 
                                        lab==labPred, img_id, qn_id,
-                                       mm_im, mm_qn])
+                                       mm_alpha])
                         
                 if mini and nBatch == chooseBatch:
                     ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
@@ -497,7 +526,6 @@ class QnAttentionModel(BaseModel):
                 else:
                     topK, qnAlphas, alphas, labels_pred = self.sess.run(
                         [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred], feed_dict=feed)
-                
                 
                 for lab, labPred, qn, img_id, qn_id in zip(
                     labels, labels_pred, rawQns, img_ids, qn_ids):
@@ -529,7 +557,7 @@ class QnAttentionModel(BaseModel):
         print('ValAcc: {:>6.1%}, total_preds: {}'.format(valAcc, total_predictions))
         #return valAcc, correct_predictions, total_predictions
         if mini and self.config.mmAtt:
-            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK, lab_to_return, mm_ims, mm_qns
+            return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK, lab_to_return, mmAlphas
         if mini:
             return qnAlphas, alphas, img_ids_toreturn, qns_to_return, ans_to_return, topK, lab_to_return
         return results, valAcc

@@ -147,13 +147,18 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
+            if (i==1 or i==20 or i == 50 or i==100):
+                mmalpha = self.sess.run(
+                self.mmAlpha, feed_dict=feed)
+                print(mmalpha)
+                
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
                 
-                mm_im, mm_qn, qn_alpha, lmOut, un_im, un_qn, den, im_c, qn_c = self.sess.run(
-                [self.mmAlpha_im, self.mmAlpha_qn, self.qnAtt_alpha, 
-                 self.lstmOutput, self.unnorm_im, self.unnorm_qn, self.denominator,
-                 self.imgContext, self.qnContext] , feed_dict=feed)
+                #mm_im, mm_qn, qn_alpha, un_im, un_qn, den, im_c, qn_c = self.sess.run(
+                #[self.mmAlpha_im, self.mmAlpha_qn, self.qnAtt_alpha, 
+                # self.unnorm_im, self.unnorm_qn, self.denominator,
+                # self.imgContext, self.qnContext] , feed_dict=feed)
                 
                 qnattflat, fimv = self.sess.run(
                 [self.qnAtt_flat, self.flattenedImgVecs] , feed_dict=feed)
