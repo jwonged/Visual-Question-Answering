@@ -97,11 +97,11 @@ class LSTMIMGmodel(BaseModel):
                 mm_att_flatWeights = tf.matmul(mm_a, mm_beta_w) #get scalar for each batch, region [b*2]
                 mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
                 
-                #unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
-                #norm_denominator = tf.expand_dims(
-                #    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
-                #self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
-                self.mmAlpha = tf.nn.softmax(mm_a_shaped, name='mmAlpha')
+                unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
+                norm_denominator = tf.expand_dims(
+                    tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+                self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
+                #self.mmAlpha = tf.nn.softmax(mm_a_shaped, name='mmAlpha')
                 
                 alpha = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
                 mmContext = tf.reduce_sum(tf.multiply(alpha, mm_in),  axis=1) #[b,512]
