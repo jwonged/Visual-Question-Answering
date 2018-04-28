@@ -166,6 +166,7 @@ class BaseModel(object):
                 print('fimv: {}'.format(fimv.shape))
                 print('im_c: {}'.format(im_c))
                 print('qn_c: {}'.format(qn_c))
+                print('lmOut: {}'.format(lmOut))
                 '''
                 _, _, labels_pred, summary, regionWs, exp_regionWs, mask, maskedRWs, denominator, qnalp, we, qadim = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged,
