@@ -88,13 +88,14 @@ class LSTMIMGmodel(BaseModel):
                 mm_in = tf.concat([att_im, att_qn], axis=1) #[b,2,1024]
                 
                 #beta * tanh(Wx+b)
-                mm_in_flat = tf.reshape(mm_in, shape=[-1, mm_in.get_shape()[-1]]) #[b*2, 1024]
-                mm_a = tf.layers.dense(inputs=mm_in_flat,
-                                               units=mm_in_flat.get_shape()[-1],
+                
+                mm_a = tf.layers.dense(inputs=mm_in,
+                                               units=mm_in.get_shape()[-1],
                                                activation=tf.tanh,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
-                mm_a = tf.layers.dense(inputs=mm_a,
-                                               units=mm_a.get_shape()[-1],
+                mm_in_flat = tf.reshape(mm_a, shape=[-1, mm_a.get_shape()[-1]]) #[b*2, 1024]
+                mm_a = tf.layers.dense(inputs=mm_in_flat,
+                                               units=mm_in_flat.get_shape()[-1],
                                                activation=tf.tanh,
                                                kernel_initializer=tf.contrib.layers.xavier_initializer())
                 mm_beta_w = tf.get_variable("beta", shape=[mm_a.get_shape()[-1], 1], dtype=tf.float32) #1024,1
