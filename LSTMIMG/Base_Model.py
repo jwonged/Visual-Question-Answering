@@ -154,11 +154,11 @@ class BaseModel(object):
                 self.dropout : self.config.dropoutVal
             }
             
-            if (i==1 or i==20 or i == 50 or i==100):
-                print('Batch {}'.format(i))
-                mmalpha = self.sess.run(self.mmAlpha, feed_dict=feed)
-                
-                print('mmalpha: {}'.format(mmalpha))
+            #if (i==1 or i==20 or i == 50 or i==100):
+            #    print('Batch {}'.format(i))
+            #    mmalpha = self.sess.run(self.mmAlpha, feed_dict=feed)
+            #    
+            #    print('mmalpha: {}'.format(mmalpha))
             
             _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
@@ -229,6 +229,8 @@ class BaseModel(object):
             
             if not math.isnan(val_loss):
                 val_losses.append(val_loss)
+            else:
+                val_losses.append(0)
         
         epoch_valLoss = np.mean(val_losses)
         valAcc = np.mean(accuracies)
