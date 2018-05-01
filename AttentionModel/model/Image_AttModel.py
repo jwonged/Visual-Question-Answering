@@ -128,6 +128,7 @@ class ImageAttentionModel(BaseModel):
                                        units=qnContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
+        qnContext= tf.nn.dropout(qnContext, self.dropout)
         #[b, 512]
         imgContext = tf.layers.dense(inputs=imgContext,
                                        units=qnContext.get_shape()[-1],
@@ -157,7 +158,7 @@ class ImageAttentionModel(BaseModel):
                                        units=combinedInfo.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
-        #att_qn= tf.nn.dropout(att_qn, self.dropout)
+        att_qn= tf.nn.dropout(att_qn, self.dropout)
         att_qn_b = tf.layers.dense(inputs=att_qn,
                                        units=1,
                                        activation=None,
