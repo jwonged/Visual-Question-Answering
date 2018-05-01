@@ -58,7 +58,7 @@ class Config(object):
     imgModel = 'vgg' #'vgg' or 'googlenet' #for pre-trained img model
     
     nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
-    batch_size = 32
+    batch_size = 128
     wordVecSize = 300
     imgVecSize = [512, 14, 14]
     
@@ -77,11 +77,11 @@ class Config(object):
     max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     '''
     unkWord = '<UNK>'
-    probSingleToUNK = 0.05
-    usePretrainedEmbeddings = False
+    probSingleToUNK = 0.1
+    usePretrainedEmbeddings = True
     shuffle = True
     trainEmbeddings = True
-    removeQnMark = False
+    removeQnMark = True
     
     
         
