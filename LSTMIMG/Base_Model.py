@@ -176,8 +176,7 @@ class BaseModel(object):
                 self.sequence_lengths : seqLens,
                 self.img_vecs : img_vecs,
                 self.labels : labels,
-                self.lr : self.config.learningRate,
-                self.dropout : self.config.dropoutVal
+                self.dropout : 1.0
             }
             loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
             
