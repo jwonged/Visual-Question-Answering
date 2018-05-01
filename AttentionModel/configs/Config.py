@@ -77,11 +77,11 @@ class Config(object):
     max_gradient_norm = 4 #for clipping; usually 4-5; -1 for none
     '''
     unkWord = '<UNK>'
-    probSingleToUNK = 0.1
-    usePretrainedEmbeddings = True
+    probSingleToUNK = 0.05
+    usePretrainedEmbeddings = False
     shuffle = True
     trainEmbeddings = True
-    removeQnMark = True
+    removeQnMark = False
     
     
         
