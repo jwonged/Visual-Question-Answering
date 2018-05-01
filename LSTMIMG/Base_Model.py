@@ -140,8 +140,6 @@ class BaseModel(object):
         correct_predictions, total_predictions = 0., 0.
         train_losses = []
         
-        self.runVal(valReader, nEpoch)
-        
         for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
             trainReader.getNextBatch(batch_size)):
             
@@ -162,12 +160,6 @@ class BaseModel(object):
             
             _, loss, labels_pred, summary = self.sess.run(
                 [self.train_op, self.loss, self.labels_pred, self.merged], feed_dict=feed)
-            
-            train_losses.append(loss)
-            for lab, labPred in zip(labels, labels_pred):
-                if lab==labPred:
-                    correct_predictions += 1
-                total_predictions += 1
                 
                 #log to csv
                 #self.predFile.writerow([qn, self.classToAnsMap[labPred], self.classToAnsMap[lab], labPred, lab, lab==labPred])
@@ -175,7 +167,25 @@ class BaseModel(object):
                 
             if (i%10==0):
                 self.tb_writer.add_summary(summary, global_step=nBatches*nEpoch + i)
-                                           
+        
+        for i, (qnAsWordIDsBatch, seqLens, img_vecs, labels, _, _, _) in enumerate(
+            trainReader.getNextBatch(batch_size)):
+            
+            feed = {
+                self.word_ids : qnAsWordIDsBatch,
+                self.sequence_lengths : seqLens,
+                self.img_vecs : img_vecs,
+                self.labels : labels,
+                self.lr : self.config.learningRate,
+                self.dropout : self.config.dropoutVal
+            }
+            loss, labels_pred = self.sess.run([self.loss, self.labels_pred], feed_dict=feed)
+            
+            train_losses.append(loss)
+            for lab, labPred in zip(labels, labels_pred):
+                if lab==labPred:
+                    correct_predictions += 1
+                total_predictions += 1
             '''valAcc, valCorrect, valTotalPreds = self.runVal(valReader, nEpoch)
             resMsg = 'Epoch {0}, batch {1}: val Score={2:>6.1%}, trainAcc={3:>6.1%}\n'.format(
             nEpoch, i, valAcc, correct_predictions/total_predictions if correct_predictions > 0 else 0 )
