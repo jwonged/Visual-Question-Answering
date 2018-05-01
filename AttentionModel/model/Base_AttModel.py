@@ -149,11 +149,13 @@ class BaseModel(object):
             
             if (i==1 or i==5 or i==20 or i == 50 or i==100):
                 print('Batch {}'.format(i))
-                mm_im, mm_qn = self.sess.run(
+                mm_im, mm_qn, un_im, un_qn = self.sess.run(
                 [self.mmAlpha_im, self.mmAlpha_qn, self.unnorm_im, self.unnorm_qn], feed_dict=feed)
                 
                 print('mm_im: {}'.format(mm_im))
                 print('mm_qn: {}'.format(mm_qn))
+                print('un_im: {}'.format(un_im))
+                print('un_qn: {}'.format(un_qn))
                 
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
