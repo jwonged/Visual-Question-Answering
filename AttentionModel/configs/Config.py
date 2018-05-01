@@ -58,14 +58,14 @@ class Config(object):
     imgModel = 'vgg' #'vgg' or 'googlenet' #for pre-trained img model
     
     nOutClasses = 3147  #1000 or >3 freq=3127 or 17140 (all)
-    batch_size = 128
+    batch_size = 32
     wordVecSize = 300
     imgVecSize = [512, 14, 14]
     
     LSTM_num_units = 512
     fclayerAfterLSTM = 1024
     elMult = True #False = concat; True = Mult
-    LSTMType = 'bi' #'bi' or 'single'
+    LSTMType = 'single' #'bi' or 'single'
     '''
     nTrainEpochs = 50
     nEpochsWithoutImprov = 5
