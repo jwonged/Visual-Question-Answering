@@ -146,7 +146,7 @@ class BaseModel(object):
                 self.lr : self.config.learningRate,
                 self.dropout : self.config.dropoutVal
             }
-            
+            '''
             if (i==1 or i==20 or i == 50 or i==100):
                 print('Batch {}'.format(i))
                 mmalpha, mmalpha_expanded = self.sess.run(
@@ -154,7 +154,7 @@ class BaseModel(object):
                 
                 print('mmalpha: {}'.format(mmalpha))
                 print('mmalpha_expanded: {}'.format(mmalpha_expanded))
-                
+                '''
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
                 
