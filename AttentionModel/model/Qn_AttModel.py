@@ -371,11 +371,6 @@ class QnAttentionModel(BaseModel):
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         imgContext= tf.nn.dropout(imgContext, self.dropout)
-        qnContext = tf.layers.dense(inputs=qnContext,
-                                       units=qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-        print('Shape of imgContext : {}'.format(imgContext.get_shape()))
         #[b, 512]
         
         combinedInfo = tf.add(imgContext, qnContext)#, axis=-1) #[b,1024]
