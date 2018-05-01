@@ -239,8 +239,6 @@ class BaseModel(object):
             
             if not math.isnan(val_loss):
                 val_losses.append(val_loss)
-            else:
-                val_losses.append(0)
         
         epoch_valLoss = np.mean(val_losses)
         valAcc = np.mean(accuracies)
