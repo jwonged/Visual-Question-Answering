@@ -269,11 +269,11 @@ class ImageAttentionModel(BaseModel):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
-                                           units=1000,
-                                           activation=tf.tanh,
-                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
-            y = tf.layers.dense(inputs=hidden_layer2,
+            #hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
+            #                               units=1000,
+            #                               activation=tf.tanh,
+            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+            y = tf.layers.dense(inputs=self.multimodalOutput,#hidden_layer2,
                                            units=self.config.nOutClasses,
                                            activation=None,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
