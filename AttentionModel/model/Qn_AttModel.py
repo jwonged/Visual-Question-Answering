@@ -401,10 +401,6 @@ class QnAttentionModel(BaseModel):
                                        units=combinedInfo.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
-        att_qn = tf.layers.dense(inputs=att_qn,
-                                       units=combinedInfo.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
         att_qn_b = tf.layers.dense(inputs=att_qn,
                                        units=1,
                                        activation=None,
