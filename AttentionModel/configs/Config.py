@@ -32,7 +32,7 @@ class Config(object):
         self.nTrainEpochs = 60
         self.nEpochsWithoutImprov = 7
         self.decayAfterEpoch = 20
-        self.dropoutVal = 0.5 #standard 0.5, 1.0 for none
+        self.dropoutVal = 1.0 #standard 0.5, 1.0 for none
         self.modelOptimizer = 'adam'
         self.learningRate = 0.0005
         self.learningRateDecay = 0.95 #noDecay= 1; usually ~0.9
