@@ -55,7 +55,7 @@ def parseArgs():
     parser.add_argument('--debugmode', help='Trace printing', action='store_true')
     parser.add_argument('--stackAtt', help='Use stacked attention', action='store_true')
     parser.add_argument('--attComb', choices=['concat', 'mult', 'add'], default='concat')
-    parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='sigmoid')
+    parser.add_argument('--qnAttf', choices=['softmax', 'sigmoid'], default='softmax')
     parser.add_argument('--mmAtt', help='Use multimodal attention', action='store_true')
     args = parser.parse_args()
     return args

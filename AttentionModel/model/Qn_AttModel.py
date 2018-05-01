@@ -361,10 +361,10 @@ class QnAttentionModel(BaseModel):
         #self.qnContext = qnContext
         
         #shape qn down to 512
-        qnContext = tf.layers.dense(inputs=qnContext,
-                                       units=imgContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        #qnContext = tf.layers.dense(inputs=qnContext,
+        #                               units=imgContext.get_shape()[-1],
+        #                               activation=tf.tanh,
+        #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
         #[b, 512]
         
         combinedInfo = tf.concat([imgContext, qnContext], axis=-1) #[b,1024]
@@ -374,6 +374,7 @@ class QnAttentionModel(BaseModel):
                                        units=combinedInfo.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1024]
+        att_im= tf.nn.dropout(att_im, self.dropout)
         att_im_b = tf.layers.dense(inputs=att_im,
                                        units=1,
                                        activation=None,
@@ -426,9 +427,9 @@ class QnAttentionModel(BaseModel):
         LSTMinput = self._addEmbeddings() #[b, seqlen, 300]
         
         lstmOutput = self._addLSTM(LSTMinput) #[batch_size, max_time, 1024]
-        #make qn tanh activated
+        #make qn tanh activated, halve 1024-->512 for image size consistency
         lstmOutput = tf.layers.dense(inputs=lstmOutput,
-                                       units=lstmOutput.get_shape()[-1],
+                                       units=lstmOutput.get_shape()[-1]/2,
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         
