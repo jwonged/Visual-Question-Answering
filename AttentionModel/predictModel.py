@@ -121,21 +121,23 @@ def visQnImgAtt():
     
     model = QnAttentionModel(config)
     
-    saveData = False
+    saveData = True
     
-    #model.loadTrainedModel(config.restoreQuAttSigmoidModel, 
-    #                       config.restoreQuAttSigmoidModelPath)
-    model.loadTrainedModel(config.restoreCMmodel, 
-                           config.restoreCMmodelPath)
+    model.loadTrainedModel(config.restoreQuAttSigmoidModel, 
+                           config.restoreQuAttSigmoidModelPath)
+    #model.loadTrainedModel(config.restoreCMmodel, 
+    #                       config.restoreCMmodelPath)
     #model.loadTrainedModel(config.restoreQnImAttModel, 
     #                       config.restoreQnImAttModelPath)
     qnAlphas, alphas, img_ids, qns, preds, topk, labs = model.runPredict(
-        reader, config.csvResults, 20, mini=True, chooseBatch=0)
+        reader, config.csvResults, 200, mini=True, chooseBatch=30)
     model.destruct()
     
     out = OutputGenerator(config.valImgPaths)
     #out = OutputGenerator(config.trainImgPaths)
-    out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
+    #out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
+    out.displayQnImgAttSaveSplit(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
+    
 
 def parseArgs():
     parser = argparse.ArgumentParser()

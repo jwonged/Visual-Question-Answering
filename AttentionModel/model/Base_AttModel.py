@@ -146,15 +146,15 @@ class BaseModel(object):
                 self.lr : self.config.learningRate,
                 self.dropout : self.config.dropoutVal
             }
-            '''
+            
             if (i==1 or i==20 or i == 50 or i==100):
                 print('Batch {}'.format(i))
-                mmalpha, mmalpha_expanded = self.sess.run(
-                [self.mmAlpha,self.alpha_mm], feed_dict=feed)
+                mm_im, mm_qn = self.sess.run(
+                [self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
                 
-                print('mmalpha: {}'.format(mmalpha))
-                print('mmalpha_expanded: {}'.format(mmalpha_expanded))
-                '''
+                print('mm_im: {}'.format(mm_im))
+                print('mm_qn: {}'.format(mm_qn))
+                
             if (i==1 or i==20 or i == 50 or i==100) and self.config.debugMode:
                 print('Batch {}'.format(i))
                 

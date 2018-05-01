@@ -106,8 +106,13 @@ class QnAttentionModel(BaseModel):
         return lstmOutput
     
     def _addQuestionAttention(self, lstmOutput):
+        """
+            args: 
+                lstmOutput: shape=[b,maxlen,1024] (tanh activated)
+        """
         #########Question Attention##########
         with tf.variable_scope("qn_attention"):
+            
             #qnAtt_f output: [b x seqLen x 1024]
             qnAtt_f =  tf.layers.dense(lstmOutput, units=lstmOutput.get_shape()[-1],
                                 activation=tf.tanh,
@@ -156,6 +161,15 @@ class QnAttentionModel(BaseModel):
                     print('self.qnAtt_alpha shape: {}'.format(self.qnAtt_alpha.get_shape()))
             
         return qnContext 
+    
+    def _computeSigmoid(self, regionWeights, seqLen):
+        unnorm_Qnalpha = tf.nn.sigmoid(regionWeights) #[b, seqLen(nRegions)]
+        mask = tf.to_float(tf.sequence_mask(seqLen)) #[b, maxLen]
+        masked_qnRegions = tf.multiply(unnorm_Qnalpha, mask) #[b, maxLen]
+        qnNorm_denominator = tf.expand_dims(
+            tf.reduce_sum(masked_qnRegions, axis=-1), axis=-1) #[b, 1]
+        qnAtt_alpha = tf.div(masked_qnRegions, qnNorm_denominator, name='qn_alpha') 
+        return qnAtt_alpha
     
     def _addImageAttention(self, qnContext, flattenedImgVecs, 
                            attComb=None, name='alpha', var_scope='image_attention'):
@@ -229,7 +243,7 @@ class QnAttentionModel(BaseModel):
             
             return imgContext
     
-    def _multimodalAttention(self, imgContext, qnContext):
+    def _multimodalAttentionPrev(self, imgContext, qnContext):
         """
         args:
             imgContext: [b, 512]
@@ -238,6 +252,7 @@ class QnAttentionModel(BaseModel):
         print('Using Crossmodal Attention')
         self.imgContext = imgContext
         self.qnContext = qnContext
+        
         '''
         #separate attention weights
         att_im = tf.layers.dense(inputs=imgContext,
@@ -334,7 +349,57 @@ class QnAttentionModel(BaseModel):
         mmContext = tf.reduce_sum(tf.multiply(alpha, reg_in),  axis=1) #[b,1024]'''
         
         return mmContext
+    
+    def _multimodalAttention(self, imgContext, qnContext):
+        """
+        args: both tanh activated
+            imgContext: [b, 512]
+            qnContext: [b, 1024]
+        """
+        print('Using Concatenated Crossmodal Attention')
+        #self.imgContext = imgContext
+        #self.qnContext = qnContext
         
+        #shape qn down to 512
+        qnContext = tf.layers.dense(inputs=qnContext,
+                                       units=imgContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        #[b, 512]
+        
+        combinedInfo = tf.concat([imgContext, qnContext], axis=-1) #[b,1024]
+        
+        #compute img alpha
+        att_im = tf.layers.dense(inputs=combinedInfo,
+                                       units=combinedInfo.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1024]
+        att_im_b = tf.layers.dense(inputs=att_im,
+                                       units=1,
+                                       activation=None,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
+        unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
+        
+        #compute qn alpha
+        att_qn = tf.layers.dense(inputs=combinedInfo,
+                                       units=combinedInfo.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
+        att_qn_b = tf.layers.dense(inputs=att_qn,
+                                       units=1,
+                                       activation=None,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
+        unnorm_qn = tf.nn.sigmoid(att_qn_b) #[b,1]
+        
+        #normalise
+        comb_denominator = tf.add(unnorm_im, unnorm_qn) #[b,1]
+        self.mmAlpha_im = tf.div(unnorm_im, comb_denominator, name='mmAlphaIm') #[b,1]
+        self.mmAlpha_qn = tf.div(unnorm_qn, comb_denominator, name='mmAlphaQn') #[b,1]
+        
+        #combine context
+        mmContext = tf.add(tf.multiply(self.mmAlpha_im, imgContext), 
+                           tf.multiply(self.mmAlpha_qn, qnContext))
+        return mmContext
         
     
     def _combineModes(self, imgContext, qnContext):
@@ -381,16 +446,15 @@ class QnAttentionModel(BaseModel):
                                        units=flattenedImgVecs.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
+        self.flattenedImgVecs = tf.nn.dropout(self.flattenedImgVecs, self.dropout)
         
         #image attention layer --> [bx1536] --> [bx512]
         imgContext = self._addImageAttention(qnContext, self.flattenedImgVecs, name='alpha')
         
         #combine modes
         if self.config.mmAtt:
-            print('Using crossmodal attention')
             self.multimodalOutput = self._multimodalAttention(imgContext, qnContext)
         else:
-            print('Combining modes through normal hadamard')
             self.multimodalOutput = self._combineModes(imgContext, qnContext)
         
         if self.config.stackAtt:
@@ -447,9 +511,9 @@ class QnAttentionModel(BaseModel):
         if not self.config.noqnatt:
             self.qnAtt_alpha = graph.get_tensor_by_name('qn_attention/qn_alpha:0')
         if self.config.mmAtt:
-            self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
-            #self.mmAlpha_im = graph.get_tensor_by_name('mmAlphaIm:0')
-            #self.mmAlpha_qn = graph.get_tensor_by_name('mmAlphaQn:0')
+            #self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
+            self.mmAlpha_im = graph.get_tensor_by_name('mmAlphaIm:0')
+            self.mmAlpha_qn = graph.get_tensor_by_name('mmAlphaQn:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)
@@ -495,12 +559,17 @@ class QnAttentionModel(BaseModel):
             }
             
             if self.config.mmAtt:
-                topK, qnAlphas, alphas, labels_pred, mmAlphas = self.sess.run(
+                #topK, qnAlphas, alphas, labels_pred, mmAlphas = self.sess.run(
+                #    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
+                #     self.mmAlpha], feed_dict=feed)
+                topK, qnAlphas, alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
                     [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
-                     self.mmAlpha], feed_dict=feed)
+                     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
                 
-                for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
-                    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
+                #for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
+                #    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
+                for lab, labPred, qn, img_id, qn_id, mm_im, mm_qn in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims, mm_qns):
                     if (lab==labPred):
                         correct_predictions += 1
                     total_predictions += 1
@@ -517,7 +586,7 @@ class QnAttentionModel(BaseModel):
                                        self.classToAnsMap[lab], 
                                        labPred, lab, 
                                        lab==labPred, img_id, qn_id,
-                                       mm_alpha])
+                                       mm_im, mm_qn])
                         
                 if mini and nBatch == chooseBatch:
                     ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]

@@ -93,8 +93,50 @@ class OutputGenerator(object):
             data['preds'] = preds_to_save
             data['qns'] = qns_to_save
             data['labs'] = labs_to_save
-            self._saveToPickle(data, fileName='/media/jwong/Transcend/VQAresults/Samplespictures/QuAttsigmoidValFirst.pkl')
+            self._saveToPickle(data, fileName='/media/jwong/Transcend/VQAresults/Samplespictures/QuAttLargeSample.pkl')
+    
+    def displayQnImgAttSaveSplit(self, qnAlphas, imgAlphas, img_ids, qns, preds, topk, labs, saveData=False):
+        for n, (qnAl, imAl, img_id, qn, pred, topk, lab) in enumerate(zip(
+            qnAlphas, imgAlphas, img_ids, qns, preds, topk, labs)):
+            #if n > 6:
+            #    break
+            n += 30
+            alp_img = self._processImgAlpha(imAl)
+            toks = word_tokenize(qn)
+            for tok, att in zip(toks, qnAl):
+                print('{} ( {} )  '.format(tok,att))
+                
+            imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
+            qn_2d = np.expand_dims(qnAl[:len(toks)], axis=0)
             
+            plt.suptitle('Qn: {}\n Prediction: {} \n Ground truth: {}'.format(qn, pred, lab))#, fontsize=16)
+            plt.savefig('/media/jwong/Transcend/VQAresults/QnAndImgAtt/QuAttSamples/{}quatt{}.png'.format(n,0), 
+                        bbox_inches='tight')
+            plt.clf()
+            
+            #attended image
+            plt.imshow(imgvec)
+            plt.imshow(alp_img, alpha=0.80)#, cmap='gray')
+            plt.axis('off')
+            plt.savefig('/media/jwong/Transcend/VQAresults/QnAndImgAtt/QuAttSamples/{}quatt{}.png'.format(n,1), 
+                        bbox_inches='tight')
+            plt.clf()
+            
+            #img
+            plt.imshow(imgvec)
+            plt.axis('off')
+            plt.savefig('/media/jwong/Transcend/VQAresults/QnAndImgAtt/QuAttSamples/{}quatt{}.png'.format(n,2), 
+                        bbox_inches='tight')
+            plt.clf()
+            
+            #qn attention
+            plt.yticks([])
+            plt.xticks(np.arange(0, len(toks)+2), (toks))
+            plt.imshow(qn_2d, cmap='gray_r', interpolation='nearest')
+            plt.savefig('/media/jwong/Transcend/VQAresults/QnAndImgAtt/QuAttSamples/{}quatt{}.png'.format(n,3), 
+                        bbox_inches='tight')
+            plt.clf()
+        
     def _saveToPickle(self, data, fileName):
         with open(fileName, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -242,6 +284,7 @@ class OutputGenerator(object):
             #plt.title("\n".join(wrap(
             #    "Qn: {} Pred: {}".format(qn, pred), 20)))
             plt.imshow(imgvec)
+           
             
             plt.axis('off')
             plt.suptitle('Qn: {}\n Pred: {} \n Ans: {}'.format(qn, pred, lab), fontsize=16)
