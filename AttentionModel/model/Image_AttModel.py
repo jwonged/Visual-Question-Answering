@@ -124,10 +124,10 @@ class ImageAttentionModel(BaseModel):
         #self.qnContext = qnContext
         
         #shape qn down to 512
-        qnContext = tf.layers.dense(inputs=qnContext,
-                                       units=qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        #qnContext = tf.layers.dense(inputs=qnContext,
+        #                               units=qnContext.get_shape()[-1],
+        #                               activation=tf.tanh,
+        #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
         #[b, 512]
         imgContext = tf.layers.dense(inputs=imgContext,
                                        units=qnContext.get_shape()[-1],
