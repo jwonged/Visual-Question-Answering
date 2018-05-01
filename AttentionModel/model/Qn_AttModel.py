@@ -366,7 +366,7 @@ class QnAttentionModel(BaseModel):
         #                               activation=tf.tanh,
         #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
         #[b, 512]
-        imgContext = tf.layers.dense(inputs=qnContext,
+        imgContext = tf.layers.dense(inputs=imgContext,
                                        units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
@@ -390,7 +390,8 @@ class QnAttentionModel(BaseModel):
                                        activation=None,
                                        use_bias=False,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
-        unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
+        #unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
+        unnorm_im = tf.nn.tanh(att_im_b)
         
         #compute qn alpha
         att_qn = tf.layers.dense(inputs=combinedInfo,
@@ -402,7 +403,8 @@ class QnAttentionModel(BaseModel):
                                        activation=None,
                                        use_bias=False,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
-        unnorm_qn = tf.nn.sigmoid(att_qn_b) #[b,1]
+        #unnorm_qn = tf.nn.sigmoid(att_qn_b) #[b,1]
+        unnorm_qn = tf.nn.tanh(att_qn_b) #[b,1]
         
         #normalise
         comb_denominator = tf.add(unnorm_im, unnorm_qn) #[b,1]
