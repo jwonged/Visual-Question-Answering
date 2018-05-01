@@ -366,11 +366,15 @@ class QnAttentionModel(BaseModel):
         #                               activation=tf.tanh,
         #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
         #[b, 512]
-        imgContext = tf.layers.dense(inputs=qnContext,
+        imgContext = tf.layers.dense(inputs=imgContext,
                                        units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())
         imgContext= tf.nn.dropout(imgContext, self.dropout)
+        qnContext= tf.layers.dense(inputs=qnContext,
+                                       units=qnContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
         #[b, 512]
         
         combinedInfo = tf.concat([imgContext, qnContext], axis=-1) #[b,1024]
@@ -384,6 +388,7 @@ class QnAttentionModel(BaseModel):
         att_im_b = tf.layers.dense(inputs=att_im,
                                        units=1,
                                        activation=None,
+                                       use_bias=False,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
         unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
         
@@ -395,6 +400,7 @@ class QnAttentionModel(BaseModel):
         att_qn_b = tf.layers.dense(inputs=att_qn,
                                        units=1,
                                        activation=None,
+                                       use_bias=False,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
         unnorm_qn = tf.nn.sigmoid(att_qn_b) #[b,1]
         
@@ -404,11 +410,10 @@ class QnAttentionModel(BaseModel):
         self.mmAlpha_qn = tf.div(unnorm_qn, comb_denominator, name='mmAlphaQn') #[b,1]
         
         #combine context
-        mmContext = tf.add(tf.multiply(self.mmAlpha_im, imgContext), 
-                           tf.multiply(self.mmAlpha_qn, qnContext))
-        return mmContext
+        mmContext = tf.add(tf.multiply(self.mmAlpha_qn, qnContext),
+                           tf.multiply(self.mmAlpha_im, imgContext))
+        return mmContext #[b, 512]
         
-    
     def _combineModes(self, imgContext, qnContext):
         if self.config.elMult: #element wise hadamard
             print('Using pointwise mult in combining modes')
