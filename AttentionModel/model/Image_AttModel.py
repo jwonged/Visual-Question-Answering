@@ -176,6 +176,67 @@ class ImageAttentionModel(BaseModel):
                            tf.multiply(self.mmAlpha_im, imgContext))
         return mmContext #[b, 512]
     
+    def _multimodalAttentionShared(self, imgContext, qnContext):
+        """
+        args:
+            imgContext: [b, 512]
+            qnContext: [b, 1024]
+        """
+        print('Using Crossmodal Attention')
+        self.imgContext = imgContext
+        self.qnContext = qnContext
+        
+        #map qn down to 512
+        qnContext = tf.layers.dense(inputs=qnContext,
+                                       units=imgContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,512]
+        
+        #combine for result
+        att_im = tf.expand_dims(imgContext, axis=1) #[b,1,512]
+        att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,512]
+        mm_start = tf.concat([att_im, att_qn], axis=1) #[b,2,512]
+        
+        
+        #use the same attention weights for across modes
+        combinedInfo = tf.concat([imgContext, qnContext], axis=-1)
+        
+        att_im = tf.layers.dense(inputs=combinedInfo,
+                                       units=combinedInfo.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1024]
+        att_qn = tf.layers.dense(inputs=combinedInfo,
+                                      units=combinedInfo.get_shape()[-1],
+                                      activation=tf.tanh,
+                                      kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
+        
+        att_im = tf.expand_dims(att_im, axis=1) #[b,1,1024]
+        att_qn = tf.expand_dims(att_qn, axis=1) #[b,1,1024]
+        mm_in = tf.concat([att_im, att_qn], axis=1) #[b,2,1024]
+        
+        #beta * tanh(Wx+b)
+        #mm_a = tf.layers.dense(inputs=mm_in,
+        #                               units=mm_in.get_shape()[-1],
+        #                               activation=tf.tanh,
+        #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+        mm_beta_w = tf.get_variable("beta", shape=[mm_in.get_shape()[-1], 1], dtype=tf.float32) #512,1
+        mm_flat = tf.reshape(mm_in, shape=[-1, mm_in.get_shape()[-1]]) #[b*2, 1024]
+        mm_att_flatWeights = tf.matmul(mm_flat, mm_beta_w) #get scalar for each batch, region [b*2]
+        mm_a_shaped = tf.reshape(mm_att_flatWeights, shape=[-1, 2])  #[b, 2]
+        
+        unnorm_alpha = tf.nn.sigmoid(mm_a_shaped) #[b, 2]
+        norm_denominator = tf.expand_dims(
+            tf.reduce_sum(unnorm_alpha, axis=-1), axis=-1) #[b, 1]
+        self.mmAlpha = tf.div(unnorm_alpha, norm_denominator, name='mmAlpha') #[b, 2]
+        
+        self.mmAlpha_im = self.mmAlpha
+        self.mmAlpha_qn = self.mmAlpha
+        
+        self.alpha_mm = tf.expand_dims(self.mmAlpha, axis=-1)  #[b,2,1]
+        mmContext = tf.reduce_sum(tf.multiply(self.alpha_mm, mm_start),  axis=1) #[b,512]
+        
+        return mmContext
+    
     def construct(self):
         self._addPlaceholders()
         
@@ -251,7 +312,8 @@ class ImageAttentionModel(BaseModel):
             
         #Handle output according to model structure
         if self.config.mmAtt:
-            self.multimodalOutput = self._multimodalAttention(self.imgContext, self.lstmOutput)
+            #self.multimodalOutput = self._multimodalAttention(self.imgContext, self.lstmOutput)
+            self.multimodalOutput = self._multimodalAttentionShared(self.imgContext, self.lstmOutput)
         else:
             if self.config.elMult:
                 print('Using pointwise mult')
@@ -270,11 +332,11 @@ class ImageAttentionModel(BaseModel):
         
         #fully connected layer
         with tf.variable_scope("proj"):
-            #hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
-            #                               units=1000,
-            #                               activation=tf.tanh,
-            #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
-            y = tf.layers.dense(inputs=self.multimodalOutput,#hidden_layer2,
+            hidden_layer2 = tf.layers.dense(inputs=self.multimodalOutput,
+                                           units=1000,
+                                           activation=tf.tanh,
+                                           kernel_initializer=tf.contrib.layers.xavier_initializer())
+            y = tf.layers.dense(inputs=hidden_layer2,
                                            units=self.config.nOutClasses,
                                            activation=None,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
