@@ -374,7 +374,7 @@ class QnAttentionModel(BaseModel):
         print('Shape of imgContext : {}'.format(imgContext.get_shape()))
         #[b, 512]
         
-        combinedInfo = tf.add([imgContext, qnContext])#, axis=-1) #[b,1024]
+        combinedInfo = tf.add(imgContext, qnContext)#, axis=-1) #[b,1024]
         print('Shape of combinedInfo  : {}'.format(combinedInfo.get_shape()))
         
         #compute img alpha
