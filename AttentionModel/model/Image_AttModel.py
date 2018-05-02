@@ -112,7 +112,9 @@ class ImageAttentionModel(BaseModel):
                 #lstmOutput =  tf.concat([lstmOutState.c, lstmOutState.h], axis=-1) #1024
         
         self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
-        
+    
+    
+    #######################USE SHARED INSTEAD#########################################
     def _multimodalAttention(self, imgContext, qnContext):
         """
         args: both tanh activated
@@ -191,10 +193,7 @@ class ImageAttentionModel(BaseModel):
                                        units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,512]
-        imgContext = tf.layers.dense(inputs=imgContext,
-                                       units=imgContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        
         #combine for result
         att_im = tf.expand_dims(imgContext, axis=1) #[b,1,512]
         att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,512]
@@ -253,6 +252,12 @@ class ImageAttentionModel(BaseModel):
         transposedImgVec = tf.transpose(self.img_vecs, perm=[0,3,2,1]) #bx14x14x512
         print('transposedImgVec = {}'.format(transposedImgVec.get_shape()))
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
+        
+        #tanh activate image
+        self.flattenedImgVecs= tf.layers.dense(inputs=self.flattenedImgVecs,
+                                       units=self.flattenedImgVecs.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
          
         self._addLSTM()
         
