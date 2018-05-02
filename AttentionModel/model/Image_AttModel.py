@@ -97,7 +97,6 @@ class ImageAttentionModel(BaseModel):
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 
-                
             else:
                 print('Using Uni-LSTM')
                 #rnn_layers = [tf.nn.rnn_cell.LSTMCell(size) for size in self.config.LSTMCellSizes]
@@ -263,13 +262,13 @@ class ImageAttentionModel(BaseModel):
         
         #########Attention layer##########
         with tf.variable_scope("attention"):
-            self.lstmOutput = tf.layers.dense(inputs=self.lstmOutput,
+            lstmOutputForIm = tf.layers.dense(inputs=self.lstmOutput,
                                            units=1024,
                                            activation=tf.tanh,
                                            kernel_initializer=tf.contrib.layers.xavier_initializer())
                 
             #duplicate qn vec to combine with each region to get [v_i, q]
-            qnAtt_in = tf.expand_dims(self.lstmOutput, axis=1)
+            qnAtt_in = tf.expand_dims(lstmOutputForIm, axis=1)
             qnAtt_in = tf.tile(qnAtt_in, [1,tf.shape(self.flattenedImgVecs)[1],1]) 
             print('Shape of attention input : {}'.format(tf.shape(qnAtt_in)))
             att_in = tf.concat([self.flattenedImgVecs, qnAtt_in], axis=-1) #[bx196x1536]
