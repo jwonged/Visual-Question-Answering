@@ -368,6 +368,7 @@ class ImageAttentionModel(BaseModel):
     def loadTrainedModel(self, restoreModel, restoreModelPath):
         graph = super(ImageAttentionModel, self).loadTrainedModel(restoreModel, restoreModelPath)
         self.alpha = graph.get_tensor_by_name('attention/alpha:0')
+        self.mmAlpha = graph.get_tensor_by_name('mmAlpha:0')
     
     def solve(self, qn, img_id, processor):
         qnAsWordIDsBatch, seqLens, img_vecs = processor.processInput(qn, img_id)

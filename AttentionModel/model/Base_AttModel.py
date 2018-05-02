@@ -329,17 +329,17 @@ class BaseModel(object):
             }
             
             if self.config.mmAtt:
-                #topK, qnAlphas, alphas, labels_pred, mmAlphas = self.sess.run(
-                #    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
-                #     self.mmAlpha], feed_dict=feed)
-                topK,  alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
-                    [self.topK, self.alpha, self.labels_pred, 
-                     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
+                topK,  alphas, labels_pred, mmAlphas = self.sess.run(
+                    [self.topK,  self.alpha, self.labels_pred, 
+                     self.mmAlpha], feed_dict=feed)
+                #topK,  alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
+                #    [self.topK, self.alpha, self.labels_pred, 
+                #     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
                 
-                #for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
-                #    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
-                for lab, labPred, qn, img_id, qn_id, mm_im in zip(
-                    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims):
+                for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
+                #for lab, labPred, qn, img_id, qn_id, mm_im in zip(
+                #    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims):
                     if (lab==labPred):
                         correct_predictions += 1
                     total_predictions += 1
@@ -356,7 +356,7 @@ class BaseModel(object):
                                        self.classToAnsMap[lab], 
                                        labPred, lab, 
                                        lab==labPred, img_id, qn_id,
-                                       mm_im[0], mm_im[1]])
+                                       mm_alpha])
                         
                 if mini and nBatch == chooseBatch:
                     ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
