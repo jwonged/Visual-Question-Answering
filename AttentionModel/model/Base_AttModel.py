@@ -151,11 +151,10 @@ class BaseModel(object):
                 print('Batch {}'.format(i))
                 #mm_im, mm_qn, un_im, un_qn = self.sess.run(
                 #[self.mmAlpha_im, self.mmAlpha_qn, self.unnorm_im, self.unnorm_qn], feed_dict=feed)
-                mm_im, mm_qn = self.sess.run(
-                [self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
+                mm_al = self.sess.run(
+                [self.mmAlpha], feed_dict=feed)
                 
-                print('mm_im: {}'.format(mm_im))
-                print('mm_qn: {}'.format(mm_qn))
+                print('mm_both: {}'.format(mm_al))
                 #print('un_im: {}'.format(un_im))
                 #print('un_qn: {}'.format(un_qn))
                 

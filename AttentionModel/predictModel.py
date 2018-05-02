@@ -138,7 +138,9 @@ def visQnImgAtt():
     #out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
     out.displayQnImgAttSaveSplit(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
     
-
+def solveSingleImage():
+    
+    
 def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', help='Display all print statement', 

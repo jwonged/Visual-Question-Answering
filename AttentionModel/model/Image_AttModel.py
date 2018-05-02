@@ -191,12 +191,14 @@ class ImageAttentionModel(BaseModel):
                                        units=imgContext.get_shape()[-1],
                                        activation=tf.tanh,
                                        kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,512]
-        
+        imgContext = tf.layers.dense(inputs=imgContext,
+                                       units=imgContext.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
         #combine for result
         att_im = tf.expand_dims(imgContext, axis=1) #[b,1,512]
         att_qn = tf.expand_dims(qnContext, axis=1) #[b,1,512]
         mm_start = tf.concat([att_im, att_qn], axis=1) #[b,2,512]
-        
         
         #use the same attention weights for across modes
         combinedInfo = tf.concat([imgContext, qnContext], axis=-1)
