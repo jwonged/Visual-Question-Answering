@@ -152,7 +152,7 @@ class BaseModel(object):
                 #mm_im, mm_qn, un_im, un_qn = self.sess.run(
                 #[self.mmAlpha_im, self.mmAlpha_qn, self.unnorm_im, self.unnorm_qn], feed_dict=feed)
                 mm_al = self.sess.run(
-                [self.mmAlpha, self.imgContext], feed_dict=feed)
+                [self.mmAlpha,self.qnContext], feed_dict=feed)
                 
                 print('mm_both: {}'.format(mm_al))
                 #print('un_im: {}'.format(un_im))
