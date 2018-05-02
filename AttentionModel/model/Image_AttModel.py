@@ -184,8 +184,8 @@ class ImageAttentionModel(BaseModel):
             qnContext: [b, 1024]
         """
         print('Using Crossmodal Attention')
-        self.imgContext = imgContext
-        self.qnContext = qnContext
+        self.im_con = imgContext
+        self.qn_con = qnContext
         
         #map qn down to 512
         qnContext = tf.layers.dense(inputs=qnContext,
