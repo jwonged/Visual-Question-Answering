@@ -253,10 +253,10 @@ class ImageAttentionModel(BaseModel):
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
         #tanh activate image
-        #self.flattenedImgVecs= tf.layers.dense(inputs=self.flattenedImgVecs,
-        #                               units=self.flattenedImgVecs.get_shape()[-1],
-        #                               activation=tf.tanh,
-        #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
+        self.flattenedImgVecs= tf.layers.dense(inputs=self.flattenedImgVecs,
+                                       units=self.flattenedImgVecs.get_shape()[-1],
+                                       activation=tf.tanh,
+                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
          
         self._addLSTM()
         
