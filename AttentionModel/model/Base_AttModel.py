@@ -327,35 +327,73 @@ class BaseModel(object):
                 self.img_vecs : img_vecs,
                 self.dropout : 1.0
             }
-            alphas, labels_pred = self.sess.run(
-                [self.alpha, self.labels_pred], feed_dict=feed)
             
-            for lab, labPred, qn, img_id, qn_id in zip(
-                labels, labels_pred, rawQns, img_ids, qn_ids):
-                if (lab==labPred):
-                    correct_predictions += 1
-                total_predictions += 1
-                accuracies.append(lab==labPred)
+            if self.config.mmAtt:
+                #topK, qnAlphas, alphas, labels_pred, mmAlphas = self.sess.run(
+                #    [self.topK, self.qnAtt_alpha, self.alpha, self.labels_pred, 
+                #     self.mmAlpha], feed_dict=feed)
+                topK,  alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
+                    [self.topK, self.alpha, self.labels_pred, 
+                     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
                 
-                if not mini:
-                    self._logToCSV(nEpoch='', qn=qn, 
-                                   pred=self.classToAnsMap[labPred], 
-                                   lab=self.classToAnsMap[lab], 
-                                   predClass=labPred, labClass=lab, 
-                                   correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                #for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
+                #    labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
+                for lab, labPred, qn, img_id, qn_id, mm_im in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids, mm_ims):
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
+                    
+                    if not mini:
+                        self.predFile.writerow(['', qn, 
+                                       self.classToAnsMap[labPred], 
+                                       self.classToAnsMap[lab], 
+                                       labPred, lab, 
+                                       lab==labPred, img_id, qn_id,
+                                       mm_im[0], mm_im[1]])
+                        
+                if mini and nBatch == chooseBatch:
+                    ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
+                    img_ids_toreturn = img_ids
+                    qns_to_return = rawQns
+                    lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
+                    break
+            else:
+                alphas, labels_pred = self.sess.run(
+                    [self.alpha, self.labels_pred], feed_dict=feed)
                 
-                currentPred = {}
-                currentPred['question_id'] = qn_id
-                currentPred['answer'] = self.classToAnsMap[labPred]
-                results.append(currentPred)
-                
-            if mini and nBatch == chooseBatch:
-                ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
-                img_ids_toreturn = img_ids
-                qns_to_return = rawQns
-                lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
-                break
-        
+                for lab, labPred, qn, img_id, qn_id in zip(
+                    labels, labels_pred, rawQns, img_ids, qn_ids):
+                    if (lab==labPred):
+                        correct_predictions += 1
+                    total_predictions += 1
+                    accuracies.append(lab==labPred)
+                    
+                    if not mini:
+                        self._logToCSV(nEpoch='', qn=qn, 
+                                       pred=self.classToAnsMap[labPred], 
+                                       lab=self.classToAnsMap[lab], 
+                                       predClass=labPred, labClass=lab, 
+                                       correct=lab==labPred, img_id=img_id, qn_id=qn_id)
+                    
+                    currentPred = {}
+                    currentPred['question_id'] = qn_id
+                    currentPred['answer'] = self.classToAnsMap[labPred]
+                    results.append(currentPred)
+                    
+                if mini and nBatch == chooseBatch:
+                    ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
+                    img_ids_toreturn = img_ids
+                    qns_to_return = rawQns
+                    lab_to_return = [self.classToAnsMap[trueLab] for trueLab in labels]
+                    break
+            
         valAcc = np.mean(accuracies)
         print('ValAcc: {:>6.2%}, total_preds: {}'.format(valAcc, total_predictions))
         
