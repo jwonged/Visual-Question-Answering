@@ -113,70 +113,6 @@ class ImageAttentionModel(BaseModel):
         self.lstmOutput = tf.nn.dropout(lstmOutput, self.dropout)
     
     
-    #######################USE SHARED INSTEAD#########################################
-    def _multimodalAttention(self, imgContext, qnContext):
-        """
-        args: both tanh activated
-            imgContext: [b, 512]
-            qnContext: [b, 1024] 
-        """
-        print('Using Concatenated Crossmodal Attention')
-        #self.imgContext = imgContext
-        #self.qnContext = qnContext
-        
-        #shape qn down to 512
-        qnContext = tf.layers.dense(inputs=qnContext,
-                                       units=qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-        qnContext= tf.nn.dropout(qnContext, self.dropout)
-        #[b, 512]
-        imgContext = tf.layers.dense(inputs=imgContext,
-                                       units=qnContext.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
-        imgContext= tf.nn.dropout(imgContext, self.dropout)
-        #[b, 512]
-        
-        combinedInfo = tf.concat([imgContext, qnContext], axis=-1) #[b,1024]
-        print('Shape of combinedInfo  : {}'.format(combinedInfo.get_shape()))
-        
-        #compute img alpha
-        att_im = tf.layers.dense(inputs=combinedInfo,
-                                       units=combinedInfo.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1024]
-        att_im= tf.nn.dropout(att_im, self.dropout)
-        att_im_b = tf.layers.dense(inputs=att_im,
-                                       units=1,
-                                       activation=None,
-                                       use_bias=False,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
-        unnorm_im = tf.nn.sigmoid(att_im_b) #[b, 1]
-        
-        #compute qn alpha
-        att_qn = tf.layers.dense(inputs=combinedInfo,
-                                       units=combinedInfo.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer()) #[b,1024]
-        att_qn= tf.nn.dropout(att_qn, self.dropout)
-        att_qn_b = tf.layers.dense(inputs=att_qn,
-                                       units=1,
-                                       activation=None,
-                                       use_bias=False,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())#[b,1]
-        unnorm_qn = tf.nn.sigmoid(att_qn_b) #[b,1]
-        
-        #normalise
-        comb_denominator = tf.add(unnorm_im, unnorm_qn) #[b,1]
-        self.mmAlpha_im = tf.div(unnorm_im, comb_denominator, name='mmAlphaIm') #[b,1]
-        self.mmAlpha_qn = tf.div(unnorm_qn, comb_denominator, name='mmAlphaQn') #[b,1]
-        
-        #combine context
-        mmContext = tf.add(tf.multiply(self.mmAlpha_qn, qnContext),
-                           tf.multiply(self.mmAlpha_im, imgContext))
-        return mmContext #[b, 512]
-    
     def _multimodalAttentionShared(self, imgContext, qnContext):
         """
         args:
@@ -253,10 +189,10 @@ class ImageAttentionModel(BaseModel):
         self.flattenedImgVecs = tf.reshape(transposedImgVec, [self.batch_size, 196, 512])
         
         #tanh activate image
-        self.flattenedImgVecs= tf.layers.dense(inputs=self.flattenedImgVecs,
-                                       units=self.flattenedImgVecs.get_shape()[-1],
-                                       activation=tf.tanh,
-                                       kernel_initializer=tf.contrib.layers.xavier_initializer())
+        #self.flattenedImgVecs= tf.layers.dense(inputs=self.flattenedImgVecs,
+        #                               units=self.flattenedImgVecs.get_shape()[-1],
+        #                               activation=tf.tanh,
+        #                               kernel_initializer=tf.contrib.layers.xavier_initializer())
          
         self._addLSTM()
         

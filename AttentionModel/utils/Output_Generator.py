@@ -259,12 +259,15 @@ class OutputGenerator(object):
         #plt.tight_layout()
         plt.show()
         
-    def displayEachSample(self, alphas, img_ids, qns, preds, labs, saveData=False):
+    def displayEachSample(self, alphas, img_ids, qns, preds, labs, mm_als, saveData=False):
         print('Num of images: {}'.format(img_ids))
         if saveData:
             data = {}
             alphas_to_save, images_to_save, preds_to_save, qns_to_save, labs_to_save = [], [], [], [], []
-        for n, (alp, img_id, qn, pred, lab) in enumerate(zip(alphas, img_ids, qns, preds, labs)):
+        print(mm_als)
+        print(alphas)
+        for n, (alp, img_id, qn, pred, lab, mm_al) in enumerate(zip(
+            alphas, img_ids, qns, preds, labs, mm_als)):
             imgvec = self._readImageAndResize(self.idToImgpathMap[img_id])
             #imgvec = cv2.imread(self.idToImgpathMap[img_id])
             #imgvec = ndimage.imread(self.idToImgpathMap[img_id])
@@ -279,23 +282,27 @@ class OutputGenerator(object):
                 qns_to_save.append(qn)
                 labs_to_save.append(lab)
             
-            plt.subplot(1,2,1)
-            #plt.xlabel('Qn: {} \nPred: {}'.format(qn, pred))
-            #plt.title("\n".join(wrap(
-            #    "Qn: {} Pred: {}".format(qn, pred), 20)))
+            #plt.subplot(1,2,1) #img
             plt.imshow(imgvec)
-           
-            
             plt.axis('off')
-            plt.suptitle('Qn: {}\n Pred: {} \n Ans: {}'.format(qn, pred, lab), fontsize=16)
+            plt.savefig('/media/jwong/Transcend/VQAresults/mmAtt/samples/{}mmatt{}.png'.format(n,1), 
+                        bbox_inches='tight')
+            plt.clf()
             
-            plt.subplot(1,2,2)
-            #plt.title("\n".join(wrap(
-            #    "Qn: {} Pred: {}".format(qn, pred), 20)))
+            #plt.subplot(1,2,2) att
             plt.imshow(imgvec)
             plt.imshow(alp_img, alpha=0.80) #plt.imshow(arr, cmap='gray')
             plt.axis('off')
-            plt.show()
+            plt.savefig('/media/jwong/Transcend/VQAresults/mmAtt/samples/{}mmatt{}.png'.format(n,2), 
+                        bbox_inches='tight')
+            plt.clf()
+            
+            plt.suptitle('Qn: {}\n Pred: {} \n Ans: {}\n im:{}, qn:{}'.format(
+                qn, pred, lab, mm_al[0], mm_al[1]), fontsize=16)
+            plt.savefig('/media/jwong/Transcend/VQAresults/mmAtt/samples/{}mmatt{}.png'.format(n,3), 
+                        bbox_inches='tight')
+            plt.clf()
+            
         #plt.tight_layout()
         
         if saveData:

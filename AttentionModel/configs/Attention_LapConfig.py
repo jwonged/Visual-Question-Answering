@@ -35,8 +35,11 @@ class Attention_LapConfig(Config):
     
     #crossmodal model
     restoreCMmodel = '/media/jwong/Transcend/VQAresults/mmAtt/Att16Apr23-5/att16Apr23-5.meta'
-    restoreCMmodelPath = '/media/jwong/Transcend/VQAresults/mmAtt/Att16Apr23-5'
+    restoreCMmodelPath = '/media/jwong/Transcend/VQAresults/mmAtt/Att16Apr23-5/'
     
+    #crossmodel working model
+    restoreGoodCMmodel = '/media/jwong/Transcend/VQAresults/mmAtt/Att1May22-31/att1May22-31.meta'
+    restoreGoodCMmodelPath = '/media/jwong/Transcend/VQAresults/mmAtt/Att1May22-31/'
     
     trainImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggTrainConv5_3Features_shelf'
     valImgFile = '/media/jwong/Transcend/conv5_3_shelves/vggValConv5_3Features_shelf'

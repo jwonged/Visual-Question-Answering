@@ -28,14 +28,16 @@ def runVisualiseVal():
                                  is_training=False)
     
     model = ImageAttentionModel(config)
-    model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
-    alphas, img_ids, qns, preds, labels = model.runPredict(
-        reader, config.csvResults, 9, mini=True, chooseBatch=0)
+    #model.loadTrainedModel(config.restoreModel, config.restoreModelPath)
+    model.loadTrainedModel(config.restoreGoodCMmodel, 
+                           config.restoreGoodCMmodelPath)
+    alphas, img_ids, qns, preds, labels, mm_als = model.runPredict(
+        reader, config.csvResults, 150, mini=True, chooseBatch=20)
     model.destruct()
     reader.destruct()
     
     out = OutputGenerator(config.valImgPaths)
-    out.displayEachSample(alphas, img_ids, qns, preds, labels, saveData=False)
+    out.displayEachSample(alphas, img_ids, qns, preds, labels,  mm_als, saveData=False)
 
 def runVisualise():
     print('Running Visuals')
@@ -125,8 +127,7 @@ def visQnImgAtt():
     
     model.loadTrainedModel(config.restoreQuAttSigmoidModel, 
                            config.restoreQuAttSigmoidModelPath)
-    #model.loadTrainedModel(config.restoreCMmodel, 
-    #                       config.restoreCMmodelPath)
+    
     #model.loadTrainedModel(config.restoreQnImAttModel, 
     #                       config.restoreQnImAttModelPath)
     qnAlphas, alphas, img_ids, qns, preds, topk, labs = model.runPredict(
@@ -137,8 +138,6 @@ def visQnImgAtt():
     #out = OutputGenerator(config.trainImgPaths)
     #out.displayQnImgAttention(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
     out.displayQnImgAttSaveSplit(qnAlphas, alphas, img_ids, qns, preds, topk, labs,saveData)
-    
-def solveSingleImage():
     
     
 def parseArgs():

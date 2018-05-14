@@ -316,6 +316,7 @@ class BaseModel(object):
         correct_predictions, total_predictions = 0., 0.
         if mini:
             img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return = [], [], [], []
+            mmalphas_toreturn = []
         results = []
         for nBatch, (qnAsWordIDsBatch, seqLens, img_vecs, labels, rawQns, img_ids, qn_ids) \
             in enumerate(valReader.getNextBatch(batch_size)):
@@ -334,7 +335,7 @@ class BaseModel(object):
                 #topK,  alphas, labels_pred, mm_ims, mm_qns = self.sess.run(
                 #    [self.topK, self.alpha, self.labels_pred, 
                 #     self.mmAlpha_im, self.mmAlpha_qn], feed_dict=feed)
-                
+                print('hre:{}'.format(mmAlphas))
                 for lab, labPred, qn, img_id, qn_id, mm_alpha in zip(
                     labels, labels_pred, rawQns, img_ids, qn_ids, mmAlphas):
                 #for lab, labPred, qn, img_id, qn_id, mm_im in zip(
@@ -343,6 +344,7 @@ class BaseModel(object):
                         correct_predictions += 1
                     total_predictions += 1
                     accuracies.append(lab==labPred)
+                    
                     
                     currentPred = {}
                     currentPred['question_id'] = qn_id
@@ -358,6 +360,7 @@ class BaseModel(object):
                                        mm_alpha])
                         
                 if mini and nBatch == chooseBatch:
+                    mmalphas_toreturn = mmAlphas
                     ans_to_return = [self.classToAnsMap[labPred] for labPred in labels_pred]
                     img_ids_toreturn = img_ids
                     qns_to_return = rawQns
@@ -398,7 +401,7 @@ class BaseModel(object):
         
         #return valAcc, correct_predictions, total_predictions
         if mini:
-            return alphas, img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return
+            return alphas, img_ids_toreturn, qns_to_return, ans_to_return, lab_to_return, mmalphas_toreturn 
         return results, valAcc
         
     def runEvaluationMetrics(self, valReader):
