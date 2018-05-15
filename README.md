@@ -1,4 +1,11 @@
 # Visual Question Answering
+AttentionModel: code for my Image and Question Attention models, and crossmodal attention    
+BOWIMG: the bag-of-words + pre-trained GoogLeNet/VGGNet convolutional NN model   
+DatasetPreprocessor: code for preprocessing the VQA dataset and other quick scripts    
+LSTMCNN: Bi-LSTM + CNN (from scratch) model    
+LSTMIMG: Bi-LSTM + pre-trained GoogLeNet model      
+Preparation: code written during the preparation phase e.g. practising tensorflow    
+WebApp: Web application which runs the image attention model    
 
 # Dataset
 http://visualqa.org/
